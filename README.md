@@ -19,9 +19,9 @@ This repository is currently **phase 1** — the marketing landing page. Upcomin
 | Phase | Status | Description |
 |---|---|---|
 | **1. Landing** | Live | Marketing site, branding, waitlist |
-| **2. Smart Contracts** | Planned | `Vexor.sol` (ERC-721 orchestrator NFT), `SubAgent.sol` (ERC-1155 sub-agent NFTs), `ReputationSBT.sol` (ERC-5192 reputation), `AgentWallet` (ERC-4337 smart wallet per agent) |
-| **3. dApp** | Planned | Mint flow, owner dashboard, public agent profile, chat interface |
-| **4. Audit + Mainnet** | Planned | External audit → Base mainnet launch |
+| **2. $VEXOR Token** | Planned | `VexorToken.sol` (ERC-20 on Base), `VexorStaking.sol` (lock + revenue share), `VexorGovernor.sol` (token-weighted voting), `VexorTreasury.sol` (revenue collection) |
+| **3. dApp** | Planned | Token dashboard, stake/unstake flow, governance interface, agent chat with $VEXOR metering |
+| **4. Audit + Launch** | Planned | External audit → token launch on Base (venue and model TBA) |
 
 ## Local Development
 

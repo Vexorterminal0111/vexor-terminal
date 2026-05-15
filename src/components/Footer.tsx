@@ -18,9 +18,9 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-4 max-w-md text-sm text-white/55 leading-relaxed">
-              An autonomous AI orchestrator with 9 sub-agents. On-chain
-              identity, agent-owned wallet, and verifiable reputation — coming
-              on-chain to Base.
+              An autonomous AI orchestrator with 9 sub-agents. Powered by the
+              $VEXOR token on Base — pay for runtime, stake for governance,
+              earn from agent revenue.
             </p>
             <div className="mt-6 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-white/45 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.02]">
               <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />
@@ -55,6 +55,14 @@ export function Footer() {
                   className="text-white/70 hover:text-white transition-colors"
                 >
                   Use Cases
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#token"
+                  className="text-cyan-300 hover:text-white transition-colors"
+                >
+                  $VEXOR Token
                 </a>
               </li>
               <li>
@@ -120,7 +128,7 @@ export function Footer() {
             © {new Date().getFullYear()} Vexor Terminal. All rights reserved.
           </div>
           <div className="font-mono text-[11px] text-white/40">
-            Designed in the terminal. Coming on-chain to Base.
+            Designed in the terminal. $VEXOR launching on Base.
           </div>
         </div>
       </div>

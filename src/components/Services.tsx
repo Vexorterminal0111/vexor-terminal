@@ -13,8 +13,8 @@ const services = [
     highlight: true,
   },
   {
-    title: "Mint Vexor NFT",
-    body: "Anchor your Vexor instance on-chain. Agent-owned smart wallet, portable reputation, and provably persistent memory on Base.",
+    title: "Get $VEXOR",
+    body: "Native ERC-20 token on Base. Pay for agent runtime, stake for governance, and earn a pro-rata share of every task the orchestrator runs.",
     cta: "Join waitlist",
     href: "#waitlist",
     badge: "Soon",
@@ -38,7 +38,7 @@ export function Services() {
         <SectionHeader
           kicker="Services"
           title="Ways to deploy Vexor."
-          description="Whether you want a personal orchestrator or you&apos;re building agentic features into your own product — Vexor scales with you."
+          description="Whether you want a personal orchestrator, exposure to the $VEXOR token, or you&apos;re building agentic features into your own product — Vexor scales with you."
         />
 
         <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -8,6 +8,7 @@ const links = [
   { href: "#about", label: "About" },
   { href: "#team", label: "Team" },
   { href: "#usecases", label: "Use Cases" },
+  { href: "#token", label: "$VEXOR" },
   { href: "#services", label: "Services" },
 ];
 
