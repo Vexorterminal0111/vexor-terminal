@@ -5,6 +5,7 @@ import { About } from "@/components/About";
 import { Team } from "@/components/Team";
 import { UseCases } from "@/components/UseCases";
 import { Token } from "@/components/Token";
+import { Chat } from "@/components/Chat";
 import { Services } from "@/components/Services";
 import { Footer } from "@/components/Footer";
 
@@ -19,6 +20,7 @@ export default function Home() {
         <Team />
         <UseCases />
         <Token />
+        <Chat />
         <Services />
       </main>
       <Footer />

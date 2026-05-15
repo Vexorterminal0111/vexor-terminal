@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python (chat-api)
+apps/chat-api/.venv/
+apps/chat-api/.env
+apps/chat-api/__pycache__/
+apps/chat-api/**/__pycache__/
+**/*.pyc
+
+# Local env
+.env.local
+.env*.local
+
+# Setuptools egg-info
+apps/chat-api/*.egg-info/
+apps/chat-api/**/*.egg-info/

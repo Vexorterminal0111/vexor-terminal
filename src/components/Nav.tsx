@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { WalletButton } from "./WalletButton";
 
 const links = [
   { href: "#about", label: "About" },
   { href: "#team", label: "Team" },
-  { href: "#usecases", label: "Use Cases" },
   { href: "#token", label: "$VEXOR" },
+  { href: "#chat", label: "Chat" },
   { href: "#services", label: "Services" },
 ];
 
@@ -67,13 +68,8 @@ export function Nav() {
             </span>
           </div>
 
-          <a
-            href="#get-vexor"
-            className="inline-flex items-center gap-1.5 rounded-full bg-white text-black px-3.5 py-1.5 font-mono text-xs hover:bg-cyan-300 hover:text-black transition-colors"
-          >
-            Get Vexor
-            <span aria-hidden>→</span>
-          </a>
+          <WalletButton />
+
         </div>
       </div>
     </motion.header>
