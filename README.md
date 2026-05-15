@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vexor Terminal
 
-## Getting Started
+> An autonomous AI orchestrator with 9 specialized sub-agents. On-chain identity on Base — coming soon.
 
-First, run the development server:
+This is the landing site for **Vexor Terminal**, an AI orchestrator agent inspired by personal AI systems like [thealeister.com](https://thealeister.com) but designed from day one to live on-chain on [Base](https://base.org).
+
+## Stack
+
+- **Next.js 16** (App Router, static export)
+- **TypeScript** + **Tailwind CSS v4**
+- **Framer Motion** for animations
+- **Lucide** icons
+- **Geist** + **Geist Mono** fonts
+
+## Roadmap
+
+This repository is currently **phase 1** — the marketing landing page. Upcoming phases:
+
+| Phase | Status | Description |
+|---|---|---|
+| **1. Landing** | Live | Marketing site, branding, waitlist |
+| **2. Smart Contracts** | Planned | `Vexor.sol` (ERC-721 orchestrator NFT), `SubAgent.sol` (ERC-1155 sub-agent NFTs), `ReputationSBT.sol` (ERC-5192 reputation), `AgentWallet` (ERC-4337 smart wallet per agent) |
+| **3. dApp** | Planned | Mint flow, owner dashboard, public agent profile, chat interface |
+| **4. Audit + Mainnet** | Planned | External audit → Base mainnet launch |
+
+## Local Development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build & Static Export
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm build
+```
 
-## Learn More
+The static site is emitted to `out/`. The site is fully static and can be deployed to any static host (Vercel, Cloudflare Pages, Netlify, S3, etc.).
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/
+├── app/                # Next.js App Router
+│   ├── layout.tsx      # Root layout, metadata, fonts
+│   ├── page.tsx        # Landing page composition
+│   └── globals.css     # Tailwind + design tokens
+├── components/         # Section components
+│   ├── Nav.tsx
+│   ├── Hero.tsx
+│   ├── Marquee.tsx
+│   ├── About.tsx
+│   ├── Team.tsx
+│   ├── UseCases.tsx
+│   ├── Services.tsx
+│   └── Footer.tsx
+└── lib/
+    └── utils.ts        # cn() helper
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## License
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
