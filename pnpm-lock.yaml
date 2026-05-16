@@ -45,6 +45,9 @@ importers:
         specifier: ^2.12.0
         version: 2.19.5(@tanstack/query-core@5.100.10)(@tanstack/react-query@5.100.10(react@19.2.4))(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@5.0.10)(viem@2.49.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@4.4.3))(zod@4.4.3)
     devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20260516.1
+        version: 4.20260516.1
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.3.0
@@ -152,6 +155,9 @@ packages:
 
   '@base-org/account@2.4.0':
     resolution: {integrity: sha512-A4Umpi8B9/pqR78D1Yoze4xHyQaujioVRqqO3d6xuDFw9VRtjg6tK3bPlwE0aW+nVH/ntllCpPa2PbI8Rnjcug==}
+
+  '@cloudflare/workers-types@4.20260516.1':
+    resolution: {integrity: sha512-aPckyZSPQXhOo+nSIvGLtXVl9M2qmf2GwFZYmvut9z47F1XTjHYcaYpI9/BvxrI+Q5l99UtXZU4bmQtX10JG+w==}
 
   '@coinbase/cdp-sdk@1.49.2':
     resolution: {integrity: sha512-QojjrkLG2mgo5Lq2ybu+k8Rk1NtklKQrroPG/1VCvMM62kGnF59B5re4B3XySY4etrzu60oqCnPuLSRcwuhI1g==}
@@ -3959,6 +3965,8 @@ snapshots:
       - utf-8-validate
       - zod
 
+  '@cloudflare/workers-types@4.20260516.1': {}
+
   '@coinbase/cdp-sdk@1.49.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@solana-program/system': 0.10.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10))
@@ -7754,7 +7762,7 @@ snapshots:
   ox@0.6.7(typescript@5.9.3)(zod@4.4.3):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
-      '@noble/curves': 1.9.1
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
