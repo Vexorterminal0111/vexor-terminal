@@ -36,8 +36,8 @@ const stats = [
 
 export function Token() {
   return (
-    <section id="token" className="relative scroll-mt-24 py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-6 sm:px-8">
+    <section id="token" className="relative scroll-mt-24 py-16 sm:py-24 lg:py-32">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
           kicker="Tokenomics"
           title="$VEXOR — the economy that runs the orchestrator."
@@ -49,7 +49,7 @@ export function Token() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.6 }}
-          className="mt-12 relative overflow-hidden rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-500/[0.06] via-white/[0.02] to-transparent p-8 sm:p-10"
+          className="mt-10 sm:mt-12 relative overflow-hidden rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-500/[0.06] via-white/[0.02] to-transparent p-6 sm:p-8 lg:p-10"
         >
           <div
             aria-hidden
@@ -61,10 +61,10 @@ export function Token() {
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
                 Launching on Base · TBA
               </div>
-              <div className="mt-5 font-mono text-5xl sm:text-6xl text-white leading-none">
+              <div className="mt-4 sm:mt-5 font-mono text-4xl sm:text-5xl md:text-6xl text-white leading-none">
                 $VEXOR
               </div>
-              <p className="mt-4 max-w-xl text-sm text-white/65 leading-relaxed">
+              <p className="mt-4 max-w-xl text-sm sm:text-[15px] text-white/65 leading-relaxed">
                 The native ERC-20 token of the Vexor Terminal protocol on
                 Base. $VEXOR is the unit of account for runtime, staking, and
                 governance. Supply, distribution, and launch model will be
@@ -80,7 +80,7 @@ export function Token() {
                   <div className="font-mono text-[10px] uppercase tracking-widest text-white/45">
                     {s.label}
                   </div>
-                  <div className="mt-1 font-mono text-xl text-white">
+                  <div className="mt-1 font-mono text-base sm:text-xl text-white">
                     {s.value}
                   </div>
                 </div>
@@ -99,12 +99,12 @@ export function Token() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.5, delay: i * 0.05 }}
-                className="group relative bg-background/40 p-7"
+                className="group relative bg-background/40 p-5 sm:p-7"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-cyan-300">
                   <Icon className="h-5 w-5" />
                 </div>
-                <h3 className="mt-5 font-mono text-lg text-white">{u.title}</h3>
+                <h3 className="mt-4 sm:mt-5 font-mono text-base sm:text-lg text-white">{u.title}</h3>
                 <p className="mt-2 text-sm text-white/60 leading-relaxed">
                   {u.body}
                 </p>
@@ -113,7 +113,7 @@ export function Token() {
           })}
         </div>
 
-        <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+        <div className="mt-6 sm:mt-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5 sm:p-6">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/45">
               Disclaimer
@@ -125,12 +125,20 @@ export function Token() {
               team before launch.
             </p>
           </div>
-          <a
-            href="#waitlist"
-            className="inline-flex items-center gap-2 rounded-full bg-cyan-300 text-black px-5 py-2.5 font-mono text-sm hover:bg-cyan-200 transition-colors whitespace-nowrap"
-          >
-            Join waitlist →
-          </a>
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href="#console"
+              className="inline-flex items-center gap-2 rounded-full bg-cyan-300 text-black px-5 py-2.5 font-mono text-sm hover:bg-cyan-200 transition-colors whitespace-nowrap"
+            >
+              Open Console →
+            </a>
+            <a
+              href="/docs.html"
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 font-mono text-sm text-white/80 hover:text-white hover:border-white/30 transition-colors whitespace-nowrap"
+            >
+              Read Docs
+            </a>
+          </div>
         </div>
       </div>
     </section>

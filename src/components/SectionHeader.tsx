@@ -30,7 +30,7 @@ export function SectionHeader({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.5, delay: 0.05 }}
-        className="font-mono text-3xl sm:text-4xl md:text-5xl tracking-tight text-white max-w-3xl"
+        className="font-mono text-2xl sm:text-3xl md:text-4xl lg:text-5xl tracking-tight text-white max-w-3xl break-words"
       >
         {title}
       </motion.h2>
@@ -40,7 +40,7 @@ export function SectionHeader({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="max-w-2xl text-base sm:text-lg text-white/65 leading-relaxed"
+          className="max-w-2xl text-[15px] sm:text-base md:text-lg text-white/65 leading-relaxed"
         >
           {description}
         </motion.p>

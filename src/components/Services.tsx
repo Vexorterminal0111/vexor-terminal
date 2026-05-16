@@ -6,25 +6,25 @@ import { SectionHeader } from "./SectionHeader";
 
 const services = [
   {
-    title: "Get Vexor",
-    body: "Deploy Vexor as your own autonomous AI orchestrator. Handle workflows, research, and execution on autopilot.",
-    cta: "Get started",
-    href: "#get-vexor",
+    title: "Launch Console",
+    body: "Connect your wallet on Base Sepolia. Claim 1,000 $VEXOR from the faucet, stake with a lock multiplier, propose & vote — all live on-chain.",
+    cta: "Open console",
+    href: "#console",
+    badge: "Live",
     highlight: true,
   },
   {
-    title: "Get $VEXOR",
-    body: "Native ERC-20 token on Base. Pay for agent runtime, stake for governance, and earn a pro-rata share of every task the orchestrator runs.",
-    cta: "Join waitlist",
-    href: "#waitlist",
-    badge: "Soon",
+    title: "Chat with Vexor",
+    body: "Talk to the orchestrator and watch it route to 9 specialized sub-agents. Wallet-gated, rate-limited, powered by hosted Llama 3.3 70B.",
+    cta: "Open chat",
+    href: "#chat",
+    badge: "Beta",
   },
   {
-    title: "Vexor API",
-    body: "Plug Vexor's orchestrator + 9 sub-agents into your own product. Streaming responses, tool calls, and on-chain payment ready.",
-    cta: "Read docs",
-    href: "#docs",
-    badge: "Beta",
+    title: "Read the Docs",
+    body: "Quickstart, contract addresses, sub-agent reference, tier table, and FAQ. Everything you need to drive the terminal.",
+    cta: "View docs",
+    href: "/docs.html",
   },
 ];
 
@@ -32,26 +32,25 @@ export function Services() {
   return (
     <section
       id="services"
-      className="relative scroll-mt-24 py-24 sm:py-32"
+      className="relative scroll-mt-24 py-16 sm:py-24 lg:py-32"
     >
-      <div className="mx-auto max-w-7xl px-6 sm:px-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
           kicker="Services"
           title="Ways to deploy Vexor."
           description="Whether you want a personal orchestrator, exposure to the $VEXOR token, or you&apos;re building agentic features into your own product — Vexor scales with you."
         />
 
-        <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mt-10 sm:mt-14 grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
           {services.map((s, i) => (
             <motion.a
               key={s.title}
               href={s.href}
-              id={s.href === "#get-vexor" ? "get-vexor" : undefined}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.5, delay: i * 0.07 }}
-              className={`group relative overflow-hidden rounded-2xl p-7 border transition-colors ${
+              className={`group relative overflow-hidden rounded-2xl p-5 sm:p-7 border transition-colors ${
                 s.highlight
                   ? "border-cyan-400/30 bg-gradient-to-br from-cyan-500/[0.07] via-white/[0.02] to-transparent hover:border-cyan-400/50"
                   : "border-white/10 bg-white/[0.02] hover:border-white/20"
@@ -59,7 +58,7 @@ export function Services() {
             >
               {s.badge && (
                 <span
-                  className={`absolute top-5 right-5 font-mono text-[10px] uppercase tracking-widest px-2 py-1 rounded-full border ${
+                  className={`absolute top-4 right-4 sm:top-5 sm:right-5 font-mono text-[10px] uppercase tracking-widest px-2 py-1 rounded-full border ${
                     s.highlight
                       ? "border-cyan-400/30 text-cyan-300 bg-cyan-500/10"
                       : "border-white/10 text-white/55 bg-white/[0.02]"
@@ -69,12 +68,12 @@ export function Services() {
                 </span>
               )}
 
-              <h3 className="font-mono text-2xl text-white">{s.title}</h3>
-              <p className="mt-3 text-sm text-white/65 leading-relaxed min-h-[5rem]">
+              <h3 className="font-mono text-xl sm:text-2xl text-white pr-16">{s.title}</h3>
+              <p className="mt-2.5 sm:mt-3 text-sm text-white/65 leading-relaxed md:min-h-[5rem]">
                 {s.body}
               </p>
 
-              <span className="mt-6 inline-flex items-center gap-1.5 font-mono text-sm text-cyan-300 group-hover:gap-2 transition-all">
+              <span className="mt-5 sm:mt-6 inline-flex items-center gap-1.5 font-mono text-sm text-cyan-300 group-hover:gap-2 transition-all">
                 {s.cta}
                 <ArrowRight className="h-4 w-4" />
               </span>

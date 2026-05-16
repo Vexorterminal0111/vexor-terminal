@@ -80,15 +80,15 @@ const agents: Agent[] = [
 
 export function Team() {
   return (
-    <section id="team" className="relative scroll-mt-24 py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-6 sm:px-8">
+    <section id="team" className="relative scroll-mt-24 py-16 sm:py-24 lg:py-32">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
           kicker="The Team"
           title="9 sub-agents. One terminal."
           description="Vexor dispatches tasks to specialized sub-agents. Each has a personality, a role, and a verifiable performance record on-chain."
         />
 
-        <div className="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="mt-10 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {agents.map((a, i) => (
             <motion.a
               key={a.name}
@@ -97,7 +97,7 @@ export function Team() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.5, delay: (i % 3) * 0.05 }}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-6 hover:border-white/20 transition-colors"
+              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-5 sm:p-6 hover:border-white/20 transition-colors"
             >
               <div
                 aria-hidden
@@ -108,7 +108,7 @@ export function Team() {
                   <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/45">
                     Sub-Agent · 0{i + 1}
                   </div>
-                  <div className="mt-2 font-mono text-2xl text-white">
+                  <div className="mt-2 font-mono text-xl sm:text-2xl text-white">
                     {a.name}
                   </div>
                   <div className="mt-1 text-sm text-cyan-300/90 font-mono">

@@ -20,7 +20,7 @@ export function Marquee() {
         {doubled.map((text, i) => (
           <div
             key={i}
-            className="flex items-center gap-3 px-6 font-mono text-[11px] uppercase tracking-[0.22em] text-white/55"
+            className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.18em] sm:tracking-[0.22em] text-white/55"
           >
             <span>{text}</span>
             <span className="text-cyan-300/60">◇</span>

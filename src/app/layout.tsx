@@ -43,6 +43,8 @@ export const metadata: Metadata = {
     title: "Vexor Terminal — Autonomous AI Orchestrator on Base",
     description:
       "9 specialized sub-agents. One terminal. Powered by $VEXOR on Base.",
+    site: "@vexorterminal",
+    creator: "@vexorterminal",
   },
 };
 

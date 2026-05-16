@@ -30,15 +30,15 @@ const projects = [
 
 export function UseCases() {
   return (
-    <section id="usecases" className="relative scroll-mt-24 py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-6 sm:px-8">
+    <section id="usecases" className="relative scroll-mt-24 py-16 sm:py-24 lg:py-32">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
           kicker="Use Cases"
           title="What Vexor builds for you."
           description="Vexor is built to operate real production workflows — not demos. Below are the systems we&apos;re putting Vexor on next."
         />
 
-        <div className="mt-14 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="mt-10 sm:mt-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {projects.map((p, i) => (
             <motion.div
               key={p.name}
@@ -46,7 +46,7 @@ export function UseCases() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.5, delay: i * 0.07 }}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-7 hover:border-white/20 transition-colors"
+              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-5 sm:p-7 hover:border-white/20 transition-colors"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
@@ -57,7 +57,7 @@ export function UseCases() {
                 <ArrowUpRight className="h-4 w-4 text-white/40 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
               </div>
 
-              <h3 className="mt-6 font-mono text-2xl text-white">{p.name}</h3>
+              <h3 className="mt-5 sm:mt-6 font-mono text-xl sm:text-2xl text-white">{p.name}</h3>
               <p className="mt-1 font-mono text-sm text-white/55">{p.role}</p>
 
               <p className="mt-5 text-sm text-white/65 leading-relaxed">

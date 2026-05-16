@@ -1,0 +1,11 @@
+# Compiler outputs
+out/
+cache/
+
+# Foundry libraries (installed via `forge install`)
+lib/
+
+# Secrets
+.env
+.env.local
+.env.*.local

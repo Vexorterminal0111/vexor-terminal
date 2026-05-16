@@ -53,15 +53,15 @@ const features = [
 
 export function About() {
   return (
-    <section id="about" className="relative scroll-mt-24 py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-6 sm:px-8">
+    <section id="about" className="relative scroll-mt-24 py-16 sm:py-24 lg:py-32">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
           kicker="About Vexor"
           title="An autonomous AI orchestrator — not a chatbot."
           description="Vexor is a self-improving multi-agent system that dispatches work across 9 specialized sub-agents, learns from every task, and runs on the $VEXOR token economy on Base."
         />
 
-        <div className="mt-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+        <div className="mt-10 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
           {features.map((f, i) => {
             const Icon = f.icon;
             return (
@@ -71,7 +71,7 @@ export function About() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.5, delay: i * 0.05 }}
-                className={`group relative bg-background/40 p-7 sm:p-8 ${
+                className={`group relative bg-background/40 p-5 sm:p-7 lg:p-8 ${
                   f.highlight ? "ring-1 ring-inset ring-cyan-400/20" : ""
                 }`}
               >
@@ -101,7 +101,7 @@ export function About() {
                     {f.badge}
                   </span>
                 </div>
-                <h3 className="relative mt-6 font-mono text-lg text-white">
+                <h3 className="relative mt-5 sm:mt-6 font-mono text-base sm:text-lg text-white">
                   {f.title}
                 </h3>
                 <p className="relative mt-2 text-sm text-white/60 leading-relaxed">

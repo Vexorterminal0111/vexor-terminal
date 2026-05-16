@@ -136,8 +136,8 @@ export function Chat() {
   }
 
   return (
-    <section id="chat" className="relative scroll-mt-24 py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-6 sm:px-8">
+    <section id="chat" className="relative scroll-mt-24 py-16 sm:py-24 lg:py-32">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
           kicker="Live Terminal"
           title="Chat with Vexor."
@@ -149,9 +149,9 @@ export function Chat() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.6 }}
-          className="mt-12 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.03] via-white/[0.01] to-transparent"
+          className="mt-10 sm:mt-12 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.03] via-white/[0.01] to-transparent"
         >
-          <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.02] px-5 py-3">
+          <div className="flex items-center justify-between gap-3 border-b border-white/5 bg-white/[0.02] px-4 sm:px-5 py-2.5 sm:py-3">
             <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">
               <Terminal className="h-3.5 w-3.5 text-cyan-300" />
               vexor@base:~$
@@ -175,7 +175,7 @@ export function Chat() {
 
           <div
             ref={scrollerRef}
-            className="h-[420px] overflow-y-auto px-5 py-6 sm:px-7 sm:py-8 space-y-5 font-mono text-sm"
+            className="h-[380px] sm:h-[420px] overflow-y-auto px-4 py-5 sm:px-7 sm:py-8 space-y-5 font-mono text-sm"
           >
             {messages.map((m, i) => (
               <div key={i} className="space-y-1.5">
@@ -218,7 +218,7 @@ export function Chat() {
           </div>
 
           {messages.length <= 1 && !loading && (
-            <div className="border-t border-white/5 bg-white/[0.015] px-5 py-3 sm:px-7 flex flex-wrap gap-2">
+            <div className="border-t border-white/5 bg-white/[0.015] px-4 py-3 sm:px-7 flex flex-wrap gap-2">
               {SAMPLE_PROMPTS.map((p) => (
                 <button
                   key={p}
@@ -233,12 +233,13 @@ export function Chat() {
           )}
 
           {error && (
-            <div className="border-t border-red-500/20 bg-red-500/[0.06] px-5 py-2.5 sm:px-7 font-mono text-[11px] text-red-300">
+            <div className="border-t border-red-500/20 bg-red-500/[0.06] px-4 py-2.5 sm:px-7 font-mono text-[11px] text-red-300">
               ⚠ {error}
             </div>
           )}
 
           <div className="border-t border-white/5 bg-white/[0.02] p-3 sm:p-4">
+
             {!isConnected ? (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-2">
                 <div className="font-mono text-xs text-white/55 text-center sm:text-left">
