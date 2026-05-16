@@ -1,0 +1,25 @@
+{
+  // Cloudflare Workers config for Vexor Terminal.
+  // Builds via Workers Builds (GitHub-connected). The Next.js static export
+  // lands in `out/` and is served by the ASSETS binding; the Worker handler
+  // in worker/index.ts routes /api/chat to the Groq proxy.
+  //
+  // Docs: https://developers.cloudflare.com/workers/static-assets/
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vexor-terminal",
+  "main": "worker/index.ts",
+  "compatibility_date": "2024-12-01",
+  "assets": {
+    "directory": "./out",
+    "binding": "ASSETS",
+    // Next.js static export with trailingSlash:false writes pages as
+    // `out/<route>.html` (e.g. out/docs.html). Cloudflare's
+    // `auto-trailing-slash` strategy resolves `/docs` -> `docs.html`.
+    "html_handling": "auto-trailing-slash",
+    // Serve out/404.html on any unmatched path.
+    "not_found_handling": "404-page"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
