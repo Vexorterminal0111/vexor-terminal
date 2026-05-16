@@ -1,22 +1,23 @@
 /**
- * Vexor Chat API — Cloudflare Pages Function.
+ * Vexor Chat handler — /api/chat.
  *
- * Single endpoint at /api/chat. Receives a POST with a wallet address and
- * conversation history, proxies to Groq (Llama 3.3 70B) with the Vexor
- * orchestrator system prompt, returns the assistant reply.
+ * Receives a POST with a wallet address and conversation history, proxies to
+ * Groq (Llama 3.3 70B) with the Vexor orchestrator system prompt, returns the
+ * assistant reply.
  *
- * Mirrors the dev server at apps/chat-api/main.py — keep them in sync if you
- * change the system prompt or schema.
+ * Mirrors apps/chat-api/main.py (the local FastAPI dev server) — keep them in
+ * sync if you change the schema or system prompt.
+ *
+ * Rate limiting:
+ *   This handler does NOT do in-process rate limiting. On the Workers runtime
+ *   each request can land on a different isolate, so a Map kept in module
+ *   scope wouldn't actually throttle anyone — at best it slows a single client
+ *   that happens to hit the same isolate twice, at worst it's misleading.
+ *   For real protection use Cloudflare's Rate Limiting Rules on the
+ *   `/api/chat` path (dashboard → Security → Rate Limiting Rules).
  */
 
-interface Env {
-  GROQ_API_KEY: string;
-  GROQ_MODEL?: string;
-  GROQ_MAX_TOKENS?: string;
-  RATE_LIMIT_WINDOW_SEC?: string;
-  RATE_LIMIT_MAX_MSGS?: string;
-  ALLOWED_ORIGINS?: string;
-}
+import type { Env } from "./index";
 
 type Role = "user" | "assistant";
 
@@ -62,36 +63,34 @@ House style:
 
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
 
-const rateLimitBucket = new Map<string, number[]>();
-
-function rateLimited(key: string, windowSec: number, maxMsgs: number): boolean {
-  const now = Date.now();
-  const windowMs = windowSec * 1000;
-  const bucket = (rateLimitBucket.get(key) ?? []).filter(
-    (t) => now - t < windowMs,
+function parseAllowedOrigins(raw: string | undefined): Set<string> {
+  if (!raw) return new Set();
+  return new Set(
+    raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
   );
-  if (bucket.length >= maxMsgs) {
-    rateLimitBucket.set(key, bucket);
-    return true;
-  }
-  bucket.push(now);
-  rateLimitBucket.set(key, bucket);
-  return false;
 }
 
-function buildCorsHeaders(origin: string | null, allowed: string[]): HeadersInit {
-  const allowOrigin =
-    origin &&
-    (allowed.includes(origin) || /^https:\/\/[a-z0-9-]+\.pages\.dev$/.test(origin))
-      ? origin
-      : allowed[0] ?? "*";
-  return {
-    "access-control-allow-origin": allowOrigin,
+function buildCorsHeaders(
+  origin: string | null,
+  allowed: Set<string>,
+): HeadersInit {
+  // Allowlist is strict: only origins explicitly listed in ALLOWED_ORIGINS get
+  // an Access-Control-Allow-Origin header echoed back. Any other origin gets
+  // no CORS headers, which causes the browser to block the response — matching
+  // the same-origin baseline. There is intentionally no regex fallback.
+  const headers: Record<string, string> = {
     "access-control-allow-methods": "POST, OPTIONS",
     "access-control-allow-headers": "content-type, authorization",
     "access-control-max-age": "86400",
     vary: "origin",
   };
+  if (origin && allowed.has(origin)) {
+    headers["access-control-allow-origin"] = origin;
+  }
+  return headers;
 }
 
 function jsonResponse(
@@ -109,7 +108,9 @@ function jsonResponse(
   });
 }
 
-function validate(req: unknown): { ok: true; data: ChatRequest } | { ok: false; detail: string } {
+function validate(
+  req: unknown,
+): { ok: true; data: ChatRequest } | { ok: false; detail: string } {
   if (typeof req !== "object" || req === null) {
     return { ok: false, detail: "invalid body" };
   }
@@ -117,7 +118,11 @@ function validate(req: unknown): { ok: true; data: ChatRequest } | { ok: false; 
   if (typeof r.wallet !== "string" || !WALLET_RE.test(r.wallet)) {
     return { ok: false, detail: "invalid wallet address" };
   }
-  if (!Array.isArray(r.messages) || r.messages.length === 0 || r.messages.length > 40) {
+  if (
+    !Array.isArray(r.messages) ||
+    r.messages.length === 0 ||
+    r.messages.length > 40
+  ) {
     return { ok: false, detail: "messages must be a non-empty array (max 40)" };
   }
   const cleaned: Message[] = [];
@@ -138,26 +143,39 @@ function validate(req: unknown): { ok: true; data: ChatRequest } | { ok: false; 
     }
     cleaned.push({ role: mm.role, content: trimmed.slice(0, 4000) });
   }
-  return { ok: true, data: { wallet: r.wallet.toLowerCase(), messages: cleaned } };
+  return {
+    ok: true,
+    data: { wallet: r.wallet.toLowerCase(), messages: cleaned },
+  };
 }
 
-export const onRequestOptions: PagesFunction<Env> = ({ request, env }) => {
-  const allowed = (env.ALLOWED_ORIGINS ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return new Response(null, {
-    status: 204,
-    headers: buildCorsHeaders(request.headers.get("origin"), allowed),
-  });
-};
-
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
-  const allowed = (env.ALLOWED_ORIGINS ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+export async function handleChat(request: Request, env: Env): Promise<Response> {
+  const allowed = parseAllowedOrigins(env.ALLOWED_ORIGINS);
   const cors = buildCorsHeaders(request.headers.get("origin"), allowed);
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: cors });
+  }
+
+  if (request.method === "GET") {
+    return jsonResponse(
+      {
+        name: "Vexor Chat API",
+        version: "0.1.0",
+        model: env.GROQ_MODEL ?? "llama-3.3-70b-versatile",
+      },
+      { status: 200 },
+      cors,
+    );
+  }
+
+  if (request.method !== "POST") {
+    return jsonResponse(
+      { detail: `method ${request.method} not allowed` },
+      { status: 405, headers: { allow: "GET, POST, OPTIONS" } },
+      cors,
+    );
+  }
 
   if (!env.GROQ_API_KEY) {
     return jsonResponse(
@@ -177,25 +195,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const v = validate(body);
   if (!v.ok) {
     return jsonResponse({ detail: v.detail }, { status: 400 }, cors);
-  }
-
-  const ip =
-    request.headers.get("cf-connecting-ip") ??
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    "anon";
-  const rlKey = `${v.data.wallet}:${ip}`;
-  const windowSec = Number(env.RATE_LIMIT_WINDOW_SEC ?? "10");
-  const maxMsgs = Number(env.RATE_LIMIT_MAX_MSGS ?? "5");
-  if (rateLimited(rlKey, windowSec, maxMsgs)) {
-    return jsonResponse(
-      {
-        detail: `Rate limit: max ${maxMsgs} messages per ${Math.round(
-          windowSec,
-        )}s.`,
-      },
-      { status: 429 },
-      cors,
-    );
   }
 
   const model = env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
@@ -250,21 +249,4 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     { status: 200 },
     cors,
   );
-};
-
-export const onRequestGet: PagesFunction<Env> = ({ request, env }) => {
-  const allowed = (env.ALLOWED_ORIGINS ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const cors = buildCorsHeaders(request.headers.get("origin"), allowed);
-  return jsonResponse(
-    {
-      name: "Vexor Chat API",
-      version: "0.1.0",
-      model: env.GROQ_MODEL ?? "llama-3.3-70b-versatile",
-    },
-    { status: 200 },
-    cors,
-  );
-};
+}

@@ -11,7 +11,7 @@ This monorepo contains the marketing site, the Console dApp (wallet connect + cl
 
 - **Frontend** — Next.js 16 (App Router, static export) · TypeScript · Tailwind CSS v4 · Framer Motion · wagmi v2 + viem + RainbowKit · Geist / Geist Mono.
 - **Smart contracts** — Solidity 0.8.26 · Foundry · OpenZeppelin v5.
-- **Chat backend (prod)** — Cloudflare Pages Function (TypeScript) · Groq (Llama 3.3 70B).
+- **Chat backend (prod)** — Cloudflare Worker (TypeScript) · Groq (Llama 3.3 70B).
 - **Chat backend (local dev)** — FastAPI · Groq.
 
 ## Live on Base Sepolia
@@ -30,8 +30,10 @@ This monorepo contains the marketing site, the Console dApp (wallet connect + cl
 │   ├── app/                   # Routes + layout + static export config
 │   ├── components/            # Nav, Hero, Console, Chat, Docs, ...
 │   └── lib/contracts.ts       # Contract addresses + ABIs (frontend)
-├── functions/                 # Cloudflare Pages Functions
-│   └── api/chat.ts            # /api/chat — Groq proxy (production)
+├── worker/                    # Cloudflare Worker (production)
+│   ├── index.ts               # Entry point — routes /api/chat + assets
+│   └── chat.ts                # Groq proxy handler
+├── wrangler.jsonc             # Cloudflare Workers config
 ├── contracts/                 # Foundry project (Token / Staking / Governor)
 ├── apps/chat-api/             # FastAPI chat proxy (local dev only)
 └── public/                    # Static assets (favicons, OG, logo)
@@ -49,8 +51,8 @@ Open http://localhost:3000.
 Environment (`.env.local`):
 
 ```
-# In production (Cloudflare Pages) leave empty — frontend uses /api/chat
-# on same origin (served by functions/api/chat.ts).
+# In production (Cloudflare Worker) leave empty — frontend uses /api/chat
+# on same origin (served by worker/index.ts → worker/chat.ts).
 NEXT_PUBLIC_CHAT_API_URL=http://localhost:8000
 NEXT_PUBLIC_VEXOR_TOKEN_TESTNET=0x200b75db62fa66f325191b34ef784ade26321570
 NEXT_PUBLIC_VEXOR_STAKING_TESTNET=0x6a345b8390a67681764521d146853211dd089062
@@ -67,20 +69,25 @@ Static site lands in `out/`. Deploy to any static host (Cloudflare Pages, Vercel
 
 > **Note (Next.js 16):** use `--webpack` for production builds — Turbopack currently emits filenames with double dots that some static hosts strip. See `AGENTS.md`.
 
-## Deploy — Cloudflare Pages
+## Deploy — Cloudflare Workers
 
-Production is on Cloudflare Pages. Build settings:
+Production is a single Cloudflare Worker that serves the Next.js static export
+via the ASSETS binding and routes `/api/chat` to the Groq proxy in
+`worker/chat.ts`. Configuration is in `wrangler.jsonc` at the repo root.
 
-- **Framework preset**: Next.js (Static HTML Export)
+Workers Builds (GitHub-connected) settings:
+
 - **Build command**: `pnpm build --webpack`
-- **Build output directory**: `out`
+- **Deploy command**: `npx wrangler deploy` (auto, picks up wrangler.jsonc)
 - **Root directory**: `/`
-- **Environment variables** (set in Pages dashboard):
-  - `GROQ_API_KEY` — server-side, used by `functions/api/chat.ts`
+- **Environment variables** (set as Worker secrets / vars in the dashboard):
+  - `GROQ_API_KEY` — secret, used by `worker/chat.ts`
   - `ALLOWED_ORIGINS` — `https://vexorterminal.com,https://www.vexorterminal.com`
-  - `NEXT_PUBLIC_VEXOR_TOKEN_TESTNET`, `NEXT_PUBLIC_VEXOR_STAKING_TESTNET`, `NEXT_PUBLIC_VEXOR_GOVERNANCE_TESTNET` (see above)
+  - `NEXT_PUBLIC_VEXOR_TOKEN_TESTNET`, `NEXT_PUBLIC_VEXOR_STAKING_TESTNET`, `NEXT_PUBLIC_VEXOR_GOVERNANCE_TESTNET` — baked into the build, set on the build environment, not as Worker runtime vars
 
-The `functions/` directory is auto-detected by Cloudflare Pages and deployed as a serverless function at `/api/chat`.
+Rate limiting is intentionally NOT done in the Worker (module-scope state
+doesn't survive isolate recycles). Use Cloudflare's Rate Limiting Rules on the
+`/api/chat` path in the dashboard instead.
 
 ## Smart contracts
 
@@ -96,12 +103,15 @@ forge test -vv      # 9/9 passing
 
 ## Chat API (production)
 
-Lives at `functions/api/chat.ts` — a Cloudflare Pages Function that proxies the conversation to Groq (Llama 3.3 70B) with the Vexor orchestrator system prompt, plus wallet validation and per-wallet rate limiting.
+The production handler lives at `worker/chat.ts`, mounted by
+`worker/index.ts` at `/api/chat`. It validates the wallet address, calls
+Groq (Llama 3.3 70B) with the Vexor orchestrator system prompt, and returns
+the reply. CORS is strictly allowlisted via `ALLOWED_ORIGINS`.
 
 Type-check locally:
 
 ```bash
-npx tsc --noEmit -p functions/tsconfig.json
+npx tsc --noEmit -p worker/tsconfig.json
 ```
 
 ## Chat API — local dev (FastAPI)
