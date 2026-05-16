@@ -2,17 +2,17 @@
 
 > An autonomous AI orchestrator commanding 9 specialized sub-agents, powered by **$VEXOR** on **Base**.
 
-- **Live preview**: https://out-fvrnnfun.devinapps.com
-- **Docs**: https://out-fvrnnfun.devinapps.com/docs.html
+- **Production**: https://vexorterminal.com (Cloudflare Pages)
 - **X / Twitter**: [@vexorterminal](https://x.com/vexorterminal)
 
-This monorepo contains the marketing site, the Console dApp (wallet connect + claim / stake / govern), a chat backend that proxies to a hosted LLM, and the smart contracts deployed on Base Sepolia.
+This monorepo contains the marketing site, the Console dApp (wallet connect + claim / stake / govern), a chat backend (Cloudflare Pages Function in production, FastAPI for local dev), and the smart contracts deployed on Base Sepolia.
 
 ## Stack
 
 - **Frontend** — Next.js 16 (App Router, static export) · TypeScript · Tailwind CSS v4 · Framer Motion · wagmi v2 + viem + RainbowKit · Geist / Geist Mono.
 - **Smart contracts** — Solidity 0.8.26 · Foundry · OpenZeppelin v5.
-- **Chat backend** — FastAPI · Groq (Llama 3.3 70B).
+- **Chat backend (prod)** — Cloudflare Pages Function (TypeScript) · Groq (Llama 3.3 70B).
+- **Chat backend (local dev)** — FastAPI · Groq.
 
 ## Live on Base Sepolia
 
@@ -30,8 +30,10 @@ This monorepo contains the marketing site, the Console dApp (wallet connect + cl
 │   ├── app/                   # Routes + layout + static export config
 │   ├── components/            # Nav, Hero, Console, Chat, Docs, ...
 │   └── lib/contracts.ts       # Contract addresses + ABIs (frontend)
+├── functions/                 # Cloudflare Pages Functions
+│   └── api/chat.ts            # /api/chat — Groq proxy (production)
 ├── contracts/                 # Foundry project (Token / Staking / Governor)
-├── apps/chat-api/             # FastAPI chat proxy (Groq)
+├── apps/chat-api/             # FastAPI chat proxy (local dev only)
 └── public/                    # Static assets (favicons, OG, logo)
 ```
 
@@ -47,6 +49,8 @@ Open http://localhost:3000.
 Environment (`.env.local`):
 
 ```
+# In production (Cloudflare Pages) leave empty — frontend uses /api/chat
+# on same origin (served by functions/api/chat.ts).
 NEXT_PUBLIC_CHAT_API_URL=http://localhost:8000
 NEXT_PUBLIC_VEXOR_TOKEN_TESTNET=0x200b75db62fa66f325191b34ef784ade26321570
 NEXT_PUBLIC_VEXOR_STAKING_TESTNET=0x6a345b8390a67681764521d146853211dd089062
@@ -59,9 +63,24 @@ NEXT_PUBLIC_VEXOR_GOVERNANCE_TESTNET=0xd1850b4c2e663b45a49330d00637db78197be31c
 pnpm build --webpack
 ```
 
-Static site lands in `out/`. Deploy to any static host (Vercel, Cloudflare Pages, Netlify, S3, devinapps).
+Static site lands in `out/`. Deploy to any static host (Cloudflare Pages, Vercel, Netlify, S3).
 
 > **Note (Next.js 16):** use `--webpack` for production builds — Turbopack currently emits filenames with double dots that some static hosts strip. See `AGENTS.md`.
+
+## Deploy — Cloudflare Pages
+
+Production is on Cloudflare Pages. Build settings:
+
+- **Framework preset**: Next.js (Static HTML Export)
+- **Build command**: `pnpm build --webpack`
+- **Build output directory**: `out`
+- **Root directory**: `/`
+- **Environment variables** (set in Pages dashboard):
+  - `GROQ_API_KEY` — server-side, used by `functions/api/chat.ts`
+  - `ALLOWED_ORIGINS` — `https://vexorterminal.com,https://www.vexorterminal.com`
+  - `NEXT_PUBLIC_VEXOR_TOKEN_TESTNET`, `NEXT_PUBLIC_VEXOR_STAKING_TESTNET`, `NEXT_PUBLIC_VEXOR_GOVERNANCE_TESTNET` (see above)
+
+The `functions/` directory is auto-detected by Cloudflare Pages and deployed as a serverless function at `/api/chat`.
 
 ## Smart contracts
 
@@ -75,9 +94,19 @@ forge build
 forge test -vv      # 9/9 passing
 ```
 
-## Chat API
+## Chat API (production)
 
-See [`apps/chat-api/README.md`](apps/chat-api/README.md).
+Lives at `functions/api/chat.ts` — a Cloudflare Pages Function that proxies the conversation to Groq (Llama 3.3 70B) with the Vexor orchestrator system prompt, plus wallet validation and per-wallet rate limiting.
+
+Type-check locally:
+
+```bash
+npx tsc --noEmit -p functions/tsconfig.json
+```
+
+## Chat API — local dev (FastAPI)
+
+For local development against a long-lived dev server, see [`apps/chat-api/README.md`](apps/chat-api/README.md). The Python server in `apps/chat-api/main.py` mirrors the TypeScript handler.
 
 ```bash
 cd apps/chat-api
@@ -85,6 +114,8 @@ uv sync
 export GROQ_API_KEY=...
 uvicorn main:app --reload --port 8000
 ```
+
+In `.env.local` set `NEXT_PUBLIC_CHAT_API_URL=http://localhost:8000`.
 
 ## Roadmap
 

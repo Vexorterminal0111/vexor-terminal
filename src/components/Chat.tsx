@@ -92,9 +92,6 @@ export function Chat() {
     setLoading(true);
 
     try {
-      if (!CHAT_API) {
-        throw new Error("Chat API not configured. Set NEXT_PUBLIC_CHAT_API_URL.");
-      }
       const conv = next.filter((m) => m !== SUGGESTED_GREETING);
       const headers: Record<string, string> = {
         "content-type": "application/json",
@@ -102,7 +99,8 @@ export function Chat() {
       if (CHAT_API_BASIC_AUTH) {
         headers["authorization"] = `Basic ${CHAT_API_BASIC_AUTH}`;
       }
-      const res = await fetch(`${CHAT_API}/api/chat`, {
+      const endpoint = CHAT_API ? `${CHAT_API}/api/chat` : "/api/chat";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers,
         body: JSON.stringify({
