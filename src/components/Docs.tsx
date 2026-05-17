@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 const VT_ADDRESS = "0x2c684D666998436634EcEde1527EdA7975427Ba3";
+const REVSHARE_ADDRESS = "0xE25f6243f848523c4577639e975B9F3E0fA57186";
 const BASESCAN = "https://basescan.org/address";
 const BASESCAN_TESTNET = "https://sepolia.basescan.org/address";
 const STAKING_ADDRESS_TESTNET = "0x6a345b8390a67681764521d146853211dd089062";
@@ -73,7 +74,7 @@ const LOCK_TIERS = [
 const FAQ = [
   {
     q: "Is $VT live on Base mainnet?",
-    a: "Yes — $VT is deployed on Base mainnet at 0x2c684D666998436634EcEde1527EdA7975427Ba3. Total supply 100B, 18 decimals. Staking and governance contracts still run on Base Sepolia testnet for the interactive console demo.",
+    a: "Yes — $VT is deployed on Base mainnet at 0x2c684D666998436634EcEde1527EdA7975427Ba3. Total supply 100B, 18 decimals. The mainnet revenue-share staking pool (VexorRevShare) is also live at 0xE25f6243f848523c4577639e975B9F3E0fA57186 — flat staking with no lock and manual pro-rata reward distribution. The 4-tier governance demo still runs on Base Sepolia testnet so anyone can interact with the console without spending real gas.",
   },
   {
     q: "Is the token I claim from the faucet worth anything?",
@@ -105,7 +106,7 @@ const FAQ = [
   },
   {
     q: "Where can I see all contract source code?",
-    a: "Source is in the contracts/ directory of the repo (VexorToken.sol, VexorStaking.sol, VexorGovernor.sol). Built with Foundry + OpenZeppelin v5. Will be verified on Basescan ahead of mainnet.",
+    a: "Source is in the contracts/ directory of the repo (VexorToken.sol, VexorStaking.sol, VexorGovernor.sol, VexorRevShare.sol). Built with Foundry + OpenZeppelin v5. VexorRevShare is verified on Basescan mainnet.",
   },
 ];
 
@@ -415,19 +416,27 @@ export function Docs() {
 
             <Section id="contracts" kicker="03" title="Smart contract addresses">
               <p>
-                $VT is the live Vexor Terminal token, deployed on Base mainnet.
-                Staking and governance contracts run on Base Sepolia testnet so
-                anyone can interact with the console without spending real gas.
+                $VT and the revenue-share staking pool (VexorRevShare) are both
+                live on Base mainnet. The 4-tier governance demo still runs on
+                Base Sepolia testnet so anyone can interact with the console
+                without spending real gas.
               </p>
               <div className="mt-4">
                 <div className="font-mono text-[10px] uppercase tracking-widest text-cyan-300/80 mb-2">
                   Base mainnet · live
                 </div>
-                <CodeRow
-                  label="$VT"
-                  value={VT_ADDRESS}
-                  href={`${BASESCAN}/${VT_ADDRESS}`}
-                />
+                <div className="flex flex-col gap-2">
+                  <CodeRow
+                    label="$VT"
+                    value={VT_ADDRESS}
+                    href={`${BASESCAN}/${VT_ADDRESS}`}
+                  />
+                  <CodeRow
+                    label="RevShare"
+                    value={REVSHARE_ADDRESS}
+                    href={`${BASESCAN}/${REVSHARE_ADDRESS}`}
+                  />
+                </div>
               </div>
               <div className="mt-6">
                 <div className="font-mono text-[10px] uppercase tracking-widest text-white/45 mb-2">

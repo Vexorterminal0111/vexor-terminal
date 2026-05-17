@@ -5,6 +5,8 @@ export type ContractAddresses = {
   token: Address | null;
   staking: Address | null;
   governance: Address | null;
+  /** Mainnet revenue-share staking pool (VexorRevShare). Only set on Base mainnet. */
+  revShare: Address | null;
 };
 
 const ZERO = "0x0000000000000000000000000000000000000000" as const;
@@ -15,22 +17,27 @@ function asAddr(v: string | undefined): Address | null {
   return v as Address;
 }
 
+// Hardcoded mainnet revenue-share pool. Public, verified on Basescan.
+const VEXOR_REV_SHARE_MAINNET: Address = "0xE25f6243f848523c4577639e975B9F3E0fA57186";
+
 export const CONTRACTS: Record<number, ContractAddresses> = {
   [base.id]: {
     token: asAddr(process.env.NEXT_PUBLIC_VEXOR_TOKEN),
     staking: asAddr(process.env.NEXT_PUBLIC_VEXOR_STAKING),
     governance: asAddr(process.env.NEXT_PUBLIC_VEXOR_GOVERNANCE),
+    revShare: VEXOR_REV_SHARE_MAINNET,
   },
   [baseSepolia.id]: {
     token: asAddr(process.env.NEXT_PUBLIC_VEXOR_TOKEN_TESTNET),
     staking: asAddr(process.env.NEXT_PUBLIC_VEXOR_STAKING_TESTNET),
     governance: asAddr(process.env.NEXT_PUBLIC_VEXOR_GOVERNANCE_TESTNET),
+    revShare: null,
   },
 };
 
 export function getContracts(chainId: number | undefined): ContractAddresses {
   if (!chainId || !(chainId in CONTRACTS)) {
-    return { token: null, staking: null, governance: null };
+    return { token: null, staking: null, governance: null, revShare: null };
   }
   return CONTRACTS[chainId];
 }
@@ -294,6 +301,102 @@ export const LOCK_TIERS = [
   { value: 1, label: "90 days", multiplier: "1.5x", days: 90 },
   { value: 2, label: "180 days", multiplier: "2.0x", days: 180 },
   { value: 3, label: "365 days", multiplier: "3.0x", days: 365 },
+] as const;
+
+// VexorRevShare — flat $VT mainnet staking pool with manual pro-rata reward push.
+// See contracts/src/VexorRevShare.sol.
+export const VEXOR_REV_SHARE_ABI = [
+  { type: "function", name: "stakingToken", stateMutability: "view", inputs: [], outputs: [{ type: "address" }] },
+  { type: "function", name: "owner", stateMutability: "view", inputs: [], outputs: [{ type: "address" }] },
+  { type: "function", name: "totalStaked", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  { type: "function", name: "accRewardPerToken", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  { type: "function", name: "ACC_PRECISION", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  {
+    type: "function",
+    name: "balanceOf",
+    stateMutability: "view",
+    inputs: [{ name: "user", type: "address" }],
+    outputs: [{ type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "rewardDebt",
+    stateMutability: "view",
+    inputs: [{ name: "user", type: "address" }],
+    outputs: [{ type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "pending",
+    stateMutability: "view",
+    inputs: [{ name: "user", type: "address" }],
+    outputs: [{ type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "isStaker",
+    stateMutability: "view",
+    inputs: [{ name: "user", type: "address" }],
+    outputs: [{ type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "stake",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "amount", type: "uint256" }],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "withdraw",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "amount", type: "uint256" }],
+    outputs: [],
+  },
+  { type: "function", name: "claim", stateMutability: "nonpayable", inputs: [], outputs: [] },
+  {
+    type: "function",
+    name: "pushRewards",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "amount", type: "uint256" }],
+    outputs: [],
+  },
+  // Events
+  {
+    type: "event",
+    name: "Staked",
+    inputs: [
+      { name: "user", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false },
+      { name: "newBalance", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "Withdrawn",
+    inputs: [
+      { name: "user", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false },
+      { name: "newBalance", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "Claimed",
+    inputs: [
+      { name: "user", type: "address", indexed: true },
+      { name: "reward", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "RewardsPushed",
+    inputs: [
+      { name: "from", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false },
+      { name: "newAcc", type: "uint256", indexed: false },
+    ],
+  },
 ] as const;
 
 export const PROPOSAL_STATES = [

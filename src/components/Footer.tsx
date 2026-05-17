@@ -108,6 +108,16 @@ export function Footer() {
               </li>
               <li>
                 <a
+                  href="https://basescan.org/address/0xE25f6243f848523c4577639e975B9F3E0fA57186"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-cyan-300 hover:text-white transition-colors font-mono text-xs"
+                >
+                  RevShare on Base ↗
+                </a>
+              </li>
+              <li>
+                <a
                   href="https://sepolia.basescan.org/address/0x6a345b8390a67681764521d146853211dd089062"
                   target="_blank"
                   rel="noreferrer"

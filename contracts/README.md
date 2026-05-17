@@ -9,7 +9,7 @@ Foundry project for the Vexor Terminal on-chain stack.
 | Contract | Purpose | Base mainnet |
 |---|---|---|
 | `$VT` (Vexor Terminal) | ERC-20 production token. 100B total supply, 18 decimals. | [`0x2c684D666998436634EcEde1527EdA7975427Ba3`](https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3) |
-| `VexorRevShare` | Flat single-sided $VT staking with manual pro-rata reward push. No lock, no tiers. Owner calls `pushRewards(amount)` to distribute revenue to current stakers. | _TBD — deploy with `script/DeployRevShare.s.sol`_ |
+| `VexorRevShare` | Flat single-sided $VT staking with manual pro-rata reward push. No lock, no tiers. Owner calls `pushRewards(amount)` to distribute revenue to current stakers. | [`0xE25f6243f848523c4577639e975B9F3E0fA57186`](https://basescan.org/address/0xE25f6243f848523c4577639e975B9F3E0fA57186) |
 
 #### Deploying `VexorRevShare` to Base mainnet
 
