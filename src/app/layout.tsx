@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://vexorterminal.xyz"),
+  metadataBase: new URL("https://vexorterminal.com"),
   title: {
     default: "Vexor Terminal — Autonomous AI Orchestrator on Base",
     template: "%s · Vexor Terminal",
@@ -34,9 +34,17 @@ export const metadata: Metadata = {
     title: "Vexor Terminal — Autonomous AI Orchestrator on Base",
     description:
       "9 specialized sub-agents. One terminal. Powered by $VEXOR on Base.",
-    url: "https://vexorterminal.xyz",
+    url: "https://vexorterminal.com",
     siteName: "Vexor Terminal",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1280,
+        height: 320,
+        alt: "Vexor Terminal — autonomous AI orchestrator on Base",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -45,6 +53,7 @@ export const metadata: Metadata = {
       "9 specialized sub-agents. One terminal. Powered by $VEXOR on Base.",
     site: "@vexorterminal",
     creator: "@vexorterminal",
+    images: ["/og-image.png"],
   },
 };
 
