@@ -34,7 +34,7 @@ export function Hero() {
           className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/70"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
-          Vexor.Terminal · v0.1.0 · $VEXOR launching on Base
+          Vexor.Terminal · v0.1.0 · $VT launching on Base
         </motion.div>
 
         <motion.h1
@@ -60,7 +60,7 @@ export function Hero() {
           <span className="text-white font-medium">9 specialized sub-agents</span>{" "}
           across 9 large language models. Not a chatbot, not an assistant — a
           self-improving multi-agent system powered by{" "}
-          <span className="text-cyan-300">$VEXOR</span> on{" "}
+          <span className="text-cyan-300">$VT</span> on{" "}
           <span className="text-cyan-300">Base</span>.
         </motion.p>
 

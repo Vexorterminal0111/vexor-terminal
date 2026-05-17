@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: "%s · Vexor Terminal",
   },
   description:
-    "Vexor Terminal is an autonomous AI orchestrator with 9 specialized sub-agents, powered by the $VEXOR token on Base. Stake $VEXOR for governance and earn from agent revenue.",
+    "Vexor Terminal is an autonomous AI orchestrator with 9 specialized sub-agents, powered by the $VT token on Base. Stake $VT for governance and earn from agent revenue.",
   keywords: [
     "AI agent",
     "on-chain agent",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Vexor Terminal — Autonomous AI Orchestrator on Base",
     description:
-      "9 specialized sub-agents. One terminal. Powered by $VEXOR on Base.",
+      "9 specialized sub-agents. One terminal. Powered by $VT on Base.",
     url: "https://vexorterminal.com",
     siteName: "Vexor Terminal",
     type: "website",
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Vexor Terminal — Autonomous AI Orchestrator on Base",
     description:
-      "9 specialized sub-agents. One terminal. Powered by $VEXOR on Base.",
+      "9 specialized sub-agents. One terminal. Powered by $VT on Base.",
     site: "@vexorterminal",
     creator: "@vexorterminal",
     images: ["/og-image.png"],

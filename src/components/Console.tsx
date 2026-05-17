@@ -92,8 +92,8 @@ export function Console() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
           kicker="Live on testnet"
-          title="$VEXOR Console — claim, stake, govern."
-          description="Wallet-gated terminal connected to live Vexor contracts on Base Sepolia. Claim testnet $VEXOR from the faucet, stake with a lock multiplier, propose & vote — every action is a real on-chain transaction."
+          title="$VT Console — claim, stake, govern."
+          description="Wallet-gated terminal connected to live Vexor contracts on Base Sepolia. Claim testnet $VT from the faucet, stake with a lock multiplier, propose & vote — every action is a real on-chain transaction."
         />
 
         <motion.div
@@ -299,7 +299,7 @@ function WalletPanel({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Stat label="$VEXOR balance" value={fmt(balance)} hint="balanceOf" />
+        <Stat label="$VT balance" value={fmt(balance)} hint="balanceOf" />
         <Stat label="Voting power" value={fmt(votes)} hint="getVotes" />
         <Stat
           label="ETH (gas)"
@@ -315,8 +315,8 @@ function WalletPanel({
         title="Testnet faucet"
         body={
           hasClaimed
-            ? "You've already claimed your one-time 1,000 $VEXOR drop. Use the Stake or Govern tabs to put it to work."
-            : "Claim a one-time drop of 1,000 $VEXOR. Free, on-chain, no signup."
+            ? "You've already claimed your one-time 1,000 $VT drop. Use the Stake or Govern tabs to put it to work."
+            : "Claim a one-time drop of 1,000 $VT. Free, on-chain, no signup."
         }
         action={
           hasClaimed ? (
@@ -335,8 +335,8 @@ function WalletPanel({
               loading={isPending || isMining}
               label={
                 faucetAmount
-                  ? `Claim ${fmt(faucetAmount, 18, 0)} $VEXOR`
-                  : "Claim 1,000 $VEXOR"
+                  ? `Claim ${fmt(faucetAmount, 18, 0)} $VT`
+                  : "Claim 1,000 $VT"
               }
             />
           )
@@ -349,7 +349,7 @@ function WalletPanel({
         title="Activate voting power"
         body={
           isSelfDelegated
-            ? "Voting power active — your $VEXOR balance is delegated to yourself."
+            ? "Voting power active — your $VT balance is delegated to yourself."
             : "ERC20Votes requires explicit delegation. Self-delegate to use your balance as voting power."
         }
         action={
@@ -454,7 +454,7 @@ function StakePanel({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Stat label="Your balance" value={fmt(balance)} hint="$VEXOR" />
+        <Stat label="Your balance" value={fmt(balance)} hint="$VT" />
         <Stat label="Open positions" value={posCount?.toString() ?? "0"} hint="NFT-like" />
         <Stat label="Pool weighted" value={fmt(totalWeighted)} hint="totalWeighted" />
         <Stat
@@ -471,7 +471,7 @@ function StakePanel({
         <div className="flex flex-col lg:flex-row gap-4 lg:items-end">
           <div className="flex-1">
             <label className="font-mono text-[10px] uppercase tracking-widest text-white/45">
-              Amount ($VEXOR)
+              Amount ($VT)
             </label>
             <div className="mt-1 flex items-center gap-2 rounded-md border border-white/10 bg-black/40 px-3 py-2.5">
               <input
@@ -524,7 +524,7 @@ function StakePanel({
                 })
               }
               loading={isPending || isMining}
-              label={`1. Approve ${amount || "0"} $VEXOR`}
+              label={`1. Approve ${amount || "0"} $VT`}
             />
           ) : (
             <PrimaryButton
@@ -537,12 +537,12 @@ function StakePanel({
                 })
               }
               loading={isPending || isMining}
-              label={`Stake ${amount || "0"} $VEXOR · ${LOCK_TIERS[tier].label}`}
+              label={`Stake ${amount || "0"} $VT · ${LOCK_TIERS[tier].label}`}
               disabled={parsedAmount === 0n || (balance !== undefined && parsedAmount > balance)}
             />
           )}
           <div className="font-mono text-[10px] text-white/45">
-            Allowance: {fmt(allowance)} $VEXOR
+            Allowance: {fmt(allowance)} $VT
           </div>
         </div>
       </div>
@@ -596,7 +596,7 @@ function PositionsList({
   if (count === 0) {
     return (
       <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.01] p-5 font-mono text-xs text-white/45">
-        No positions yet. Stake $VEXOR above to open one.
+        No positions yet. Stake $VT above to open one.
       </div>
     );
   }
@@ -663,7 +663,7 @@ function PositionRow({
     <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 items-center">
       <div>
         <div className="font-mono text-[10px] uppercase tracking-widest text-white/40">Position #{id.toString()}</div>
-        <div className="font-mono text-sm text-white">{fmt(amount)} $VEXOR</div>
+        <div className="font-mono text-sm text-white">{fmt(amount)} $VT</div>
       </div>
       <div>
         <div className="font-mono text-[10px] uppercase tracking-widest text-white/40">Tier</div>
@@ -678,7 +678,7 @@ function PositionRow({
       <div>
         <div className="font-mono text-[10px] uppercase tracking-widest text-white/40">Pending</div>
         <div className="font-mono text-sm text-white">
-          {fmt(pending.data as bigint | undefined, 18, 4)} $VEXOR
+          {fmt(pending.data as bigint | undefined, 18, 4)} $VT
         </div>
       </div>
       <div className="flex justify-end gap-2">
@@ -836,7 +836,7 @@ function GovernPanel({
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <Stat label="Your voting power" value={fmt(votes)} hint="getVotes" />
-        <Stat label="Proposal threshold" value={fmt(threshold)} hint="100 $VEXOR" />
+        <Stat label="Proposal threshold" value={fmt(threshold)} hint="100 $VT" />
         <Stat
           label="Delegated"
           value={isSelfDelegated ? "yes" : "no"}
@@ -1059,12 +1059,12 @@ function TierPanel({
           {current?.name ?? "—"}
         </div>
         <div className="mt-1 font-mono text-xs text-white/55">
-          {current?.note ?? "Acquire 1,000 $VEXOR to reach Bronze."}
+          {current?.note ?? "Acquire 1,000 $VT to reach Bronze."}
         </div>
         {next && (
           <div className="mt-5">
             <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-widest text-white/45">
-              <span>{tokens.toFixed(2)} / {next.threshold.toLocaleString()} $VEXOR</span>
+              <span>{tokens.toFixed(2)} / {next.threshold.toLocaleString()} $VT</span>
               <span className={next.color}>Next: {next.name}</span>
             </div>
             <div className="mt-1.5 h-1.5 w-full rounded-full bg-white/[0.04] overflow-hidden">
@@ -1088,7 +1088,7 @@ function TierPanel({
             >
               <div className={`font-mono text-sm ${t.color}`}>{t.name}</div>
               <div className="mt-1 font-mono text-[10px] uppercase tracking-widest text-white/45">
-                ≥ {t.threshold.toLocaleString()} $VEXOR
+                ≥ {t.threshold.toLocaleString()} $VT
               </div>
               <div className="mt-2 text-xs text-white/60">{t.note}</div>
               <div className="mt-2 font-mono text-[10px] text-white/45">

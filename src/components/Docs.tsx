@@ -14,10 +14,11 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-const TOKEN_ADDRESS = "0x200b75db62fa66f325191b34ef784ade26321570";
-const STAKING_ADDRESS = "0x6a345b8390a67681764521d146853211dd089062";
-const GOVERNOR_ADDRESS = "0xd1850b4c2e663b45a49330d00637db78197be31c";
-const BASESCAN = "https://sepolia.basescan.org/address";
+const VT_ADDRESS = "0x2c684D666998436634EcEde1527EdA7975427Ba3";
+const BASESCAN = "https://basescan.org/address";
+const BASESCAN_TESTNET = "https://sepolia.basescan.org/address";
+const STAKING_ADDRESS_TESTNET = "0x6a345b8390a67681764521d146853211dd089062";
+const GOVERNOR_ADDRESS_TESTNET = "0xd1850b4c2e663b45a49330d00637db78197be31c";
 
 type SectionId =
   | "overview"
@@ -56,10 +57,10 @@ const SUB_AGENTS = [
 
 const TIERS = [
   { name: "—", min: "0", note: "Connect wallet to read on-chain state" },
-  { name: "Bronze", min: "1,000 $VEXOR", note: "Priority chat slot, 1-block latency" },
-  { name: "Silver", min: "10,000 $VEXOR", note: "Private channels + early sub-agents" },
-  { name: "Gold", min: "100,000 $VEXOR", note: "Beta sub-agents + private memory" },
-  { name: "Black", min: "1,000,000 $VEXOR", note: "Revenue dashboard + governance lead" },
+  { name: "Bronze", min: "1,000 $VT", note: "Priority chat slot, 1-block latency" },
+  { name: "Silver", min: "10,000 $VT", note: "Private channels + early sub-agents" },
+  { name: "Gold", min: "100,000 $VT", note: "Beta sub-agents + private memory" },
+  { name: "Black", min: "1,000,000 $VT", note: "Revenue dashboard + governance lead" },
 ];
 
 const LOCK_TIERS = [
@@ -71,20 +72,20 @@ const LOCK_TIERS = [
 
 const FAQ = [
   {
-    q: "Is $VEXOR live on Base mainnet?",
-    a: "Not yet — the contracts are currently deployed to Base Sepolia testnet (chain ID 84532) for testing. Mainnet launch terms (supply, distribution, venue) will be announced before deployment.",
+    q: "Is $VT live on Base mainnet?",
+    a: "Yes — $VT is deployed on Base mainnet at 0x2c684D666998436634EcEde1527EdA7975427Ba3. Total supply 100B, 18 decimals. Staking and governance contracts still run on Base Sepolia testnet for the interactive console demo.",
   },
   {
     q: "Is the token I claim from the faucet worth anything?",
-    a: "No. The faucet on Base Sepolia hands out free testnet $VEXOR for trying the Console. It has no monetary value and cannot be bridged or traded.",
+    a: "No. The faucet on Base Sepolia hands out free testnet $VT for trying the Console. The testnet $VT is not the same token as the mainnet $VT — it has no monetary value and cannot be bridged or traded.",
   },
   {
     q: "Do I need real ETH to use the Console?",
-    a: "You need Base Sepolia ETH (free, available from public faucets) to pay gas. No mainnet ETH or $VEXOR purchase required.",
+    a: "You need Base Sepolia ETH (free, available from public faucets) to pay gas. No mainnet ETH or $VT purchase required.",
   },
   {
     q: "Can I propose anything via the Governor?",
-    a: "You need ≥100 $VEXOR voting power (self-delegated balance at the proposal's block) to submit a proposal. Any holder with voting power can vote. Quorum is 4% of total supply.",
+    a: "You need ≥100 $VT voting power (self-delegated balance at the proposal's block) to submit a proposal. Any holder with voting power can vote. Quorum is 4% of total supply.",
   },
   {
     q: "Why does my balance not give me voting power?",
@@ -92,7 +93,7 @@ const FAQ = [
   },
   {
     q: "How does staking yield work?",
-    a: "Rewards stream from a 1M $VEXOR pool over 30 days. Your position's share = (your weighted stake) / (total weighted stake). Weighted stake = amount × lock multiplier (1.0x → 3.0x).",
+    a: "Rewards stream from a 1M $VT pool over 30 days. Your position's share = (your weighted stake) / (total weighted stake). Weighted stake = amount × lock multiplier (1.0x → 3.0x).",
   },
   {
     q: "Can I withdraw my stake early?",
@@ -100,7 +101,7 @@ const FAQ = [
   },
   {
     q: "Is the chat free?",
-    a: "Yes during beta — hosted Llama 3.3 70B via Groq, wallet-gated and rate-limited. Production billing in $VEXOR will be activated alongside mainnet launch.",
+    a: "Yes during beta — hosted Llama 3.3 70B via Groq, wallet-gated and rate-limited. Production billing in mainnet $VT will be activated once staking and governance migrate to mainnet.",
   },
   {
     q: "Where can I see all contract source code?",
@@ -227,14 +228,14 @@ export function Docs() {
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/70 w-fit">
             <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
-            Docs · v0.1.0 · live on Base Sepolia
+            Docs · v0.1.0 · $VT live on Base
           </div>
           <h1 className="font-mono text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight text-white max-w-3xl break-words">
             Drive the <span className="text-cyan-300">terminal</span>.
           </h1>
           <p className="max-w-2xl text-[15px] sm:text-base md:text-lg text-white/65 leading-relaxed">
             Vexor Terminal is a personal AI orchestrator commanding 9
-            specialized sub-agents, owned and governed by $VEXOR on Base. This
+            specialized sub-agents, owned and governed by $VT on Base. This
             page is everything you need to use the Console, talk to the
             orchestrator, and understand the token economics.
           </p>
@@ -303,10 +304,14 @@ export function Docs() {
               </nav>
               <div className="mt-8 rounded-lg border border-cyan-400/20 bg-cyan-500/[0.04] p-4">
                 <div className="font-mono text-[10px] uppercase tracking-widest text-cyan-300/80">
-                  Testnet only
+                  Token · mainnet
                 </div>
-                <p className="mt-2 text-xs text-white/65 leading-relaxed">
-                  $VEXOR is live on Base Sepolia. Mainnet launch terms TBA.
+                <p className="mt-2 text-xs text-white/65 leading-relaxed font-mono break-all">
+                  $VT · 0x2c68…7Ba3
+                </p>
+                <p className="mt-2 text-[10px] text-white/45 leading-relaxed">
+                  Console demo (claim / stake / govern) still runs on Base
+                  Sepolia testnet during beta.
                 </p>
               </div>
             </div>
@@ -324,7 +329,7 @@ export function Docs() {
               </p>
               <p>
                 The terminal is owned and governed by{" "}
-                <span className="text-cyan-300">$VEXOR</span>, an ERC-20Votes
+                <span className="text-cyan-300">$VT</span>, an ERC-20Votes
                 token on Base. Hold it to access elevated tiers, stake it to
                 earn a pro-rata share of agent revenue, vote with it to direct
                 protocol evolution.
@@ -376,9 +381,9 @@ export function Docs() {
                   in the nav. Pick MetaMask, Rainbow, or Coinbase Wallet. The
                   Console auto-prompts you to switch to Base Sepolia.
                 </Step>
-                <Step n={3} icon={Coins} title="Claim $VEXOR from the faucet">
+                <Step n={3} icon={Coins} title="Claim $VT from the faucet">
                   Open the <span className="text-cyan-300">Wallet</span> tab
-                  → click <span className="text-cyan-300">Claim 1,000 $VEXOR</span>
+                  → click <span className="text-cyan-300">Claim 1,000 $VT</span>
                   . Confirm in your wallet. (1 claim per address, ever.)
                 </Step>
                 <Step n={4} icon={Vote} title="Self-delegate for voting power">
@@ -402,26 +407,36 @@ export function Docs() {
 
             <Section id="contracts" kicker="03" title="Smart contract addresses">
               <p>
-                All three Vexor contracts are deployed and verified on Base
-                Sepolia. The deployer wallet is the temporary owner — ownership
-                will rotate to a multisig before mainnet.
+                $VT is the live Vexor Terminal token, deployed on Base mainnet.
+                Staking and governance contracts run on Base Sepolia testnet so
+                anyone can interact with the console without spending real gas.
               </p>
-              <div className="mt-2 flex flex-col gap-2">
+              <div className="mt-4">
+                <div className="font-mono text-[10px] uppercase tracking-widest text-cyan-300/80 mb-2">
+                  Base mainnet · live
+                </div>
                 <CodeRow
-                  label="Token"
-                  value={TOKEN_ADDRESS}
-                  href={`${BASESCAN}/${TOKEN_ADDRESS}`}
+                  label="$VT"
+                  value={VT_ADDRESS}
+                  href={`${BASESCAN}/${VT_ADDRESS}`}
                 />
-                <CodeRow
-                  label="Staking"
-                  value={STAKING_ADDRESS}
-                  href={`${BASESCAN}/${STAKING_ADDRESS}`}
-                />
-                <CodeRow
-                  label="Governor"
-                  value={GOVERNOR_ADDRESS}
-                  href={`${BASESCAN}/${GOVERNOR_ADDRESS}`}
-                />
+              </div>
+              <div className="mt-6">
+                <div className="font-mono text-[10px] uppercase tracking-widest text-white/45 mb-2">
+                  Base sepolia · testnet demo
+                </div>
+                <div className="flex flex-col gap-2">
+                  <CodeRow
+                    label="Staking"
+                    value={STAKING_ADDRESS_TESTNET}
+                    href={`${BASESCAN_TESTNET}/${STAKING_ADDRESS_TESTNET}`}
+                  />
+                  <CodeRow
+                    label="Governor"
+                    value={GOVERNOR_ADDRESS_TESTNET}
+                    href={`${BASESCAN_TESTNET}/${GOVERNOR_ADDRESS_TESTNET}`}
+                  />
+                </div>
               </div>
               <div className="mt-6 rounded-xl border border-amber-400/20 bg-amber-500/[0.04] p-4 flex gap-3">
                 <AlertTriangle className="h-5 w-5 text-amber-300 shrink-0 mt-0.5" />
@@ -430,9 +445,9 @@ export function Docs() {
                     Testnet disclaimer
                   </div>
                   <p className="mt-1 text-sm text-white/70">
-                    These contracts run on Base Sepolia testnet. The token has
-                    no monetary value. Anything you do here cannot be bridged
-                    to mainnet.
+                    The console (claim / stake / govern) runs against Base
+                    Sepolia testnet contracts. The testnet $VT has no monetary
+                    value and cannot be bridged to mainnet $VT.
                   </p>
                 </div>
               </div>
@@ -445,12 +460,12 @@ export function Docs() {
                     <Wallet className="h-4 w-4 text-cyan-300" /> Wallet tab
                   </h3>
                   <p className="mt-2">
-                    Shows your address, current chain, $VEXOR balance, voting
+                    Shows your address, current chain, $VT balance, voting
                     power, and faucet status. Two actions:
                   </p>
                   <ul className="mt-2 list-disc list-inside text-sm text-white/65 space-y-1 ml-2">
                     <li>
-                      <span className="text-cyan-300">Claim 1,000 $VEXOR</span>{" "}
+                      <span className="text-cyan-300">Claim 1,000 $VT</span>{" "}
                       — pulls from the public faucet (1x per address).
                     </li>
                     <li>
@@ -465,7 +480,7 @@ export function Docs() {
                     <Lock className="h-4 w-4 text-cyan-300" /> Stake tab
                   </h3>
                   <p className="mt-2">
-                    Stake $VEXOR under one of four lock tiers. Longer lock =
+                    Stake $VT under one of four lock tiers. Longer lock =
                     higher reward weight. Your share of the 30-day reward
                     stream = your weighted stake ÷ total weighted stake.
                   </p>
@@ -507,7 +522,7 @@ export function Docs() {
                   </h3>
                   <p className="mt-2">
                     OpenZeppelin Governor v5. Submit proposals with ≥100
-                    $VEXOR voting power. Vote with{" "}
+                    $VT voting power. Vote with{" "}
                     <span className="text-cyan-300">For</span> /{" "}
                     <span className="text-cyan-300">Against</span> /{" "}
                     <span className="text-cyan-300">Abstain</span>.
@@ -516,7 +531,7 @@ export function Docs() {
                     <li>Voting delay: 1 block</li>
                     <li>Voting period: 7,200 blocks (~4 hours)</li>
                     <li>Quorum: 4% of total supply</li>
-                    <li>Proposal threshold: 100 $VEXOR</li>
+                    <li>Proposal threshold: 100 $VT</li>
                   </ul>
                 </div>
 
@@ -526,15 +541,15 @@ export function Docs() {
                   </h3>
                   <p className="mt-2">
                     Shows your current tier and progress to the next based on
-                    $VEXOR balance. See the full table below.
+                    $VT balance. See the full table below.
                   </p>
                 </div>
               </div>
             </Section>
 
-            <Section id="tokenomics" kicker="05" title="$VEXOR tokenomics">
+            <Section id="tokenomics" kicker="05" title="$VT tokenomics">
               <p>
-                <span className="text-cyan-300">$VEXOR</span> is an ERC-20Votes
+                <span className="text-cyan-300">$VT</span> is an ERC-20Votes
                 + EIP-2612 Permit token. Voting power requires self-delegation
                 (one-time, no fee beyond gas).
               </p>
@@ -550,7 +565,7 @@ export function Docs() {
               <ul className="list-disc list-inside text-sm text-white/70 space-y-1 ml-2">
                 <li>
                   <span className="text-white">Pay for Runtime</span> — burn
-                  $VEXOR per chat / task. Premium dispatch costs more.
+                  $VT per chat / task. Premium dispatch costs more.
                 </li>
                 <li>
                   <span className="text-white">Stake to Earn</span> — receive
@@ -567,9 +582,10 @@ export function Docs() {
                 </li>
               </ul>
               <p className="mt-2 text-sm text-white/55">
-                Mainnet supply, distribution, and launch venue will be
-                announced before deployment. The testnet supply is provisional
-                and exists solely for protocol testing.
+                Mainnet $VT (0x2c68…7Ba3) is deployed with 100B total supply
+                at 18 decimals. Distribution and launch venue will be
+                announced before any liquidity is seeded. Testnet console
+                supply is provisional and exists solely for protocol testing.
               </p>
             </Section>
 
@@ -597,7 +613,7 @@ export function Docs() {
 
             <Section id="tiers" kicker="07" title="Tier table">
               <p>
-                Token-gated tiers are computed from your $VEXOR balance at
+                Token-gated tiers are computed from your $VT balance at
                 read time. They are not enforced on-chain (no NFT) — they're
                 a soft access ladder applied by the protocol layer.
               </p>

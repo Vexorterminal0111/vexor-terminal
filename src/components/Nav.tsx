@@ -10,7 +10,7 @@ import { VexorMark } from "./Logo";
 const links = [
   { href: "/#about", label: "About" },
   { href: "/#team", label: "Team" },
-  { href: "/#token", label: "$VEXOR" },
+  { href: "/#token", label: "$VT" },
   { href: "/#console", label: "Console" },
   { href: "/#chat", label: "Chat" },
   { href: "/docs.html", label: "Docs" },

@@ -7,7 +7,7 @@
 
 <br>
 
-**An autonomous AI orchestrator commanding 9 specialized sub-agents — powered by [$VEXOR](https://sepolia.basescan.org/address/0x200b75db62fa66f325191b34ef784ade26321570) on [Base](https://base.org).**
+**An autonomous AI orchestrator commanding 9 specialized sub-agents — powered by [$VT](https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3) on [Base](https://base.org).**
 <br>
 Not a chatbot. Not an assistant. A self-improving multi-agent system.
 
@@ -22,7 +22,7 @@ Not a chatbot. Not an assistant. A self-improving multi-agent system.
 
 [**Live site** ↗](https://vexorterminal.com) ·
 [Docs ↗](https://vexorterminal.com/docs) ·
-[Token on Basescan ↗](https://sepolia.basescan.org/address/0x200b75db62fa66f325191b34ef784ade26321570) ·
+[$VT on Basescan ↗](https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3) ·
 [@vexorterminal ↗](https://x.com/vexorterminal)
 
 <br>
@@ -36,10 +36,10 @@ Not a chatbot. Not an assistant. A self-improving multi-agent system.
 ## Features
 
 - **Vexor Orchestrator** — a single LLM that routes every request to one of 9 specialized sub-agents (Cipher, Atlas, Quill, Forge, Vector, Pulse, Halo, Prism, Nyx). Each agent runs on its own LLM and stays in lane.
-- **$VEXOR token (Base)** — ERC-20Votes + Permit on Base Sepolia. Hold to access elevated tiers, stake to earn pro-rata agent revenue, vote with it to direct protocol evolution.
+- **$VT token (Base)** — live ERC-20 on Base mainnet ([`0x2c68…7Ba3`](https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3)), 100B supply, 18 decimals. Hold to access elevated tiers, stake to earn pro-rata agent revenue, vote with it to direct protocol evolution.
 - **4-tier time-locked staking** — `FLEX`, `30D`, `90D`, `LOCK_180` with weighted multipliers for governance.
 - **On-chain governance** — OpenZeppelin Governor v5, weighted by staked balance × time-lock multiplier.
-- **Wallet-gated console** — connect wallet, claim from faucet, stake, govern, all on Base Sepolia.
+- **Wallet-gated console** — connect wallet, claim from faucet, stake, govern, all on Base Sepolia testnet during beta (mainnet migration alongside production launch).
 - **Production chat** — Groq Llama 3.3 70B proxied through a single Cloudflare Worker with strict CORS allowlist.
 - **Static-first frontend** — Next.js 16 static export, hosted as Worker Assets — fast edge delivery worldwide, no Node runtime in production.
 
@@ -65,7 +65,7 @@ The static site lands in `out/`. The Cloudflare Worker in `worker/` serves it th
 
 ---
 
-## Live on Base Sepolia
+## On-chain
 
 <div align="center">
 
@@ -73,13 +73,23 @@ The static site lands in `out/`. The Cloudflare Worker in `worker/` serves it th
 
 </div>
 
+### Base mainnet · live
+
+| Contract | Address | Basescan |
+|---|---|---|
+| `$VT` — Vexor Terminal token (ERC-20, 100B supply, 18 decimals) | `0x2c684D666998436634EcEde1527EdA7975427Ba3` | [view ↗](https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3) |
+
+### Base Sepolia · testnet console demo
+
+The interactive Console (claim / stake / govern) currently runs against these Base Sepolia contracts so anyone can try the protocol without spending real gas. The testnet $VT is a separate token from mainnet $VT — it has no monetary value and cannot be bridged.
+
 | Contract | Address | Basescan |
 |---|---|---|
 | `VexorToken` — ERC-20Votes + Permit + faucet | `0x200b75db62fa66f325191b34ef784ade26321570` | [view ↗](https://sepolia.basescan.org/address/0x200b75db62fa66f325191b34ef784ade26321570) |
 | `VexorStaking` — 4-tier time-locked staking | `0x6a345b8390a67681764521d146853211dd089062` | [view ↗](https://sepolia.basescan.org/address/0x6a345b8390a67681764521d146853211dd089062) |
 | `VexorGovernor` — OZ Governor v5 (weighted votes) | `0xd1850b4c2e663b45a49330d00637db78197be31c` | [view ↗](https://sepolia.basescan.org/address/0xd1850b4c2e663b45a49330d00637db78197be31c) |
 
-> **Testnet only.** $VEXOR is live on Base Sepolia. Mainnet launch terms TBA. $VEXOR is a utility token, not a security.
+> $VT is a utility token, not a security. Staking and governance will migrate from Sepolia testnet to Base mainnet alongside production launch.
 
 ---
 
@@ -131,11 +141,14 @@ The static site lands in `out/`. The Cloudflare Worker in `worker/` serves it th
                 │ wallet RPC                              │ ASSETS binding  │
                 ▼                                         └────────┬────────┘
        ┌─────────────────┐                                         │ HTTPS
-       │ Base Sepolia    │                                         ▼
-       │  - VexorToken   │                                ┌─────────────────┐
-       │  - VexorStaking │                                │ Groq            │
-       │  - VexorGovernor│                                │ Llama 3.3 70B   │
-       └─────────────────┘                                └─────────────────┘
+       │ Base mainnet    │                                         ▼
+       │  - $VT (ERC-20) │                                ┌─────────────────┐
+       ├─────────────────┤                                │ Groq            │
+       │ Base Sepolia    │   (console demo)               │ Llama 3.3 70B   │
+       │  - VexorToken   │                                └─────────────────┘
+       │  - VexorStaking │
+       │  - VexorGovernor│
+       └─────────────────┘
 ```
 
 - Frontend is statically exported and served by the Worker `ASSETS` binding.
@@ -262,8 +275,9 @@ git clone https://node.gitlawb.com/z6MksEgptSG69SeQYJx7HCtjPGMok5yDB6rndeY2Y5Kuj
 | 1. Landing | **Live** | Marketing site, branding, docs |
 | 2. Console | **Live (testnet)** | Wallet connect + claim / stake / govern / tier on Base Sepolia |
 | 3. Chat | **Live (beta)** | Llama 3.3 70B routed by Vexor, rate-limited at the edge |
-| 4. Mainnet token | Planned | $VEXOR launch on Base (venue + tokenomics TBA) |
-| 5. Sub-agent runtime | Planned | Real orchestrator + 9 sub-agents on production hardware |
+| 4. Mainnet token | **Live** | $VT deployed on Base mainnet ([`0x2c68…7Ba3`](https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3)) — 100B supply, 18 decimals |
+| 5. Mainnet staking + governance | Planned | Migrate staking + Governor contracts from Sepolia to Base mainnet |
+| 6. Sub-agent runtime | Planned | Real orchestrator + 9 sub-agents on production hardware |
 
 ---
 
@@ -274,9 +288,10 @@ git clone https://node.gitlawb.com/z6MksEgptSG69SeQYJx7HCtjPGMok5yDB6rndeY2Y5Kuj
 - **X / Twitter** — [@vexorterminal](https://x.com/vexorterminal)
 - **GitHub** — https://github.com/Vexorterminal0111/vexor-terminal
 - **gitlawb mirror** — https://gitlawb.com/z6MksEgptSG69SeQYJx7HCtjPGMok5yDB6rndeY2Y5KujAdj/vexor-terminal
-- **Token (Base Sepolia)** — [`0x200b75db...21570`](https://sepolia.basescan.org/address/0x200b75db62fa66f325191b34ef784ade26321570)
-- **Staking (Base Sepolia)** — [`0x6a345b83...89062`](https://sepolia.basescan.org/address/0x6a345b8390a67681764521d146853211dd089062)
-- **Governor (Base Sepolia)** — [`0xd1850b4c...be31c`](https://sepolia.basescan.org/address/0xd1850b4c2e663b45a49330d00637db78197be31c)
+- **$VT token (Base mainnet)** — [`0x2c684D66...27Ba3`](https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3)
+- **VexorToken (Base Sepolia testnet)** — [`0x200b75db...21570`](https://sepolia.basescan.org/address/0x200b75db62fa66f325191b34ef784ade26321570)
+- **VexorStaking (Base Sepolia testnet)** — [`0x6a345b83...89062`](https://sepolia.basescan.org/address/0x6a345b8390a67681764521d146853211dd089062)
+- **VexorGovernor (Base Sepolia testnet)** — [`0xd1850b4c...be31c`](https://sepolia.basescan.org/address/0xd1850b4c2e663b45a49330d00637db78197be31c)
 
 ---
 

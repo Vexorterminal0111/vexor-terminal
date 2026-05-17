@@ -8,17 +8,17 @@ const utility = [
   {
     icon: Coins,
     title: "Pay for Runtime",
-    body: "Every Vexor task burns $VEXOR. Premium chat, priority dispatch, and dedicated sub-agent slots are all priced in $VEXOR.",
+    body: "Every Vexor task burns $VT. Premium chat, priority dispatch, and dedicated sub-agent slots are all priced in $VT.",
   },
   {
     icon: Lock,
     title: "Stake to Earn",
-    body: "Lock $VEXOR and receive a pro-rata share of all task revenue. Longer locks earn higher multipliers.",
+    body: "Lock $VT and receive a pro-rata share of all task revenue. Longer locks earn higher multipliers.",
   },
   {
     icon: Vote,
     title: "Governance",
-    body: "$VEXOR holders vote on new sub-agents, model whitelisting, treasury spend, and protocol upgrades.",
+    body: "$VT holders vote on new sub-agents, model whitelisting, treasury spend, and protocol upgrades.",
   },
   {
     icon: Sparkles,
@@ -28,10 +28,10 @@ const utility = [
 ];
 
 const stats = [
-  { label: "Token", value: "$VEXOR" },
+  { label: "Token", value: "$VT" },
   { label: "Standard", value: "ERC-20" },
   { label: "Network", value: "Base" },
-  { label: "Supply", value: "TBA" },
+  { label: "Supply", value: "100B" },
 ];
 
 export function Token() {
@@ -40,8 +40,8 @@ export function Token() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
           kicker="Tokenomics"
-          title="$VEXOR — the economy that runs the orchestrator."
-          description="The Vexor Terminal economy is governed entirely by $VEXOR. Holders pay for runtime, earn from revenue, and steer protocol direction."
+          title="$VT — the economy that runs the orchestrator."
+          description="The Vexor Terminal economy is governed entirely by $VT. Holders pay for runtime, earn from revenue, and steer protocol direction."
         />
 
         <motion.div
@@ -59,16 +59,15 @@ export function Token() {
             <div className="flex-1">
               <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
-                Launching on Base · TBA
+                Live on Base · 0x2c68…7Ba3
               </div>
               <div className="mt-4 sm:mt-5 font-mono text-4xl sm:text-5xl md:text-6xl text-white leading-none">
-                $VEXOR
+                $VT
               </div>
               <p className="mt-4 max-w-xl text-sm sm:text-[15px] text-white/65 leading-relaxed">
                 The native ERC-20 token of the Vexor Terminal protocol on
-                Base. $VEXOR is the unit of account for runtime, staking, and
-                governance. Supply, distribution, and launch model will be
-                announced ahead of launch.
+                Base mainnet. $VT is the unit of account for runtime, staking,
+                and governance — 100B total supply, 18 decimals.
               </p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:max-w-md">
@@ -119,10 +118,11 @@ export function Token() {
               Disclaimer
             </div>
             <p className="mt-2 max-w-2xl text-sm text-white/55 leading-relaxed">
-              $VEXOR is a utility token for the Vexor Terminal protocol. It is
-              not a security, an investment, or a promise of return. Final
-              tokenomics, launch venue, and schedule will be announced by the
-              team before launch.
+              $VT is a utility token for the Vexor Terminal protocol. It is
+              not a security, an investment, or a promise of return. The
+              interactive console runs on Base Sepolia testnet during beta —
+              staking and governance will migrate to mainnet alongside
+              production launch.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
