@@ -8,7 +8,10 @@ import { SectionHeader } from "./SectionHeader";
 const VT_ADDRESS = "0x2c684D666998436634EcEde1527EdA7975427Ba3";
 const VT_BASESCAN = `https://basescan.org/address/${VT_ADDRESS}`;
 const VT_DEXSCREENER = `https://dexscreener.com/base/${VT_ADDRESS}`;
-const VT_DEXSCREENER_EMBED = `https://dexscreener.com/base/${VT_ADDRESS}?embed=1&theme=dark&trades=0&info=0`;
+// Deepest VT/WETH pool (Uniswap v4 on Base). GeckoTerminal renders v4 candles reliably;
+// DexScreener's chart aggregator was stuck on "No data here" for this very new pool.
+const VT_POOL = "0xf398631aaecded97003cba4e9ed2a1b30885c863fd328e56029c9da757f2c1f0";
+const VT_CHART_EMBED = `https://www.geckoterminal.com/base/pools/${VT_POOL}?embed=1&info=0&swaps=0&grayscale=0&light_chart=0`;
 
 const utility = [
   {
@@ -170,8 +173,8 @@ export function Token() {
           </div>
           <div className="relative w-full" style={{ aspectRatio: "16 / 10" }}>
             <iframe
-              src={VT_DEXSCREENER_EMBED}
-              title="$VT live price chart on DexScreener"
+              src={VT_CHART_EMBED}
+              title="$VT live price chart on GeckoTerminal"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               className="absolute inset-0 h-full w-full border-0 bg-black"
