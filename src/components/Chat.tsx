@@ -39,6 +39,69 @@ const AGENT_NAMES = new Set([
   "nyx",
 ]);
 
+type ChatReply = { reply: string; cost_units: number };
+
+async function sendOnce(
+  endpoint: string,
+  headers: Record<string, string>,
+  body: string
+): Promise<ChatReply> {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 30_000);
+  let res: Response;
+  try {
+    res = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body,
+      signal: controller.signal,
+      credentials: "omit",
+      cache: "no-store",
+      mode: "cors",
+    });
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+  if (!res.ok) {
+    const errBody = (await res.json().catch(() => ({}))) as {
+      detail?: string;
+    };
+    throw new Error(errBody.detail || `Upstream error (HTTP ${res.status})`);
+  }
+  return (await res.json()) as ChatReply;
+}
+
+function isNetworkError(e: unknown): boolean {
+  return (
+    e instanceof TypeError && /fetch|network|load failed/i.test(e.message)
+  );
+}
+
+async function sendWithRetry(
+  endpoint: string,
+  headers: Record<string, string>,
+  body: string
+): Promise<ChatReply> {
+  const delays = [1_000, 3_000];
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 1 + delays.length; attempt++) {
+    try {
+      return await sendOnce(endpoint, headers, body);
+    } catch (e) {
+      lastErr = e;
+      const retriable = isNetworkError(e);
+      if (!retriable || attempt === delays.length) throw e;
+      const wait = delays[attempt];
+      console.warn(
+        `[Chat] attempt ${attempt + 1} failed, retrying in ${wait}ms`,
+        e
+      );
+      await new Promise((r) => window.setTimeout(r, wait));
+    }
+  }
+  throw lastErr;
+}
+
 function renderContent(text: string) {
   return text.split("\n").map((line, i) => {
     const bracket = line.match(/^>\s*\[([A-Za-z][\w.]*)\]\s*(.*)$/);
@@ -94,35 +157,17 @@ export function Chat() {
     const endpoint = CHAT_API ? `${CHAT_API}/api/chat` : "/api/chat";
     try {
       const conv = next.filter((m) => m !== SUGGESTED_GREETING);
+      const body = JSON.stringify({
+        wallet: address,
+        messages: conv.map(({ role, content }) => ({ role, content })),
+      });
       const headers: Record<string, string> = {
         "content-type": "application/json",
       };
       if (CHAT_API_BASIC_AUTH) {
         headers["authorization"] = `Basic ${CHAT_API_BASIC_AUTH}`;
       }
-      const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), 30_000);
-      let res: Response;
-      try {
-        res = await fetch(endpoint, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            wallet: address,
-            messages: conv.map(({ role, content }) => ({ role, content })),
-          }),
-          signal: controller.signal,
-        });
-      } finally {
-        window.clearTimeout(timeoutId);
-      }
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(
-          errBody.detail || `Upstream error (HTTP ${res.status})`
-        );
-      }
-      const data = (await res.json()) as { reply: string; cost_units: number };
+      const data = await sendWithRetry(endpoint, headers, body);
       setMessages((m) => [...m, { role: "assistant", content: data.reply }]);
       setMsgCount((c) => c + 1);
     } catch (e) {
@@ -136,7 +181,7 @@ export function Chat() {
       ) {
         const host =
           typeof window !== "undefined" ? window.location.host : "vexorterminal.com";
-        msg = `Network error reaching ${host}/api/chat. Possible causes: ad blocker, in-app wallet browser, or flaky cellular. Try a different browser/incognito.`;
+        msg = `Network error reaching ${host}/api/chat after 3 attempts. Possible causes: ad blocker, in-app wallet browser, or flaky cellular. Try a different browser/incognito.`;
       } else if (e instanceof Error) {
         msg = e.message;
       } else {
