@@ -17,7 +17,7 @@ export function Footer() {
             </Link>
             <p className="mt-4 max-w-md text-sm text-white/55 leading-relaxed">
               An autonomous AI orchestrator with 9 sub-agents. Powered by the
-              $VEXOR token on Base — pay for runtime, stake for governance,
+              $VT token on Base — pay for runtime, stake for governance,
               earn from agent revenue.
             </p>
             <div className="mt-6 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-white/45 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.02]">
@@ -60,7 +60,7 @@ export function Footer() {
                   href="#token"
                   className="text-cyan-300 hover:text-white transition-colors"
                 >
-                  $VEXOR Token
+                  $VT Token
                 </a>
               </li>
               <li>
@@ -89,12 +89,12 @@ export function Footer() {
             <ul className="mt-4 space-y-2 text-sm">
               <li>
                 <a
-                  href="https://sepolia.basescan.org/address/0x200b75db62fa66f325191b34ef784ade26321570"
+                  href="https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-white/70 hover:text-cyan-300 transition-colors font-mono text-xs"
+                  className="text-cyan-300 hover:text-white transition-colors font-mono text-xs"
                 >
-                  Token ↗
+                  $VT on Base ↗
                 </a>
               </li>
               <li>
@@ -104,7 +104,7 @@ export function Footer() {
                   rel="noreferrer"
                   className="text-white/70 hover:text-cyan-300 transition-colors font-mono text-xs"
                 >
-                  Staking ↗
+                  Staking (testnet) ↗
                 </a>
               </li>
               <li>
@@ -114,17 +114,17 @@ export function Footer() {
                   rel="noreferrer"
                   className="text-white/70 hover:text-cyan-300 transition-colors font-mono text-xs"
                 >
-                  Governor ↗
+                  Governor (testnet) ↗
                 </a>
               </li>
               <li>
                 <a
-                  href="https://docs.base.org/chain/network-information#base-testnet-sepolia"
+                  href="https://docs.base.org/chain/network-information"
                   target="_blank"
                   rel="noreferrer"
                   className="text-white/70 hover:text-cyan-300 transition-colors font-mono text-xs"
                 >
-                  Base Sepolia ↗
+                  Base network ↗
                 </a>
               </li>
             </ul>
@@ -182,7 +182,7 @@ export function Footer() {
             © {new Date().getFullYear()} Vexor Terminal. All rights reserved.
           </div>
           <div className="font-mono text-[10px] sm:text-[11px] text-white/40">
-            Designed in the terminal. $VEXOR launching on Base.
+            Designed in the terminal. $VT live on Base.
           </div>
         </div>
       </div>

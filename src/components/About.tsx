@@ -44,8 +44,8 @@ const features = [
   },
   {
     icon: Hexagon,
-    title: "$VEXOR Token",
-    body: "Native ERC-20 token on Base. Hold $VEXOR for elevated agent access. Stake $VEXOR and earn a pro-rata share of revenue from every task the orchestrator runs.",
+    title: "$VT Token",
+    body: "Native ERC-20 token on Base. Hold $VT for elevated agent access. Stake $VT and earn a pro-rata share of revenue from every task the orchestrator runs.",
     badge: "Base · Soon",
     highlight: true,
   },
@@ -58,7 +58,7 @@ export function About() {
         <SectionHeader
           kicker="About Vexor"
           title="An autonomous AI orchestrator — not a chatbot."
-          description="Vexor is a self-improving multi-agent system that dispatches work across 9 specialized sub-agents, learns from every task, and runs on the $VEXOR token economy on Base."
+          description="Vexor is a self-improving multi-agent system that dispatches work across 9 specialized sub-agents, learns from every task, and runs on the $VT token economy on Base."
         />
 
         <div className="mt-10 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">

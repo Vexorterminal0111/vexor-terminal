@@ -27,10 +27,10 @@ If 0, the `assets` binding in `wrangler.jsonc` or the fall-through in `worker/in
 
 ### 2. /docs resolves via auto-trailing-slash
 ```
-curl -s https://vexorterminal.com/docs | grep -o '0x200b75db62fa66f325191b34ef784ade26321570' | head -1
-# expect the address echoed back
+curl -s https://vexorterminal.com/docs | grep -o '0x2c684D666998436634EcEde1527EdA7975427Ba3' | head -1
+# expect the mainnet $VT address echoed back
 ```
-Proves `html_handling: "auto-trailing-slash"` is wired and the multi-page export is being served.
+Proves `html_handling: "auto-trailing-slash"` is wired and the multi-page export is being served. The mainnet $VT CA (`0x2c684D666998436634EcEde1527EdA7975427Ba3`) is hard-coded in `src/components/Docs.tsx` and `src/components/Footer.tsx`.
 
 ### 3. /api/chat returns a real Groq reply
 ```
@@ -88,13 +88,17 @@ If the task requires UI screenshots / a recording:
 
 ### Wallet-connect and on-chain Console actions
 
-The Console tab uses RainbowKit + wagmi and needs a real wallet. The test browser does not have MetaMask, so claim / stake / govern / faucet flows cannot be UI-tested from a fresh Devin session. The contracts on Base Sepolia are still deployed and reachable — they have been validated in prior sessions:
-- Token: `0x200b75db62fa66f325191b34ef784ade26321570`
-- Staking: `0x6a345b8390a67681764521d146853211dd089062`
-- Governor: `0xd1850b4c2e663b45a49330d00637db78197be31c`
-- Chain: Base Sepolia (chainId 84532)
+The Console tab uses RainbowKit + wagmi and needs a real wallet. The test browser does not have MetaMask, so claim / stake / govern / faucet flows cannot be UI-tested from a fresh Devin session.
 
-If a UI test of these flows is required, ask the user to walk through them themselves in their own browser and send screenshots, or to install MetaMask in the test browser ahead of time and pre-import a test wallet funded with Sepolia ETH and faucet $VEXOR.
+**Chain split is intentional** — marketing surfaces (Docs, Footer, Hero) point at the mainnet $VT token, while the interactive Console runs on Base Sepolia testnet so anyone can try it without paying real gas:
+
+- **$VT (Base mainnet, chainId 8453)**: `0x2c684D666998436634EcEde1527EdA7975427Ba3` — production token, 100B supply, 18 decimals. Hard-coded in `src/components/Docs.tsx` and `src/components/Footer.tsx`.
+- **Console demo (Base Sepolia, chainId 84532)** — still loaded from `src/lib/contracts.ts`, validated in prior sessions:
+  - Token: `0x200b75db62fa66f325191b34ef784ade26321570`
+  - Staking: `0x6a345b8390a67681764521d146853211dd089062`
+  - Governor: `0xd1850b4c2e663b45a49330d00637db78197be31c`
+
+If a UI test of the console flows is required, ask the user to walk through them themselves in their own browser and send screenshots, or to install MetaMask in the test browser ahead of time and pre-import a test wallet funded with Sepolia ETH and faucet testnet $VT.
 
 ### Mobile-viewport regression
 
