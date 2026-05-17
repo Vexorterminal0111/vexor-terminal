@@ -7,6 +7,8 @@ import { SectionHeader } from "./SectionHeader";
 
 const VT_ADDRESS = "0x2c684D666998436634EcEde1527EdA7975427Ba3";
 const VT_BASESCAN = `https://basescan.org/address/${VT_ADDRESS}`;
+const VT_DEXSCREENER = `https://dexscreener.com/base/${VT_ADDRESS}`;
+const VT_DEXSCREENER_EMBED = `https://dexscreener.com/base/${VT_ADDRESS}?embed=1&theme=dark&trades=0&info=0`;
 
 const utility = [
   {
@@ -141,6 +143,40 @@ export function Token() {
                 )}
               </button>
             </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6 }}
+          className="mt-6 sm:mt-8 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]"
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-white/10 px-4 sm:px-5 py-3">
+            <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
+              Live price · $VT / WETH · Base
+            </div>
+            <a
+              href={VT_DEXSCREENER}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest text-cyan-300 hover:text-white transition-colors"
+            >
+              Open in DexScreener
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+          <div className="relative w-full" style={{ aspectRatio: "16 / 10" }}>
+            <iframe
+              src={VT_DEXSCREENER_EMBED}
+              title="$VT live price chart on DexScreener"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="absolute inset-0 h-full w-full border-0 bg-black"
+              allow="clipboard-write"
+            />
           </div>
         </motion.div>
 
