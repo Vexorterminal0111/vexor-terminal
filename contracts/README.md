@@ -9,6 +9,27 @@ Foundry project for the Vexor Terminal on-chain stack.
 | Contract | Purpose | Base mainnet |
 |---|---|---|
 | `$VT` (Vexor Terminal) | ERC-20 production token. 100B total supply, 18 decimals. | [`0x2c684D666998436634EcEde1527EdA7975427Ba3`](https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3) |
+| `VexorRevShare` | Flat single-sided $VT staking with manual pro-rata reward push. No lock, no tiers. Owner calls `pushRewards(amount)` to distribute revenue to current stakers. | _TBD — deploy with `script/DeployRevShare.s.sol`_ |
+
+#### Deploying `VexorRevShare` to Base mainnet
+
+```bash
+export DEPLOYER_PRIVATE_KEY=0x...                                 # EOA with ETH on Base mainnet
+export STAKING_TOKEN_ADDRESS=0x2c684D666998436634EcEde1527EdA7975427Ba3  # $VT mainnet
+export INITIAL_OWNER=0x...                                        # recommend a multisig
+export BASESCAN_API_KEY=...
+
+forge script script/DeployRevShare.s.sol \
+  --rpc-url base \
+  --broadcast \
+  --verify \
+  --etherscan-api-key $BASESCAN_API_KEY
+```
+
+Once deployed:
+1. Stakers approve the pool for `$VT` and call `stake(amount)`.
+2. The owner approves the pool for `$VT` and calls `pushRewards(amount)` whenever revenue should be distributed pro-rata to current stakers.
+3. Stakers call `claim()` for pending rewards or `withdraw(amount)` to pull principal (auto-claims pending).
 
 ### Base Sepolia · console demo (this Foundry project)
 
