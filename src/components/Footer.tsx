@@ -176,7 +176,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:habibullahsuteja@gmail.com"
+                  href="mailto:vexorterminal@gmail.com"
                   className="text-white/70 hover:text-white transition-colors"
                 >
                   Email
