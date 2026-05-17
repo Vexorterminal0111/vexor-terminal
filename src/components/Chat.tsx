@@ -91,6 +91,7 @@ export function Chat() {
     setInput("");
     setLoading(true);
 
+    const endpoint = CHAT_API ? `${CHAT_API}/api/chat` : "/api/chat";
     try {
       const conv = next.filter((m) => m !== SUGGESTED_GREETING);
       const headers: Record<string, string> = {
@@ -99,24 +100,48 @@ export function Chat() {
       if (CHAT_API_BASIC_AUTH) {
         headers["authorization"] = `Basic ${CHAT_API_BASIC_AUTH}`;
       }
-      const endpoint = CHAT_API ? `${CHAT_API}/api/chat` : "/api/chat";
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          wallet: address,
-          messages: conv.map(({ role, content }) => ({ role, content })),
-        }),
-      });
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 30_000);
+      let res: Response;
+      try {
+        res = await fetch(endpoint, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            wallet: address,
+            messages: conv.map(({ role, content }) => ({ role, content })),
+          }),
+          signal: controller.signal,
+        });
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.detail || `Upstream error (${res.status})`);
+        throw new Error(
+          errBody.detail || `Upstream error (HTTP ${res.status})`
+        );
       }
       const data = (await res.json()) as { reply: string; cost_units: number };
       setMessages((m) => [...m, { role: "assistant", content: data.reply }]);
       setMsgCount((c) => c + 1);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Unknown error";
+      console.error("[Chat] send failed", { endpoint, error: e });
+      let msg: string;
+      if (e instanceof DOMException && e.name === "AbortError") {
+        msg = "Request timed out after 30s — Vexor is taking too long. Try again.";
+      } else if (
+        e instanceof TypeError &&
+        /fetch|network|load failed/i.test(e.message)
+      ) {
+        const host =
+          typeof window !== "undefined" ? window.location.host : "vexorterminal.com";
+        msg = `Network error reaching ${host}/api/chat. Possible causes: ad blocker, in-app wallet browser, or flaky cellular. Try a different browser/incognito.`;
+      } else if (e instanceof Error) {
+        msg = e.message;
+      } else {
+        msg = "Unknown error";
+      }
       setError(msg);
       setMessages((m) => m.slice(0, -1));
       setInput(text);
