@@ -25,12 +25,14 @@ curl -s https://vexorterminal.com/ | grep -c "I&#39;m\|I'm Vexor"
 ```
 If 0, the `assets` binding in `wrangler.jsonc` or the fall-through in `worker/index.ts` is broken — the URL is serving the Worker JS or a Cloudflare placeholder.
 
-### 2. /docs resolves via auto-trailing-slash
+### 2. /docs resolves via auto-trailing-slash + mainnet CAs are present
 ```
 curl -s https://vexorterminal.com/docs | grep -o '0x2c684D666998436634EcEde1527EdA7975427Ba3' | head -1
 # expect the mainnet $VT address echoed back
+curl -s https://vexorterminal.com/docs | grep -o '0xE25f6243f848523c4577639e975B9F3E0fA57186' | head -1
+# expect the mainnet VexorRevShare address echoed back
 ```
-Proves `html_handling: "auto-trailing-slash"` is wired and the multi-page export is being served. The mainnet $VT CA (`0x2c684D666998436634EcEde1527EdA7975427Ba3`) is hard-coded in `src/components/Docs.tsx` and `src/components/Footer.tsx`.
+Proves `html_handling: "auto-trailing-slash"` is wired and the multi-page export is being served. The mainnet $VT CA (`0x2c684D666998436634EcEde1527EdA7975427Ba3`) and VexorRevShare CA (`0xE25f6243f848523c4577639e975B9F3E0fA57186`) are hard-coded in `src/components/Docs.tsx` and `src/components/Footer.tsx`.
 
 ### 3. /api/chat returns a real Groq reply
 ```
@@ -57,6 +59,26 @@ curl -s -i -X OPTIONS https://vexorterminal.com/api/chat \
 # expect: access-control-allow-origin: https://vexorterminal.com
 ```
 If the untrusted origin gets `access-control-allow-origin` echoed back, the strict allowlist in `worker/chat.ts`'s `parseAllowedOrigins` has regressed — likely someone re-added a regex fallback.
+
+## Verifying that an on-chain contract is verified on Basescan
+
+Whenever testing a PR that surfaces a new contract address on the site (e.g., `VexorRevShare`, future staking V2, future Governor mainnet), assert that the address (a) is a real deployed contract on Base mainnet and (b) has source code verified.
+
+First preference would be to click the Basescan link from the site and look for the green "Contract Source Code Verified" badge. However, **Basescan's UI often returns a Cloudflare anti-bot challenge for headless browsers** (including the Devin test browser), so the contract page may never render.
+
+Workaround: fetch the same verified status from the **Etherscan V2 unified API**, which is the same source of truth that powers the green-verified badge and works without the anti-bot challenge:
+
+```
+curl -s "https://api.etherscan.io/v2/api?chainid=8453&module=contract&action=getsourcecode&address=0xE25f6243f848523c4577639e975B9F3E0fA57186&apikey=${BASESCAN_API_KEY}"
+```
+
+What to assert in the JSON response:
+- `result[0].ContractName` matches the expected contract name (e.g. `VexorRevShare`, `VexorToken`).
+- `result[0].SourceCode` is non-empty.
+- `result[0].CompilerVersion` is non-empty.
+- `result[0].Proxy == "0"` (or `"1"` if expecting a proxy).
+
+A single Etherscan V2 API key (one free key from https://etherscan.io/myapikey) works for all 60+ chains via the `chainid` query param — Base mainnet is `8453`, Base Sepolia is `84532`, Ethereum mainnet is `1`. This is the migration target from the deprecated per-chain Basescan API. The Devin secret `BASESCAN_API_KEY` is reusable across sessions.
 
 ## Deploy + secret management
 
@@ -85,15 +107,17 @@ If the task requires UI screenshots / a recording:
 1. Maximize the browser: `wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz` (install `wmctrl` if missing).
 2. Open `https://vexorterminal.com/` and `https://vexorterminal.com/docs` and capture full screenshots.
 3. Use devtools `fetch('/api/chat', {...})` to exercise `/api/chat` end-to-end and capture the response — easier than scripting RainbowKit (which requires MetaMask).
+4. For headless DOM-level assertions (anchor `href`, attribute existence, button presence) prefer `browser_console` over screenshot-only verification — the runtime DOM after hydration may differ from the static HTML.
 
 ### Wallet-connect and on-chain Console actions
 
 The Console tab uses RainbowKit + wagmi and needs a real wallet. The test browser does not have MetaMask, so claim / stake / govern / faucet flows cannot be UI-tested from a fresh Devin session.
 
-**Chain split is intentional** — marketing surfaces (Docs, Footer, Hero) point at the mainnet $VT token, while the interactive Console runs on Base Sepolia testnet so anyone can try it without paying real gas:
+**Chain split is intentional** — marketing surfaces (Docs, Footer, Hero) point at mainnet contracts, while the interactive Console runs on Base Sepolia testnet so anyone can try it without paying real gas:
 
-- **$VT (Base mainnet, chainId 8453)**: `0x2c684D666998436634EcEde1527EdA7975427Ba3` — production token, 100B supply, 18 decimals. Hard-coded in `src/components/Docs.tsx` and `src/components/Footer.tsx`.
-- **Console demo (Base Sepolia, chainId 84532)** — still loaded from `src/lib/contracts.ts`, validated in prior sessions:
+- **$VT (Base mainnet, chainId 8453)**: `0x2c684D666998436634EcEde1527EdA7975427Ba3` — production token, 100B supply, 18 decimals.
+- **VexorRevShare (Base mainnet, chainId 8453)**: `0xE25f6243f848523c4577639e975B9F3E0fA57186` — production single-sided staking pool, flat (no tier, no lock), manual pro-rata reward push via `pushRewards(amount)`. Owner: same as deployer.
+- **Console demo (Base Sepolia, chainId 84532)** — loaded from `src/lib/contracts.ts`:
   - Token: `0x200b75db62fa66f325191b34ef784ade26321570`
   - Staking: `0x6a345b8390a67681764521d146853211dd089062`
   - Governor: `0xd1850b4c2e663b45a49330d00637db78197be31c`
@@ -108,5 +132,6 @@ Forcing a 375px viewport in the test browser is not reliable: `wmctrl -e` to res
 
 - `CLOUDFLARE_API_TOKEN` — required to redeploy or update Worker secrets. Token must have Account → Workers Scripts → Edit, plus Zone → DNS → Edit (for attaching custom domains). Watch out for the `start_date` field when creating tokens — leave it empty or the token won't be usable until that date.
 - `GROQ_API_KEY` — only needed if redeploying the Worker secret. Server-side only.
+- `BASESCAN_API_KEY` — Etherscan V2 unified API key (one key works for all 60+ chains). Required for the verified-contract API workaround when Basescan UI is gated behind Cloudflare anti-bot in the test browser. Get free at https://etherscan.io/myapikey.
 
 No wallet/private-key secret is needed for the four health checks above.
