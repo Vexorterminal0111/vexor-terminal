@@ -302,14 +302,22 @@ export function Docs() {
                   </a>
                 ))}
               </nav>
-              <div className="mt-8 rounded-lg border border-cyan-400/20 bg-cyan-500/[0.04] p-4">
-                <div className="font-mono text-[10px] uppercase tracking-widest text-cyan-300/80">
-                  Token · mainnet
+              <div className="mt-8 rounded-lg border border-cyan-400/30 bg-cyan-500/[0.06] p-4">
+                <div className="font-mono text-[10px] uppercase tracking-widest text-cyan-300">
+                  $VT · Base mainnet
                 </div>
-                <p className="mt-2 text-xs text-white/65 leading-relaxed font-mono break-all">
-                  $VT · 0x2c68…7Ba3
+                <p className="mt-2 text-[11px] text-white leading-snug font-mono break-all select-all">
+                  {VT_ADDRESS}
                 </p>
-                <p className="mt-2 text-[10px] text-white/45 leading-relaxed">
+                <a
+                  href={`${BASESCAN}/${VT_ADDRESS}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-block font-mono text-[10px] uppercase tracking-widest text-cyan-300 hover:text-white transition-colors"
+                >
+                  View on Basescan ↗
+                </a>
+                <p className="mt-3 text-[10px] text-white/45 leading-relaxed">
                   Console demo (claim / stake / govern) still runs on Base
                   Sepolia testnet during beta.
                 </p>
@@ -582,10 +590,11 @@ export function Docs() {
                 </li>
               </ul>
               <p className="mt-2 text-sm text-white/55">
-                Mainnet $VT (0x2c68…7Ba3) is deployed with 100B total supply
-                at 18 decimals. Distribution and launch venue will be
-                announced before any liquidity is seeded. Testnet console
-                supply is provisional and exists solely for protocol testing.
+                Mainnet $VT (<span className="font-mono text-white/75 break-all">{VT_ADDRESS}</span>)
+                is deployed with 100B total supply at 18 decimals.
+                Distribution and launch venue will be announced before any
+                liquidity is seeded. Testnet console supply is provisional
+                and exists solely for protocol testing.
               </p>
             </Section>
 
