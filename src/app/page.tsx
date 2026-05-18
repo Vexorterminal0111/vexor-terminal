@@ -6,6 +6,7 @@ import { Team } from "@/components/Team";
 import { UseCases } from "@/components/UseCases";
 import { Token } from "@/components/Token";
 import { Console } from "@/components/Console";
+import { RevShareConsole } from "@/components/RevShareConsole";
 import { Chat } from "@/components/Chat";
 import { Services } from "@/components/Services";
 import { Footer } from "@/components/Footer";
@@ -22,6 +23,7 @@ export default function Home() {
         <UseCases />
         <Token />
         <Console />
+        <RevShareConsole />
         <Chat />
         <Services />
       </main>
