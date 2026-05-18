@@ -284,9 +284,10 @@ function WalletPanel({
     query: { refetchInterval: 8_000 },
   });
 
+  const refetchReads = reads.refetch;
   useEffect(() => {
-    if (isMined) reads.refetch();
-  }, [isMined, reads, blockNumber]);
+    if (isMined) refetchReads();
+  }, [isMined, refetchReads, blockNumber]);
 
   const balance = reads.data?.[0]?.result as bigint | undefined;
   const supply = reads.data?.[1]?.result as bigint | undefined;
@@ -418,9 +419,10 @@ function StakePanel({
   const rewardRate = reads.data?.[3]?.result as bigint | undefined;
   const totalWeighted = reads.data?.[4]?.result as bigint | undefined;
 
+  const refetchReads = reads.refetch;
   useEffect(() => {
-    if (isMined) reads.refetch();
-  }, [isMined, reads]);
+    if (isMined) refetchReads();
+  }, [isMined, refetchReads]);
 
   const parsedAmount = useMemo(() => {
     try {

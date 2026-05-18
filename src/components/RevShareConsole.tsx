@@ -251,9 +251,10 @@ function RevSharePanel({
   const accRewardPerToken = reads.data?.[5]?.result as bigint | undefined;
   const poolBalance = reads.data?.[6]?.result as bigint | undefined;
 
+  const refetchReads = reads.refetch;
   useEffect(() => {
-    if (isMined) reads.refetch();
-  }, [isMined, reads]);
+    if (isMined) refetchReads();
+  }, [isMined, refetchReads]);
 
   const parsedAmount = useMemo(() => {
     try {
