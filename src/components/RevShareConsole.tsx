@@ -47,7 +47,7 @@ function fmt(n: bigint | undefined, decimals = 18, max = 4): string {
   return `${whole}.${frac.slice(0, max).replace(/0+$/, "") || "0"}`;
 }
 
-type Mode = "stake" | "withdraw" | "claim";
+type Mode = "stake" | "withdraw" | "claim" | "push";
 
 export function RevShareConsole() {
   const { address, isConnected } = useAccount();
@@ -239,6 +239,12 @@ function RevSharePanel({
         functionName: "balanceOf",
         args: [revShare],
       },
+      // 7: RevShare.owner() — drives owner-only "Push Rewards" mode visibility
+      {
+        abi: VEXOR_REV_SHARE_ABI,
+        address: revShare,
+        functionName: "owner",
+      },
     ],
     query: { refetchInterval: 8_000 },
   });
@@ -250,6 +256,8 @@ function RevSharePanel({
   const totalStaked = reads.data?.[4]?.result as bigint | undefined;
   const accRewardPerToken = reads.data?.[5]?.result as bigint | undefined;
   const poolBalance = reads.data?.[6]?.result as bigint | undefined;
+  const owner = reads.data?.[7]?.result as Address | undefined;
+  const isOwner = !!owner && owner.toLowerCase() === address.toLowerCase();
 
   const refetchReads = reads.refetch;
   useEffect(() => {
@@ -284,7 +292,7 @@ function RevSharePanel({
   }, [mode, userStake, totalStaked, parsedAmount]);
 
   const needsApproval =
-    mode === "stake" &&
+    (mode === "stake" || mode === "push") &&
     allowance !== undefined &&
     parsedAmount > 0n &&
     parsedAmount > allowance;
@@ -296,6 +304,10 @@ function RevSharePanel({
     parsedAmount === 0n ||
     (userStake !== undefined && parsedAmount > userStake);
   const claimDisabled = !claimable || claimable === 0n;
+  const pushDisabled =
+    parsedAmount === 0n ||
+    (walletBalance !== undefined && parsedAmount > walletBalance) ||
+    (totalStaked !== undefined && totalStaked === 0n);
 
   return (
     <div className="space-y-6">
@@ -332,7 +344,17 @@ function RevSharePanel({
 
       {/* Mode tabs */}
       <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5">
-        <div className="grid grid-cols-3 gap-1 mb-5">
+        {isOwner && (
+          <div className="mb-4 inline-flex items-center gap-2 rounded-md border border-amber-300/30 bg-amber-300/[0.05] px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-amber-200">
+            <Coins className="h-3 w-3" />
+            Owner mode — pushRewards unlocked
+          </div>
+        )}
+        <div
+          className={`grid ${
+            isOwner ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"
+          } gap-1 mb-5`}
+        >
           <ModeButton
             active={mode === "stake"}
             onClick={() => setMode("stake")}
@@ -351,9 +373,45 @@ function RevSharePanel({
             icon={Gift}
             label="Claim"
           />
+          {isOwner && (
+            <ModeButton
+              active={mode === "push"}
+              onClick={() => setMode("push")}
+              icon={Coins}
+              label="Push Rewards"
+            />
+          )}
         </div>
 
-        {mode === "claim" ? (
+        {mode === "push" && isOwner ? (
+          <PushRewardsForm
+            amount={amount}
+            setAmount={setAmount}
+            walletBalance={walletBalance}
+            allowance={allowance}
+            totalStaked={totalStaked}
+            parsedAmount={parsedAmount}
+            needsApproval={needsApproval}
+            loading={isPending || isMining}
+            disabled={pushDisabled}
+            onApprove={() =>
+              writeContract({
+                abi: VEXOR_TOKEN_ABI,
+                address: token,
+                functionName: "approve",
+                args: [revShare, parsedAmount],
+              })
+            }
+            onPush={() =>
+              writeContract({
+                abi: VEXOR_REV_SHARE_ABI,
+                address: revShare,
+                functionName: "pushRewards",
+                args: [parsedAmount],
+              })
+            }
+          />
+        ) : mode === "claim" ? (
           <ClaimForm
             claimable={claimable}
             disabled={claimDisabled}
@@ -508,6 +566,100 @@ function AmountInput({
         </button>
       </div>
     </div>
+  );
+}
+
+function PushRewardsForm({
+  amount,
+  setAmount,
+  walletBalance,
+  allowance,
+  totalStaked,
+  parsedAmount,
+  needsApproval,
+  loading,
+  disabled,
+  onApprove,
+  onPush,
+}: {
+  amount: string;
+  setAmount: (v: string) => void;
+  walletBalance: bigint | undefined;
+  allowance: bigint | undefined;
+  totalStaked: bigint | undefined;
+  parsedAmount: bigint;
+  needsApproval: boolean;
+  loading: boolean;
+  disabled: boolean;
+  onApprove: () => void;
+  onPush: () => void;
+}) {
+  // Per-100-$VT-staked reward preview (wei units).
+  const per100 = useMemo(() => {
+    if (!totalStaked || totalStaked === 0n || parsedAmount === 0n) return null;
+    // delta_acc = parsedAmount * 1e18 / totalStaked
+    // per100_wei = 100 * 1e18 * delta_acc / 1e18 = 100 * 1e18 * parsedAmount / totalStaked
+    return (100n * 10n ** 18n * parsedAmount) / totalStaked;
+  }, [parsedAmount, totalStaked]);
+
+  const poolEmpty = totalStaked !== undefined && totalStaked === 0n;
+
+  return (
+    <>
+      <AmountInput
+        amount={amount}
+        setAmount={setAmount}
+        maxValue={walletBalance}
+        symbol="$VT"
+        label="Amount to push as rewards (pro-rata to all stakers)"
+      />
+
+      {poolEmpty ? (
+        <div className="mt-4 rounded-md border border-amber-300/30 bg-amber-300/[0.05] text-amber-200 px-3 py-2 font-mono text-[11px] flex items-start gap-2">
+          <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          <span>
+            No stakers in pool —{" "}
+            <span className="text-cyan-300">pushRewards()</span> will revert with{" "}
+            <span className="text-cyan-300">&quot;VRS: no stakers&quot;</span>.
+            Wait for first stake.
+          </span>
+        </div>
+      ) : (
+        <div className="mt-4 rounded-md border border-cyan-300/20 bg-cyan-300/[0.03] px-3 py-2 font-mono text-[11px] text-white/65 leading-relaxed">
+          {per100 ? (
+            <>
+              Each <span className="text-cyan-300">100 $VT</span> staked earns{" "}
+              <span className="text-cyan-300">{fmt(per100)} $VT</span> from this
+              push. Distribution is pro-rata to{" "}
+              <span className="text-cyan-300">{fmt(totalStaked)} $VT</span>{" "}
+              totalStaked and lands the instant the tx confirms.
+            </>
+          ) : (
+            <>Enter an amount to preview per-staker reward.</>
+          )}
+        </div>
+      )}
+
+      <div className="mt-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        {needsApproval ? (
+          <PrimaryButton
+            onClick={onApprove}
+            loading={loading}
+            label={`1. Approve ${amount || "0"} $VT`}
+          />
+        ) : (
+          <PrimaryButton
+            onClick={onPush}
+            loading={loading}
+            label={`Push ${amount || "0"} $VT to stakers`}
+            disabled={disabled}
+          />
+        )}
+        <div className="font-mono text-[10px] text-white/45">
+          Allowance: {fmt(allowance)} $VT
+        </div>
+      </div>
+    </>
   );
 }
 
