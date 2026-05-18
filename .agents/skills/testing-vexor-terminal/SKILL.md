@@ -111,18 +111,43 @@ If the task requires UI screenshots / a recording:
 
 ### Wallet-connect and on-chain Console actions
 
-The Console tab uses RainbowKit + wagmi and needs a real wallet. The test browser does not have MetaMask, so claim / stake / govern / faucet flows cannot be UI-tested from a fresh Devin session.
+The Console + RevShare tabs use RainbowKit + wagmi and need a real wallet. The test browser does not have MetaMask, so claim / stake / govern / faucet / withdraw flows cannot be UI-tested end-to-end from a fresh Devin session.
 
-**Chain split is intentional** — marketing surfaces (Docs, Footer, Hero) point at mainnet contracts, while the interactive Console runs on Base Sepolia testnet so anyone can try it without paying real gas:
+**Chain split is intentional** — marketing surfaces (Docs, Footer, Hero) and the new RevShare Console point at mainnet contracts, while the legacy interactive Console runs on Base Sepolia testnet so anyone can try it without paying real gas:
 
 - **$VT (Base mainnet, chainId 8453)**: `0x2c684D666998436634EcEde1527EdA7975427Ba3` — production token, 100B supply, 18 decimals.
-- **VexorRevShare (Base mainnet, chainId 8453)**: `0xE25f6243f848523c4577639e975B9F3E0fA57186` — production single-sided staking pool, flat (no tier, no lock), manual pro-rata reward push via `pushRewards(amount)`. Owner: same as deployer.
+- **VexorRevShare (Base mainnet, chainId 8453)**: `0xE25f6243f848523c4577639e975B9F3E0fA57186` — production single-sided staking pool, flat (no tier, no lock), manual pro-rata reward push via `pushRewards(amount)`. Owner: same as deployer (`0x0259abb884050E19e787cF7E271b6984E13BD79B`).
 - **Console demo (Base Sepolia, chainId 84532)** — loaded from `src/lib/contracts.ts`:
   - Token: `0x200b75db62fa66f325191b34ef784ade26321570`
   - Staking: `0x6a345b8390a67681764521d146853211dd089062`
   - Governor: `0xd1850b4c2e663b45a49330d00637db78197be31c`
 
-If a UI test of the console flows is required, ask the user to walk through them themselves in their own browser and send screenshots, or to install MetaMask in the test browser ahead of time and pre-import a test wallet funded with Sepolia ETH and faucet testnet $VT.
+If a UI test of the on-chain flows is required, ask the user to walk through them themselves in their own browser and send screenshots, or to install MetaMask in the test browser ahead of time and pre-import a test wallet funded with Sepolia ETH / faucet testnet $VT (for Sepolia Console) or Base-mainnet ETH + $VT (for RevShare Console).
+
+#### Pattern for testing wallet-gated UI WITHOUT a private key
+
+Even without a connected wallet, you can prove the user-visible feature renders + is wired correctly. Use this five-step pattern (used end-to-end for the RevShare Console PR #17 + PR #18 — see those PRs for a concrete example):
+
+1. **Verify the section renders + copy is correct.** Navigate to the anchor (e.g. `/#revshare`) and assert the H2 / kicker / description text matches expected strings exactly. A broken bundle would land at page bottom with none of these strings in the DOM.
+2. **Assert the disconnected gate's copy.** Each wallet-gated component should expose an unmistakable `ConnectGate` (terminal-prompt line + heading + `Connect Wallet` button). Verify all three are visible — proves the component is mounting in the `!isConnected` branch.
+3. **Click `Connect Wallet` to prove RainbowKit wiring.** A working `ConnectButton.Custom` should open the RainbowKit modal with wallet options (Rainbow / Base / MetaMask / WalletConnect). If the button no-ops, the wiring is broken. Close the modal with Escape — do NOT proceed to actually connect.
+4. **Read full `href` values via `browser_console`.** The annotated DOM that comes back from the computer tool truncates long URLs like `https://basescan.org/address/0xE25f6243f848523c...`. Use `browser_console` to query `document.querySelectorAll` and read `.href` on each anchor — this gives you the full URL for exact-match assertions. Example:
+   ```js
+   Array.from(document.querySelectorAll('section a')).map(a => ({text: a.textContent.trim(), href: a.href}))
+   ```
+5. **Cross-check contract addresses via Etherscan V2 API** (see workaround section above) to prove the address the UI links to is actually the verified contract the PR claims.
+
+Explicitly list connected-state flows that cannot be exercised (stake / withdraw / claim tx, mode tab swaps that only render in `RevSharePanel`, TxReceipt confirmation, WrongChainGate switch button) as **untested-by-design** in the test report. Failing loudly beats fake-passing.
+
+#### wagmi quirk: `useChainId` returns the default chain when disconnected
+
+When reading `useChainId()` from wagmi while no wallet is connected, it returns the **configured default chain ID**, not `undefined`. In this repo that means `useChainId() === base.id` (8453) is `true` even on a fresh page load without a wallet.
+
+In `RevShareConsole.tsx`, the visible terminal-strip mode label is derived as:
+```ts
+{onBaseMainnet ? "base-mainnet" : chainId ? "wrong-chain" : "disconnected"}
+```
+where `onBaseMainnet = useChainId() === base.id`. So the disconnected state shows `vexor@revshare — base-mainnet`, NOT `disconnected`. This is intentional — the AUTH state is separately tracked via `isConnected` (which correctly shows `AUTH PENDING` when no wallet). When writing test plans, expect `base-mainnet` + `AUTH PENDING` on a fresh page load, not `disconnected`.
 
 ### Mobile-viewport regression
 
@@ -134,4 +159,4 @@ Forcing a 375px viewport in the test browser is not reliable: `wmctrl -e` to res
 - `GROQ_API_KEY` — only needed if redeploying the Worker secret. Server-side only.
 - `BASESCAN_API_KEY` — Etherscan V2 unified API key (one key works for all 60+ chains). Required for the verified-contract API workaround when Basescan UI is gated behind Cloudflare anti-bot in the test browser. Get free at https://etherscan.io/myapikey.
 
-No wallet/private-key secret is needed for the four health checks above.
+No wallet/private-key secret is needed for the four health checks above, nor for the wallet-gated UI render checks (see pattern above). A wallet seed would only be needed to fully exercise the on-chain stake/withdraw/claim/vote flows.
