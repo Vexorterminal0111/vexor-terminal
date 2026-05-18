@@ -12,6 +12,7 @@ const links = [
   { href: "/#team", label: "Team" },
   { href: "/#token", label: "$VT" },
   { href: "/#console", label: "Console" },
+  { href: "/#revshare", label: "RevShare" },
   { href: "/#chat", label: "Chat" },
   { href: "/docs.html", label: "Docs" },
 ];
