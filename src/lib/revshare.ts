@@ -131,9 +131,13 @@ export async function fetchPoolSummary(): Promise<PoolSummary> {
       const headTs = Number(BigInt(headBlock.timestamp));
       const windowSeconds = headTs - oldestTs;
 
+      // Event RewardsPushed(address indexed from, uint256 amount, uint256 newAcc)
+      // packs two non-indexed uint256s into `data` (64 bytes). Only the first
+      // 32 bytes is the reward amount — including the second word inflates the
+      // sum by ~2^256 per log and explodes APR to e+80%.
       let total = 0n;
       for (const l of logs) {
-        total += hexToBigInt(l.data);
+        total += hexToBigInt("0x" + l.data.slice(2, 66));
       }
       rewards30dVt = total;
 
