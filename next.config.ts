@@ -44,7 +44,9 @@ function assertSafeChatApiUrl() {
   );
 }
 
-assertSafeChatApiUrl();
+// Only enforce for production builds. `next dev` legitimately needs a localhost
+// chat backend per README.md (`NEXT_PUBLIC_CHAT_API_URL=http://localhost:8000`).
+if (process.env.NODE_ENV === "production") assertSafeChatApiUrl();
 
 const nextConfig: NextConfig = {
   output: "export",
