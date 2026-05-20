@@ -115,7 +115,7 @@ function buildCorsHeaders(
   // the same-origin baseline. There is intentionally no regex fallback.
   const headers: Record<string, string> = {
     "access-control-allow-methods": "POST, OPTIONS",
-    "access-control-allow-headers": "content-type, authorization",
+    "access-control-allow-headers": "content-type, authorization, x-agent",
     "access-control-max-age": "86400",
     vary: "origin",
   };
