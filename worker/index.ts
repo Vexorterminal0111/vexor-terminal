@@ -10,6 +10,7 @@
  */
 
 import { handleChat } from "./chat";
+import { handlePool } from "./pool";
 
 export interface Env {
   ASSETS: Fetcher;
@@ -23,11 +24,14 @@ export default {
   async fetch(
     request: Request,
     env: Env,
-    _ctx: ExecutionContext,
+    ctx: ExecutionContext,
   ): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname === "/api/chat") {
       return handleChat(request, env);
+    }
+    if (url.pathname === "/api/pool") {
+      return handlePool(request, env, ctx);
     }
     return env.ASSETS.fetch(request);
   },
