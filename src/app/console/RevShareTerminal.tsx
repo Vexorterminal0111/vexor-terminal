@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useAccount, useChainId } from "wagmi";
+import { base } from "wagmi/chains";
+import { WalletButton } from "@/components/WalletButton";
 import styles from "./console.module.css";
 
 const RPC_URL = "https://mainnet.base.org";
@@ -14,6 +17,7 @@ const AUTO_REFRESH_MS = 300000;
 const SEL_TOTAL_STAKED = "0x817b1cd2";
 const SEL_ACC_REWARD = "0xcbce44b4";
 const SEL_BALANCE_OF = "0x70a08231";
+const SEL_PENDING = "0x5eebea20";
 
 const TOPIC_REWARDS_PUSHED =
   "0xc1385e138caab1497b877640f7c64be52dcce8053e3e24b2b13d34af76d7d835";
@@ -21,6 +25,12 @@ const TOPIC_STAKED =
   "0x1449c6dd7851abc30abf37f57715f492010519147cc2652fbc38202c18a6ee90";
 const TOPIC_WITHDRAWN =
   "0x92ccf450a286a957af52509bc1c9939d1a6a481783e142e41e2499f0bb66ebc6";
+const TOPIC_CLAIMED =
+  "0xd8138f8a3f377c5259ca548e70e4c2de94f129f5a11036a15b69513cba2b426a";
+
+function padAddress(addr: string): string {
+  return "000000000000000000000000" + addr.slice(2).toLowerCase();
+}
 
 interface DexPair {
   priceUsd?: string;
@@ -186,6 +196,15 @@ export default function RevShareTerminal() {
   const [copied, setCopied] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const onBaseMainnet = chainId === base.id;
+
+  const [userStake, setUserStake] = useState<bigint | null>(null);
+  const [userPending, setUserPending] = useState<bigint | null>(null);
+  const [userLifetimeClaims, setUserLifetimeClaims] = useState<bigint | null>(null);
+  const [personalLoading, setPersonalLoading] = useState(false);
+
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -345,6 +364,66 @@ export default function RevShareTerminal() {
     setLoading(false);
   }, []);
 
+  const fetchPersonal = useCallback(async () => {
+    if (!address || !onBaseMainnet) {
+      setUserStake(null);
+      setUserPending(null);
+      setUserLifetimeClaims(null);
+      return;
+    }
+    setPersonalLoading(true);
+    try {
+      const padded = padAddress(address);
+      const [stakeRaw, pendingRaw, currentBlockHex] = await Promise.all([
+        rpcCallWithRetry("eth_call", [
+          { to: STAKING_CONTRACT, data: SEL_BALANCE_OF + padded },
+          "latest",
+        ]),
+        rpcCallWithRetry("eth_call", [
+          { to: STAKING_CONTRACT, data: SEL_PENDING + padded },
+          "latest",
+        ]),
+        rpcCallWithRetry("eth_blockNumber", []),
+      ]);
+      setUserStake(hexToBigInt(stakeRaw as string));
+      setUserPending(hexToBigInt(pendingRaw as string));
+
+      const currentBlock = Number(BigInt(currentBlockHex as string));
+      const userTopic = "0x" + padded;
+      const chunks: { fromBlock: string; toBlock: string }[] = [];
+      for (let end = currentBlock; end > 0; end -= LOG_CHUNK_SIZE) {
+        const start = Math.max(0, end - LOG_CHUNK_SIZE + 1);
+        chunks.push({
+          fromBlock: "0x" + start.toString(16),
+          toBlock: "0x" + end.toString(16),
+        });
+        if (chunks.length >= 30) break;
+      }
+      const logResults = await Promise.all(
+        chunks.map((c) =>
+          rpcCall("eth_getLogs", [
+            {
+              address: STAKING_CONTRACT,
+              topics: [TOPIC_CLAIMED, userTopic],
+              fromBlock: c.fromBlock,
+              toBlock: c.toBlock,
+            },
+          ]).catch(() => [] as RawLog[])
+        )
+      );
+      const claimLogs = logResults.flat() as RawLog[];
+      const lifetime = claimLogs.reduce(
+        (sum, log) => sum + hexToBigInt("0x" + log.data.slice(2, 66)),
+        0n
+      );
+      setUserLifetimeClaims(lifetime);
+    } catch (err) {
+      console.error("Personal stats fetch failed:", err);
+    } finally {
+      setPersonalLoading(false);
+    }
+  }, [address, onBaseMainnet]);
+
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
@@ -362,6 +441,27 @@ export default function RevShareTerminal() {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [autoRefresh, fetchAll]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (cancelled) return;
+      await fetchPersonal();
+    };
+    void run();
+    if (!autoRefresh || !address || !onBaseMainnet) {
+      return () => {
+        cancelled = true;
+      };
+    }
+    const id = setInterval(() => {
+      void fetchPersonal();
+    }, AUTO_REFRESH_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [autoRefresh, address, onBaseMainnet, fetchPersonal]);
 
   const copyOwner = () => {
     navigator.clipboard.writeText(OWNER);
@@ -469,6 +569,107 @@ export default function RevShareTerminal() {
           <div className={styles.label}>AVG PUSH INTERVAL</div>
           <div className={styles.value}>{avgPushInterval}</div>
         </div>
+      </div>
+
+      <div className={styles.personalSection}>
+        <div className={styles.personalHeader}>
+          <div className={styles.sectionTitle}>YOUR POSITION</div>
+          <div className={styles.personalControls}>
+            {isConnected && onBaseMainnet && (
+              <button
+                className={styles.btn}
+                onClick={fetchPersonal}
+                disabled={personalLoading}
+              >
+                {personalLoading ? "REFRESHING..." : "REFRESH"}
+              </button>
+            )}
+            <WalletButton compact />
+          </div>
+        </div>
+
+        {!isConnected ? (
+          <div className={styles.gateBox}>
+            <div className={styles.gateText}>
+              CONNECT WALLET TO VIEW YOUR PERSONAL STAKE, PENDING REWARDS, AND
+              LIFETIME CLAIMS.
+            </div>
+          </div>
+        ) : !onBaseMainnet ? (
+          <div className={styles.gateBox}>
+            <div className={styles.gateText}>
+              WRONG NETWORK. SWITCH TO BASE MAINNET TO VIEW YOUR POSITION.
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className={styles.statRow}>
+              <div className={styles.statCard}>
+                <div className={styles.label}>YOUR STAKE</div>
+                <div className={styles.value}>
+                  {userStake !== null ? formatVT(userStake) + " VT" : "—"}
+                </div>
+              </div>
+              <div className={styles.statCard}>
+                <div className={styles.label}>YOUR PENDING</div>
+                <div className={styles.value}>
+                  {userPending !== null
+                    ? formatVTCompact(userPending)
+                    : "—"}
+                </div>
+              </div>
+              <div className={styles.statCard}>
+                <div className={styles.label}>YOUR SHARE</div>
+                <div className={styles.value}>
+                  {userStake !== null && totalStaked && totalStaked > 0n
+                    ? (
+                        ((Number(userStake / 10n ** 14n) / 10000) /
+                          (Number(totalStaked / 10n ** 14n) / 10000)) *
+                        100
+                      ).toFixed(4) + "%"
+                    : "—"}
+                </div>
+              </div>
+            </div>
+            <div className={styles.statRow}>
+              <div className={styles.statCard}>
+                <div className={styles.label}>LIFETIME CLAIMS</div>
+                <div className={styles.value}>
+                  {userLifetimeClaims !== null
+                    ? formatVT(userLifetimeClaims) + " VT"
+                    : "—"}
+                </div>
+              </div>
+              <div className={styles.statCard}>
+                <div className={styles.label}>CONNECTED ADDRESS</div>
+                <div className={`${styles.value} ${styles.valueSmall}`}>
+                  {address ? (
+                    <a
+                      className={styles.addr}
+                      href={`https://basescan.org/address/${address}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {truncAddr(address)}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </div>
+              </div>
+              <div className={styles.statCard}>
+                <div className={styles.label}>STATUS</div>
+                <div className={`${styles.value} ${styles.valueSmall}`}>
+                  {userStake && userStake > 0n ? "ACTIVE STAKER" : "NOT STAKED"}
+                </div>
+              </div>
+            </div>
+            <div className={styles.sectionNote}>
+              Read-only view. To stake, withdraw, or claim use the landing-page
+              RevShare console at vexorterminal.com/#revshare.
+            </div>
+          </>
+        )}
       </div>
 
       <div className={styles.ownerRow}>
