@@ -115,6 +115,135 @@ body {
   animation: marquee 40s linear infinite;
 }
 
+/* Markdown article styling for /docs/staking */
+.prose-vexor {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 15px;
+  line-height: 1.75;
+}
+.prose-vexor h1 {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 2rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+.prose-vexor h2 {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
+  color: #fff;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.prose-vexor h3 {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 1.1rem;
+  color: #fff;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+.prose-vexor h4 {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.92);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.prose-vexor p {
+  margin: 0.85rem 0;
+}
+.prose-vexor a {
+  color: #67e8f9;
+  text-decoration: underline;
+  text-decoration-color: rgba(103, 232, 249, 0.35);
+  text-underline-offset: 3px;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+.prose-vexor a:hover {
+  color: #a5f3fc;
+  text-decoration-color: rgba(165, 243, 252, 0.7);
+}
+.prose-vexor ul,
+.prose-vexor ol {
+  margin: 0.85rem 0;
+  padding-left: 1.5rem;
+}
+.prose-vexor li {
+  margin: 0.4rem 0;
+}
+.prose-vexor strong {
+  color: #fff;
+  font-weight: 600;
+}
+.prose-vexor em {
+  color: rgba(255, 255, 255, 0.92);
+}
+.prose-vexor blockquote {
+  border-left: 2px solid rgba(34, 211, 238, 0.5);
+  padding-left: 1rem;
+  margin: 1.25rem 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+}
+.prose-vexor hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 2rem 0;
+}
+.prose-vexor code {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85em;
+  color: #67e8f9;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.prose-vexor pre {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1.25rem 0;
+  font-size: 0.85rem;
+}
+.prose-vexor pre code {
+  background: transparent;
+  padding: 0;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+}
+.prose-vexor table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 0.9rem;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+}
+.prose-vexor th,
+.prose-vexor td {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.6rem 0.85rem;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-vexor th {
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font-weight: 600;
+}
+.prose-vexor img {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 /* Subtle noise */
 .noise::after {
   content: "";
