@@ -15,7 +15,20 @@
 
 import type { Env } from "./index";
 
-const RPC_URL = "https://mainnet.base.org";
+// Ordered list of public Base mainnet RPCs. Tried sequentially: if one fails
+// (429 / 5xx / timeout / network error) we move on to the next. From the
+// Cloudflare edge, `mainnet.base.org` aggressively 429s due to shared outbound
+// IP space, so it's intentionally placed last as a final fallback. Provider
+// rate limits and uptime drift over time — anchor this list to whatever
+// currently behaves best from the edge.
+const RPC_URLS: ReadonlyArray<string> = [
+  "https://base-rpc.publicnode.com",
+  "https://base.meowrpc.com",
+  "https://1rpc.io/base",
+  "https://mainnet.base.org",
+] as const;
+const RPC_TIMEOUT_MS = 5000;
+
 const STAKING_CONTRACT = "0xE25f6243f848523c4577639e975B9F3E0fA57186";
 const VT_TOKEN = "0x2c684D666998436634EcEde1527EdA7975427Ba3";
 const OWNER = "0x0259abb884050E19e787cF7E271b6984E13BD79B";
@@ -112,18 +125,45 @@ function formatVt(raw: bigint): string {
   return num.toFixed(4);
 }
 
-async function rpcCall(method: string, params: unknown[]): Promise<unknown> {
-  const res = await fetch(RPC_URL, {
+async function rpcCallOnce(
+  url: string,
+  method: string,
+  params: unknown[],
+  signal: AbortSignal,
+): Promise<unknown> {
+  const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "content-type": "application/json" },
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+    signal,
   });
   if (!res.ok) {
     throw new Error(`RPC HTTP ${res.status}`);
   }
-  const json = (await res.json()) as { result?: unknown; error?: { message?: string } };
+  const json = (await res.json()) as {
+    result?: unknown;
+    error?: { message?: string };
+  };
   if (json.error) throw new Error(json.error.message || "RPC error");
   return json.result;
+}
+
+async function rpcCall(method: string, params: unknown[]): Promise<unknown> {
+  let lastErr: unknown = new Error("no rpc endpoints configured");
+  for (const url of RPC_URLS) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), RPC_TIMEOUT_MS);
+    try {
+      const result = await rpcCallOnce(url, method, params, controller.signal);
+      clearTimeout(timer);
+      return result;
+    } catch (err) {
+      clearTimeout(timer);
+      lastErr = err;
+      // try next RPC
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
 }
 
 async function fetchLogsChunked(
@@ -331,7 +371,12 @@ export async function handlePool(
     );
   }
 
+  // Normalize the cache key: drop query string + fragment so attackers cannot
+  // amplify cost by varying `?_=N` on each request. The endpoint ignores all
+  // query params; only the method + pathname matter.
   const url = new URL(request.url);
+  url.search = "";
+  url.hash = "";
   const cacheKey = new Request(url.toString(), { method: "GET" });
   const cache = caches.default;
 
