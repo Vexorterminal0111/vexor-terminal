@@ -14,6 +14,7 @@ const links = [
   { href: "/#console", label: "Console" },
   { href: "/#revshare", label: "RevShare" },
   { href: "/agents", label: "Agents" },
+  { href: "/intel", label: "Intel" },
   { href: "/#chat", label: "Chat" },
   { href: "/docs.html", label: "Docs" },
 ];
