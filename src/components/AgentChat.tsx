@@ -98,11 +98,18 @@ function renderContent(text: string, accent: string) {
 
 export function AgentChat({ agent }: { agent: AgentPersona }) {
   const { address, isConnected } = useAccount();
-  const greeting: Msg = {
+  // Stable greeting reference — captured in state on first render so it
+  // keeps the same object identity across re-renders. Building the greeting
+  // inline in the component body would produce a new reference per render,
+  // breaking the `messages.filter((m) => m !== greeting)` strip below and
+  // leaking the synthetic greeting to the API as fake conversation context.
+  // useState's lazy init runs exactly once, so `greeting === messages[0]`
+  // stays true for the lifetime of the mount.
+  const [greeting] = useState<Msg>(() => ({
     role: "assistant",
     content: `${agent.name} online. ${agent.pitch} Ready when you are.`,
-  };
-  const [messages, setMessages] = useState<Msg[]>([greeting]);
+  }));
+  const [messages, setMessages] = useState<Msg[]>(() => [greeting]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
