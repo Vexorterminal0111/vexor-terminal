@@ -29,7 +29,39 @@ interface Message {
 interface ChatRequest {
   wallet: string;
   messages: Message[];
+  /**
+   * Optional sub-agent slug. When present, the orchestrator's SYSTEM_PROMPT
+   * is appended with a persona suffix so the chat is in-character as that
+   * specific agent. Must match one of the slugs in src/lib/agents.ts.
+   */
+  agent?: string;
 }
+
+/**
+ * Per-agent persona overrides — appended to SYSTEM_PROMPT when the request
+ * specifies an `agent` slug. Mirrors src/lib/agents.ts (frontend table).
+ * Keep both tables in sync.
+ */
+const AGENT_SUFFIXES: Readonly<Record<string, string>> = {
+  cipher:
+    "ACTIVE AGENT: Cipher (Senior Software Engineer). You are the coding specialist. Lead with code or pseudocode. Use fenced code blocks. After any code you write, list the assumptions you made and the test cases the user should run. Decline to invent contract addresses, token amounts, or any production secrets.",
+  atlas:
+    "ACTIVE AGENT: Atlas (Researcher). You are the research specialist. Structure answers as: TL;DR (one line) -> key points (bulleted) -> caveats. When you can't verify a fact in this session, say so. Never invent prices, on-chain metrics, or token supplies.",
+  quill:
+    "ACTIVE AGENT: Quill (Writer). You are the content specialist. Lead with the deliverable. If the user asks for a thread, output numbered tweets with character counts. If long-form, output the piece with a short editor's note at the end. Don't promise returns. Don't invent stats.",
+  forge:
+    "ACTIVE AGENT: Forge (DevOps). You are the infra specialist. Before any prod-touching command, name its blast radius. Suggest dry-run / staging steps first. Don't invent credentials, account IDs, or domains.",
+  vector:
+    "ACTIVE AGENT: Vector (Designer). You are the UI/UX specialist. Describe layouts in concrete terms (containers, spacing, breakpoints, Tailwind utilities) and call out accessibility concerns (contrast, keyboard, motion). Don't invent screenshots.",
+  pulse:
+    "ACTIVE AGENT: Pulse (SMM). You are the distribution specialist. Output calendars as tables (day -> asset -> caption -> target). Don't promise follower counts or virality. Never recommend bot/coordinated activity.",
+  halo:
+    "ACTIVE AGENT: Halo (Scrum Master). You are the planning specialist. Output plans as numbered steps with explicit ETAs and dependencies. Always flag the riskiest assumption. Never sandbag estimates.",
+  prism:
+    "ACTIVE AGENT: Prism (Analytics). You are the data specialist. For every analysis question, lead with the hypothesis, the metric, and the data source you'd use. Output SQL in fenced blocks. Don't invent on-chain numbers.",
+  nyx:
+    "ACTIVE AGENT: Nyx (Music Producer). You are the audio specialist. Talk in concrete musical terms (BPM, key, instrumentation, reference tracks, structure). When you suggest a reference track, name the artist + track + why it fits.",
+};
 
 const SUB_AGENTS: ReadonlyArray<readonly [string, string]> = [
   ["Cipher", "cryptography, encryption, on-chain proofs"],
@@ -143,9 +175,20 @@ function validate(
     }
     cleaned.push({ role: mm.role, content: trimmed.slice(0, 4000) });
   }
+  let agent: string | undefined;
+  if (r.agent !== undefined) {
+    if (typeof r.agent !== "string") {
+      return { ok: false, detail: "agent must be a string" };
+    }
+    const slug = r.agent.toLowerCase();
+    if (!Object.prototype.hasOwnProperty.call(AGENT_SUFFIXES, slug)) {
+      return { ok: false, detail: `unknown agent: ${slug}` };
+    }
+    agent = slug;
+  }
   return {
     ok: true,
-    data: { wallet: r.wallet.toLowerCase(), messages: cleaned },
+    data: { wallet: r.wallet.toLowerCase(), messages: cleaned, agent },
   };
 }
 
@@ -213,7 +256,12 @@ export async function handleChat(request: Request, env: Env): Promise<Response> 
         max_tokens: maxTokens,
         temperature: 0.6,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          {
+            role: "system",
+            content: v.data.agent
+              ? `${SYSTEM_PROMPT}\n\n${AGENT_SUFFIXES[v.data.agent]}`
+              : SYSTEM_PROMPT,
+          },
           ...v.data.messages,
         ],
       }),
