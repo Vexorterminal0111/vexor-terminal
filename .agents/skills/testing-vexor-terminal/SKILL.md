@@ -101,6 +101,30 @@ CLOUDFLARE_API_TOKEN=$CLOUDFLARE_API_TOKEN npx wrangler secret put GROQ_API_KEY
 
 If the user wants auto-deploy on push to main, they must manually reconnect the Workers Builds GitHub integration in the Cloudflare dashboard at `Workers → vexor-terminal → Settings → Builds → Reconnect`. There's no way to fix this from inside a Devin session.
 
+### .env.local gotcha — clear `NEXT_PUBLIC_CHAT_API_URL` before every prod build
+
+Next.js loads `.env.local` for **every** build, including production. If a previous session set `NEXT_PUBLIC_CHAT_API_URL=https://<some>.trycloudflare.com` (e.g. for local Worker tunnelling), that value gets **baked into the static export** and shipped to production — every `/api/chat` call from the browser then tries to hit the (long-dead) dev tunnel and fails with `net::ERR_NAME_NOT_RESOLVED`.
+
+Before running `pnpm build --webpack`, **always** ensure the env var is empty so the frontend falls back to the same-origin `/api/chat`:
+
+```
+grep -n NEXT_PUBLIC_CHAT_API_URL /home/ubuntu/repos/vexor-terminal/.env.local
+# expect: NEXT_PUBLIC_CHAT_API_URL=     (empty value after =)
+```
+
+If it's not empty, blank it out before building:
+```
+sed -i 's|^NEXT_PUBLIC_CHAT_API_URL=.*|NEXT_PUBLIC_CHAT_API_URL=|' /home/ubuntu/repos/vexor-terminal/.env.local
+```
+
+After deploy, verify the production bundle does NOT reference any `trycloudflare`/`ngrok` URL:
+```
+curl -s https://vexorterminal.com/agents/cipher | grep -oE 'page-[a-f0-9]{16}\.js' | head -1
+# then download that chunk and grep for trycloudflare — should return nothing
+```
+
+This same `.env.local` value also affects the main `/chat` orchestrator (`Chat.tsx`) and every `/agents/<slug>` page (`AgentChat.tsx`) — both modules use `process.env.NEXT_PUBLIC_CHAT_API_URL` with same-origin `/api/chat` as the fallback.
+
 ## What to do for full UI testing
 
 If the task requires UI screenshots / a recording:
