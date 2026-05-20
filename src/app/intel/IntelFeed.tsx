@@ -93,8 +93,10 @@ function formatRelative(iso: string | undefined): string | null {
   const diffSec = Math.round((Date.now() - d.getTime()) / 1000);
   if (diffSec < 0) {
     const ahead = Math.abs(diffSec);
+    if (ahead < 60) return `in ${ahead}s`;
     if (ahead < 3600) return `in ${Math.round(ahead / 60)}m`;
-    return `in ${Math.round(ahead / 3600)}h`;
+    if (ahead < 86400) return `in ${Math.round(ahead / 3600)}h`;
+    return `in ${Math.round(ahead / 86400)}d`;
   }
   if (diffSec < 60) return `${diffSec}s ago`;
   if (diffSec < 3600) return `${Math.round(diffSec / 60)}m ago`;

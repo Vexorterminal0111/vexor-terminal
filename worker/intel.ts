@@ -109,7 +109,12 @@ function normalize(raw: unknown, sourceUrl: string): IntelPayload {
         typeof e.run_id === "string" || typeof e.run_id === "number"
           ? e.run_id
           : undefined,
-      items: Array.isArray(e.items) ? (e.items as SkillItem[]) : undefined,
+      items: Array.isArray(e.items)
+        ? (e.items.filter(
+            (item: unknown): item is SkillItem =>
+              !!item && typeof item === "object",
+          ) as SkillItem[])
+        : undefined,
       metadata:
         e.metadata && typeof e.metadata === "object"
           ? (e.metadata as Record<string, unknown>)
