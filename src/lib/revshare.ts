@@ -114,24 +114,22 @@ export async function fetchPoolSummary(): Promise<PoolSummary> {
   try {
     const logs = await fetchLogsChunked(TOPIC_REWARDS_PUSHED, currentBlock);
     if (logs.length > 0) {
-      // Block timestamps for the freshest log to determine the window we have.
-      // We approximate: take the oldest fetched log's block timestamp as window start,
-      // compare to now, scale to 30d → 365d.
+      // Window = (current block timestamp) − (oldest fetched log timestamp).
+      // Using the current head instead of the newest log timestamp keeps the
+      // window meaningful when only one log exists or when several logs land
+      // in the same block — otherwise newestTs − oldestTs collapses to 0 and
+      // the annualization explodes (e.g. a single 1k VT push → ~1.6M% APR).
       const oldest = logs.reduce<RawLog>(
         (acc, l) => (Number(BigInt(l.blockNumber)) < Number(BigInt(acc.blockNumber)) ? l : acc),
         logs[0]
       );
-      const newest = logs.reduce<RawLog>(
-        (acc, l) => (Number(BigInt(l.blockNumber)) > Number(BigInt(acc.blockNumber)) ? l : acc),
-        logs[0]
-      );
-      const [oldestBlock, newestBlock] = (await Promise.all([
+      const [oldestBlock, headBlock] = (await Promise.all([
         rpcCall("eth_getBlockByNumber", [oldest.blockNumber, false]),
-        rpcCall("eth_getBlockByNumber", [newest.blockNumber, false]),
+        rpcCall("eth_getBlockByNumber", ["latest", false]),
       ])) as BlockInfo[];
       const oldestTs = Number(BigInt(oldestBlock.timestamp));
-      const newestTs = Number(BigInt(newestBlock.timestamp));
-      const windowSeconds = Math.max(1, newestTs - oldestTs);
+      const headTs = Number(BigInt(headBlock.timestamp));
+      const windowSeconds = headTs - oldestTs;
 
       let total = 0n;
       for (const l of logs) {
@@ -139,7 +137,10 @@ export async function fetchPoolSummary(): Promise<PoolSummary> {
       }
       rewards30dVt = total;
 
-      if (totalStaked > 0n) {
+      // Require a minimum window of 1 hour before annualizing. A shorter
+      // window would dramatically over-extrapolate from a single fresh push.
+      const MIN_APR_WINDOW_SECONDS = 60 * 60;
+      if (totalStaked > 0n && windowSeconds >= MIN_APR_WINDOW_SECONDS) {
         // Annualize: (total / windowSeconds) * (365d in seconds) / totalStaked * 100
         const yearSeconds = 365 * 24 * 60 * 60;
         const totalNum = Number(total / 10n ** 14n) / 10000;
