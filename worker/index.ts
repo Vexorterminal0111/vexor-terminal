@@ -12,6 +12,7 @@
 import { handleChat } from "./chat";
 import { handlePool } from "./pool";
 import { handleIntel } from "./intel";
+import { handleIntelToken } from "./intel-token";
 
 export interface Env {
   ASSETS: Fetcher;
@@ -22,6 +23,10 @@ export interface Env {
   // Optional override for the aeon-published intel feed URL.
   // Defaults to the canonical vexor-aeon data branch.
   INTEL_DATA_URL?: string;
+  // Optional override for the per-token intel feed base URL
+  // (Pulse Premium). Defaults to the vexor-aeon data branch
+  // `intel/tokens/` directory.
+  INTEL_TOKEN_BASE_URL?: string;
 }
 
 export default {
@@ -39,6 +44,12 @@ export default {
     }
     if (url.pathname === "/api/intel") {
       return handleIntel(request, env, ctx);
+    }
+    // /api/intel/<slug>  — per-token Pulse Premium feed.
+    // /api/intel/index  — index manifest of supported tokens.
+    const tokenMatch = url.pathname.match(/^\/api\/intel\/([a-z0-9-]+)\/?$/i);
+    if (tokenMatch) {
+      return handleIntelToken(request, env, ctx, tokenMatch[1]);
     }
     return env.ASSETS.fetch(request);
   },
