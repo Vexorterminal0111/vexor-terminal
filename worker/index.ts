@@ -13,6 +13,7 @@ import { handleChat } from "./chat";
 import { handlePool } from "./pool";
 import { handleIntel } from "./intel";
 import { handleIntelToken } from "./intel-token";
+import { handleWatchtowerWebhook, runWatchtowerCron } from "./watchtower";
 
 export interface Env {
   ASSETS: Fetcher;
@@ -27,6 +28,13 @@ export interface Env {
   // (Pulse Premium). Defaults to the vexor-aeon data branch
   // `intel/tokens/` directory.
   INTEL_TOKEN_BASE_URL?: string;
+  // Watchtower (Telegram-native alerts).
+  WATCHTOWER: KVNamespace;
+  TELEGRAM_BOT_TOKEN: string;
+  // Optional shared secret. When set, the Watchtower webhook rejects
+  // any inbound request whose `X-Telegram-Bot-Api-Secret-Token` header
+  // does not match.
+  TELEGRAM_WEBHOOK_SECRET?: string;
 }
 
 export default {
@@ -45,6 +53,9 @@ export default {
     if (url.pathname === "/api/intel") {
       return handleIntel(request, env, ctx);
     }
+    if (url.pathname === "/api/watchtower/webhook") {
+      return handleWatchtowerWebhook(request, env, ctx);
+    }
     // /api/intel/<slug>  — per-token Pulse Premium feed.
     // /api/intel/index  — index manifest of supported tokens.
     const tokenMatch = url.pathname.match(/^\/api\/intel\/([a-z0-9-]+)\/?$/i);
@@ -52,5 +63,15 @@ export default {
       return handleIntelToken(request, env, ctx, tokenMatch[1]);
     }
     return env.ASSETS.fetch(request);
+  },
+  // Cloudflare Cron Triggers entrypoint. Configured in wrangler.jsonc
+  // (`triggers.crons`). Currently dispatches the hourly Watchtower
+  // refresh + alert pass.
+  async scheduled(
+    _controller: ScheduledController,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<void> {
+    ctx.waitUntil(runWatchtowerCron(env));
   },
 } satisfies ExportedHandler<Env>;
