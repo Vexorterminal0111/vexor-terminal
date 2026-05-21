@@ -125,6 +125,106 @@ curl -s https://vexorterminal.com/agents/cipher | grep -oE 'page-[a-f0-9]{16}\.j
 
 This same `.env.local` value also affects the main `/chat` orchestrator (`Chat.tsx`) and every `/agents/<slug>` page (`AgentChat.tsx`) — both modules use `process.env.NEXT_PUBLIC_CHAT_API_URL` with same-origin `/api/chat` as the fallback.
 
+## Vexor Watchtower V1 — Telegram-native bot testing
+
+Watchtower V1 is Telegram-native — the bot IS the UI, there is no `/watch` page. Smoke testing happens entirely through Telegram DMs.
+
+**Production endpoint:** `https://vexorterminal.com/api/watchtower/webhook` (POST only, JSON body).
+**Bot:** `@VexorAeonWatchtowerbot`.
+**KV namespace:** `WATCHTOWER` (id `f781ca225f1f4407b4b1651bbb89fb92`), bound in `wrangler.jsonc`.
+**Worker secrets:** `TELEGRAM_BOT_TOKEN` (required, the BotFather token). `TELEGRAM_WEBHOOK_SECRET` is optional and currently unset in prod.
+
+### Webhook reachability check (no Telegram client needed)
+
+```
+curl -s -o /dev/null -w '%{http_code}\n' -X GET  https://vexorterminal.com/api/watchtower/webhook
+# expect 405 (method not allowed)
+curl -s -o /dev/null -w '%{http_code}\n' -X POST https://vexorterminal.com/api/watchtower/webhook \
+  -H 'content-type: application/json' -d '{}'
+# expect 200 (empty update body is valid; Worker no-ops)
+curl -s -o /dev/null -w '%{http_code}\n' -X POST https://vexorterminal.com/api/watchtower/webhook \
+  -H 'content-type: application/json' -d '{not-json}'
+# expect 400
+```
+
+Also verify Telegram has the webhook registered:
+
+```
+curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo"
+# expect: url == https://vexorterminal.com/api/watchtower/webhook, pending_update_count == 0
+```
+
+If `url` is empty, re-register: `curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" -d "url=https://vexorterminal.com/api/watchtower/webhook" -d "drop_pending_updates=true"`.
+
+### E2E test via Telegram Web (recording-grade test)
+
+The only way to record the full happy-path + Markdown rendering is to log into the user's Telegram account in Chrome on the Devin VM. Devin has no test Telegram account and the bot only responds to authenticated users with a chat_id.
+
+Flow (requires user assistance):
+1. Ask the user for their **phone number** in international format.
+2. Navigate Chrome to `https://web.telegram.org/k/` (this loads the WebK client — WebA is at `/a/`, slightly different UI).
+3. Click "Log in by phone number", enter the user's phone.
+4. Telegram sends a 5-digit code to the user's official `Telegram` chat (NOT SMS, NOT email — they have to be told to look in their own Telegram app's chat list for a chat from "Telegram" with the code).
+5. Ask user for the code, enter it.
+6. If 2FA password is set, ask user for it (Telegram shows a hint inside the password field — that's just a reminder phrase, not the password).
+7. Now logged in. DM `@VexorAeonWatchtowerbot` and exercise all command paths.
+
+**Logging out the Web session at end of test** — Telegram WebK has NO "Log out" UI. The only ways to terminate the Web session are: (a) clear browser site data for `web.telegram.org`, or (b) the user remote-terminates from their phone (Settings → Devices). Programmatic way via CDP:
+
+```python
+# After test complete — clear all telegram.org storage via CDP
+import asyncio
+from playwright.async_api import async_playwright
+async def main():
+    async with async_playwright() as p:
+        b = await p.chromium.connect_over_cdp("http://localhost:29229")
+        ctx = b.contexts[0]
+        for page in ctx.pages:
+            if "telegram" in page.url:
+                cdp = await ctx.new_cdp_session(page)
+                await cdp.send("Storage.clearDataForOrigin", {
+                    "origin": "https://web.telegram.org", "storageTypes": "all"})
+                await page.goto("https://web.telegram.org/k/")
+        await b.close()
+asyncio.run(main())
+```
+
+The page should now show the QR-code login screen, confirming the session is gone.
+
+### Test sequence (9 steps, additive — one E2E flow)
+
+| # | Send | Expected reply (key tokens) | Code path |
+|---|------|------------------------------|-----------|
+| 0 | `/stop` | `Unsubscribed. All watches removed.` | `worker/watchtower.ts:373` |
+| 1 | `/start` | `Vexor Watchtower live, <name>.` + `±10%` / `≥25%` | `worker/watchtower.ts:232-248` |
+| 2 | `/help` | `Free-tier limit: 5 tokens.` + `Thresholds: price ±10% / 1h, liquidity ≤-25% / 1h.` | `worker/watchtower.ts:252-262` |
+| 3 | `/tokens` | `Supported tokens (7):` + VT, AERO, BRETT, DEGEN, TOSHI, AEON, BNKR | `worker/watchtower.ts:361-365` |
+| 4 | `/watch vt` | `Watching **VT**. You will get an alert on ±10% / 1h moves.` | `worker/watchtower.ts:330-335` |
+| 5 | `/list` | `Your watchlist (1/5): • **VT** (`vt`) —` (em-dash OR `$<price>` — both valid) | `worker/watchtower.ts:285-289` |
+| 6 | `/watch __invalid__` | `Unknown slug \`invalid\`. Run /tokens to see supported tokens.` — sanitization strips `_` | `worker/watchtower.ts:300-305` + `662-665` (sanitizeSlugForEcho) |
+| 7 | `/unwatch vt` | `Stopped watching \`vt\`.` | `worker/watchtower.ts:357` |
+| 8 | `/list` | `You are not watching any tokens. Try \`/watch vt\`.` | `worker/watchtower.ts:269-273` |
+
+The `/watch __invalid__` negative case is the regression test for PR #39's `sanitizeSlugForEcho` fix — without it, the unbalanced `_` chars in a Markdown code span would cause Telegram to reject the entire `sendMessage` with HTTP 400 and the user would receive nothing.
+
+### Things you CANNOT verify from chat (require external triggers)
+
+- **Cron alert pipeline** (`runWatchtowerCron`, scheduled `0 * * * *`) — needs a real DexScreener delta crossing `±10% / 1h` or `≤-25% / 1h`. Code path covered by static review; no on-demand trigger.
+- **Liquidity-drop alert headline `Math.abs` fix** (PR #39 bug 2) — same dependency.
+- **`/start` greeting Markdown-escape fix** (PR #39 bug 1) — only fires for users whose Telegram `first_name` contains `_*\`[`. A user whose name is plain ASCII letters (like "cedric ronvel") will exercise the escape function but the output is byte-identical to no-escape.
+
+### Free-tier ceiling (constants in `worker/watchtower.ts:43-47`)
+
+```ts
+const PRICE_THRESHOLD_PCT = 10;       // alert on \u00b110% / 1h
+const LIQ_DROP_THRESHOLD_PCT = -25;   // alert on \u2264-25% / 1h
+const ALERT_COOLDOWN_MS = 60 * 60 * 1000;  // 1h per direction per token
+const SNAPSHOT_FRESH_WINDOW_MS = 2 * 60 * 60 * 1000;
+const MAX_TOKENS_PER_USER = 5;        // free-tier ceiling
+```
+
+If any of these numbers change in the source, the `/help` and `/start` greeting strings must update in lockstep.
+
 ## What to do for full UI testing
 
 If the task requires UI screenshots / a recording:
