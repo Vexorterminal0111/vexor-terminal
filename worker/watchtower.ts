@@ -396,10 +396,11 @@ async function cmdResearch(env: Env, chatId: number, args: string[]): Promise<vo
     return;
   }
 
-  // Rate-limit check against per-chat per-UTC-day counter. We read,
-  // check, then increment — no atomic CAS in KV, but the worst case is
-  // two simultaneous /research commands from the same chat both
-  // succeeding at the boundary, which is harmless.
+  // Rate-limit check against per-chat per-UTC-day counter. We read and
+  // check here, but only *increment* the counter after the brief is
+  // successfully synthesized — otherwise an upstream blip (Groq down,
+  // DexScreener timeout, ResearchError on a bad CA) would burn one of
+  // the user's 3 daily slots without delivering anything.
   const today = utcDayKey(new Date());
   const counterKey = researchCounterKey(chatId, today);
   const used = await readCounter(env, counterKey);
@@ -412,11 +413,11 @@ async function cmdResearch(env: Env, chatId: number, args: string[]): Promise<vo
     );
     return;
   }
-  await writeCounter(env, counterKey, used + 1);
 
   // ACK so the user knows the bot heard them; the LLM call below can
   // take 10-20s and Telegram users get nervous without an immediate
-  // reply.
+  // reply. Quota shown is "what it will be on success" so the user
+  // sees an honest budget — we commit the write on the success path.
   await sendMessage(
     env,
     chatId,
@@ -426,9 +427,16 @@ async function cmdResearch(env: Env, chatId: number, args: string[]): Promise<vo
 
   try {
     const brief = await produceResearchBrief(env, input);
+    // Commit the quota slot ONLY after we have a real brief in hand.
+    // sendMessage doesn't throw on Telegram API errors (it just logs)
+    // so the user still gets charged for transient Telegram-side
+    // failures; that tradeoff is acceptable because the work was done.
+    await writeCounter(env, counterKey, used + 1);
     await sendMessage(env, chatId, brief, "Markdown");
   } catch (err) {
     if (err instanceof ResearchError) {
+      // User-facing soft errors (bad CA, no pair on Base, etc.) — do
+      // not charge quota since no real work happened.
       await sendMessage(env, chatId, err.message, "Markdown");
     } else {
       console.warn("watchtower: research failed", err);
