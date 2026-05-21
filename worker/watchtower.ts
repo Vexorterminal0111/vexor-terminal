@@ -220,7 +220,7 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
 // -----------------------------------------------------------------------------
 
 async function cmdStart(env: Env, msg: TelegramMessage): Promise<void> {
-  const name = msg.from?.first_name ?? "anon";
+  const name = escapeMarkdown(msg.from?.first_name ?? "anon");
   const existing = await getChat(env, msg.chat.id);
   if (!existing) {
     await putChat(env, msg.chat.id, {
@@ -300,7 +300,7 @@ async function cmdWatch(env: Env, chatId: number, args: string[]): Promise<void>
     await sendMessage(
       env,
       chatId,
-      `Unknown slug \`${slug}\`. Run /tokens to see supported tokens.`,
+      `Unknown slug \`${sanitizeSlugForEcho(slug)}\`. Run /tokens to see supported tokens.`,
       "Markdown",
     );
     return;
@@ -343,7 +343,12 @@ async function cmdUnwatch(env: Env, chatId: number, args: string[]): Promise<voi
   const slug = args[0].toLowerCase();
   const existing = await getChat(env, chatId);
   if (!existing || !existing.tokens.includes(slug)) {
-    await sendMessage(env, chatId, `Not currently watching \`${slug}\`.`, "Markdown");
+    await sendMessage(
+      env,
+      chatId,
+      `Not currently watching \`${sanitizeSlugForEcho(slug)}\`.`,
+      "Markdown",
+    );
     return;
   }
   existing.tokens = existing.tokens.filter((t) => t !== slug);
@@ -492,7 +497,7 @@ async function fanOutAlert(
   const symbol = meta?.symbol ?? slug.toUpperCase();
   const headline =
     trigger.dir === "liq_drop"
-      ? `\u26A0\uFE0F *${symbol}* liquidity dropped ${trigger.pct.toFixed(1)}% / 1h`
+      ? `\u26A0\uFE0F *${symbol}* liquidity dropped ${Math.abs(trigger.pct).toFixed(1)}% / 1h`
       : trigger.dir === "up"
         ? `\uD83D\uDFE2 *${symbol}* +${trigger.pct.toFixed(1)}% / 1h`
         : `\uD83D\uDD34 *${symbol}* ${trigger.pct.toFixed(1)}% / 1h`;
@@ -640,4 +645,21 @@ function fmtUsdMaybe(n: number | null | undefined): string {
 function fmtPriceMaybe(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return "\u2014";
   return `$${fmtUsd(n)}`;
+}
+
+// Escape Telegram legacy Markdown special chars. Telegram silently rejects
+// messages with mismatched `_`, `*`, `` ` `` or `[` characters, so any raw
+// user-supplied string interpolated into a Markdown message must be escaped
+// first.
+function escapeMarkdown(s: string): string {
+  return s.replace(/([_*`\[\]])/g, "\\$1");
+}
+
+// User-supplied slugs (from /watch /unwatch args) are echoed back in error
+// messages inside Markdown code spans. Strip anything that isn't a safe slug
+// character so a malformed input can't break the code span or the entire
+// message parse.
+function sanitizeSlugForEcho(s: string): string {
+  const cleaned = s.replace(/[^a-z0-9-]/g, "").slice(0, 32);
+  return cleaned || "?";
 }
