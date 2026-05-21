@@ -37,6 +37,7 @@
 
 import type { Env } from "./index";
 import { INTEL_TOKENS, isIntelTokenSlug, getIntelToken } from "../src/lib/intel-tokens";
+import { parseResearchInput, produceResearchBrief, ResearchError } from "./researcher";
 
 const TELEGRAM_API_BASE = "https://api.telegram.org";
 
@@ -45,6 +46,8 @@ const LIQ_DROP_THRESHOLD_PCT = -25; // alert on ≤-25% / 1h
 const ALERT_COOLDOWN_MS = 60 * 60 * 1000; // 1h per direction per token
 const SNAPSHOT_FRESH_WINDOW_MS = 2 * 60 * 60 * 1000; // ignore baselines older than 2h
 const MAX_TOKENS_PER_USER = 5; // free-tier ceiling
+const RESEARCH_DAILY_LIMIT = 3; // free-tier `/research` quota per chat per UTC day
+const RESEARCH_KEY_TTL_SECONDS = 60 * 60 * 36; // 36h so the counter is around long enough to span the day
 
 interface ChatRecord {
   tokens: string[];
@@ -203,6 +206,9 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
     case "/tokens":
       await cmdTokens(env, msg.chat.id);
       break;
+    case "/research":
+      await cmdResearch(env, msg.chat.id, rawArgs);
+      break;
     case "/stop":
       await cmdStop(env, msg.chat.id);
       break;
@@ -241,9 +247,10 @@ async function cmdStart(env: Env, msg: TelegramMessage): Promise<void> {
     "/unwatch <slug> \u2014 stop watching",
     "/list \u2014 your active watches",
     "/tokens \u2014 list every supported slug",
+    `/research <slug|CA> \u2014 on-demand AI deep dive (${RESEARCH_DAILY_LIMIT}/day)`,
     "/stop \u2014 unsubscribe entirely",
     "",
-    "Example: `/watch vt`",
+    "Examples: `/watch vt`  \u00B7  `/research aero`",  
   ].join("\n");
   await sendMessage(env, msg.chat.id, greet, "Markdown");
 }
@@ -255,10 +262,11 @@ async function cmdHelp(env: Env, chatId: number): Promise<void> {
     "/unwatch <slug> \u2014 stop watching a token",
     "/list \u2014 your watchlist",
     "/tokens \u2014 supported slugs",
+    "/research <slug|CA> \u2014 on-demand AI deep dive",
     "/stop \u2014 unsubscribe everything",
     "",
-    `Free-tier limit: ${MAX_TOKENS_PER_USER} tokens.`,
-    "Thresholds: price \u00B110% / 1h, liquidity \u2264-25% / 1h.",
+    `Free-tier limits: ${MAX_TOKENS_PER_USER} watched tokens, ${RESEARCH_DAILY_LIMIT} researches/day.`,
+    "Watch thresholds: price \u00B110% / 1h, liquidity \u2264-25% / 1h.",
   ];
   await sendMessage(env, chatId, lines.join("\n"), "Markdown");
 }
@@ -365,6 +373,73 @@ async function cmdTokens(env: Env, chatId: number): Promise<void> {
     `Supported tokens (${INTEL_TOKENS.length}):\n${rows.join("\n")}\n\nUse \`/watch <slug>\` to start.`,
     "Markdown",
   );
+}
+
+async function cmdResearch(env: Env, chatId: number, args: string[]): Promise<void> {
+  if (args.length === 0) {
+    await sendMessage(
+      env,
+      chatId,
+      "Usage: `/research <slug>` or `/research <0x-CA>` (e.g. `/research vt`).",
+      "Markdown",
+    );
+    return;
+  }
+  const input = parseResearchInput(args[0]);
+  if (!input) {
+    await sendMessage(
+      env,
+      chatId,
+      `Unrecognized input \`${sanitizeSlugForEcho(args[0])}\`. Pass one of the supported slugs (see /tokens) or a 0x-prefixed Base mainnet address.`,
+      "Markdown",
+    );
+    return;
+  }
+
+  // Rate-limit check against per-chat per-UTC-day counter. We read,
+  // check, then increment — no atomic CAS in KV, but the worst case is
+  // two simultaneous /research commands from the same chat both
+  // succeeding at the boundary, which is harmless.
+  const today = utcDayKey(new Date());
+  const counterKey = researchCounterKey(chatId, today);
+  const used = await readCounter(env, counterKey);
+  if (used >= RESEARCH_DAILY_LIMIT) {
+    await sendMessage(
+      env,
+      chatId,
+      `Daily \`/research\` quota reached (${used}/${RESEARCH_DAILY_LIMIT}). Resets at 00:00 UTC.`,
+      "Markdown",
+    );
+    return;
+  }
+  await writeCounter(env, counterKey, used + 1);
+
+  // ACK so the user knows the bot heard them; the LLM call below can
+  // take 10-20s and Telegram users get nervous without an immediate
+  // reply.
+  await sendMessage(
+    env,
+    chatId,
+    `\uD83D\uDD2C Researching ${input.label}\u2026 brief incoming in ~30s. (Quota today: ${used + 1}/${RESEARCH_DAILY_LIMIT}.)`,
+    "Markdown",
+  );
+
+  try {
+    const brief = await produceResearchBrief(env, input);
+    await sendMessage(env, chatId, brief, "Markdown");
+  } catch (err) {
+    if (err instanceof ResearchError) {
+      await sendMessage(env, chatId, err.message, "Markdown");
+    } else {
+      console.warn("watchtower: research failed", err);
+      await sendMessage(
+        env,
+        chatId,
+        `Research failed for ${input.label}. The upstream data feed or model is unreachable right now \u2014 try again in a minute.`,
+        "Markdown",
+      );
+    }
+  }
 }
 
 async function cmdStop(env: Env, chatId: number): Promise<void> {
@@ -528,6 +603,31 @@ function chatKey(chatId: number): string {
 
 function snapKey(slug: string): string {
   return `snapshot:${slug}`;
+}
+
+function researchCounterKey(chatId: number, utcDay: string): string {
+  return `research-count:${chatId}:${utcDay}`;
+}
+
+/** Returns `YYYYMMDD` in UTC. */
+function utcDayKey(d: Date): string {
+  const y = d.getUTCFullYear().toString().padStart(4, "0");
+  const m = (d.getUTCMonth() + 1).toString().padStart(2, "0");
+  const day = d.getUTCDate().toString().padStart(2, "0");
+  return `${y}${m}${day}`;
+}
+
+async function readCounter(env: Env, key: string): Promise<number> {
+  const raw = await env.WATCHTOWER.get(key);
+  if (!raw) return 0;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
+async function writeCounter(env: Env, key: string, value: number): Promise<void> {
+  await env.WATCHTOWER.put(key, String(value), {
+    expirationTtl: RESEARCH_KEY_TTL_SECONDS,
+  });
 }
 
 async function getChat(env: Env, chatId: number): Promise<ChatRecord | null> {

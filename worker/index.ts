@@ -35,6 +35,12 @@ export interface Env {
   // any inbound request whose `X-Telegram-Bot-Api-Secret-Token` header
   // does not match.
   TELEGRAM_WEBHOOK_SECRET?: string;
+  // Vexor Researcher (Telegram `/research` command). When set, the
+  // researcher pulls contract-verification status from Basescan via the
+  // Etherscan V2 API. Without it the brief still ships but the
+  // contract-security signal is dropped. Free key from
+  // https://etherscan.io/myapikey works.
+  ETHERSCAN_API_KEY?: string;
 }
 
 export default {
