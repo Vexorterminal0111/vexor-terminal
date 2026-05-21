@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { IntelTokenMeta } from "@/lib/intel-tokens";
+import { IntelChart } from "./IntelChart";
 
 const AUTO_REFRESH_MS = 120_000; // 2 min, matches /intel index cadence
 
@@ -254,6 +255,16 @@ export function TokenFeed({ token }: { token: IntelTokenMeta }) {
           <Stat label="Liquidity" value={fmtUsd(market.liquidity_usd)} />
           <Stat label="FDV" value={fmtUsd(market.fdv_usd)} />
         </div>
+
+        {/* Interactive candlestick chart. Skipped until we know the pool
+            address — without it the GeckoTerminal endpoint 404s. */}
+        {market.top_pool?.address && (
+          <IntelChart
+            symbol={token.symbol}
+            network={token.network}
+            pool={market.top_pool.address}
+          />
+        )}
 
         {/* Cards (V1: token-pulse only; future: on-chain etc) */}
         <div className="mt-10 grid grid-cols-1 gap-4">
