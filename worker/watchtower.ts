@@ -64,6 +64,23 @@ interface SnapshotRecord {
   last_alert_dir?: "up" | "down" | "liq_drop";
 }
 
+// Subset of the Pulse Premium per-token feed schema we read inside
+// `cmdChart`. Full schema lives in `worker/intel-token.ts`; we redefine
+// only the fields we need so this file does not depend on the larger
+// `TokenPayload` type.
+interface PulsePremiumSnapshot {
+  price_usd?: number | null;
+  volume_24h_usd?: number | null;
+  liquidity_usd?: number | null;
+  fdv_usd?: number | null;
+  price_change_24h_pct?: number | null;
+}
+
+interface PulsePremiumPayload {
+  generated_at?: string;
+  market_snapshot?: PulsePremiumSnapshot;
+}
+
 interface TelegramUpdate {
   update_id: number;
   message?: TelegramMessage;
@@ -209,6 +226,9 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
     case "/research":
       await cmdResearch(env, msg.chat.id, rawArgs);
       break;
+    case "/chart":
+      await cmdChart(env, msg.chat.id, rawArgs);
+      break;
     case "/stop":
       await cmdStop(env, msg.chat.id);
       break;
@@ -248,9 +268,10 @@ async function cmdStart(env: Env, msg: TelegramMessage): Promise<void> {
     "/list \u2014 your active watches",
     "/tokens \u2014 list every supported slug",
     `/research <slug|CA> \u2014 on-demand AI deep dive (${RESEARCH_DAILY_LIMIT}/day)`,
+    "/chart <slug> \u2014 latest Pulse Premium snapshot (price, vol, liq)",
     "/stop \u2014 unsubscribe entirely",
     "",
-    "Examples: `/watch vt`  \u00B7  `/research aero`",  
+    "Examples: `/watch vt`  \u00B7  `/chart vt`  \u00B7  `/research aero`",  
   ].join("\n");
   await sendMessage(env, msg.chat.id, greet, "Markdown");
 }
@@ -263,6 +284,7 @@ async function cmdHelp(env: Env, chatId: number): Promise<void> {
     "/list \u2014 your watchlist",
     "/tokens \u2014 supported slugs",
     "/research <slug|CA> \u2014 on-demand AI deep dive",
+    "/chart <slug> \u2014 latest snapshot (price, vol, liq, FDV)",
     "/stop \u2014 unsubscribe everything",
     "",
     `Free-tier limits: ${MAX_TOKENS_PER_USER} watched tokens, ${RESEARCH_DAILY_LIMIT} researches/day.`,
@@ -448,6 +470,107 @@ async function cmdResearch(env: Env, chatId: number, args: string[]): Promise<vo
       );
     }
   }
+}
+
+// `/chart` — pull the latest Pulse Premium snapshot for a token and reply
+// with a one-screen stat block + a link to the per-token intel page (which
+// Telegram unfurls into a rich preview, giving the user an inline chart
+// without us rendering an image here).
+async function cmdChart(env: Env, chatId: number, args: string[]): Promise<void> {
+  if (args.length === 0) {
+    const list = INTEL_TOKENS.map((t) => t.symbol).join(", ");
+    await sendMessage(
+      env,
+      chatId,
+      `Usage: \`/chart <slug>\`\nAvailable: ${list}\n\nExample: \`/chart vt\``,
+      "Markdown",
+    );
+    return;
+  }
+
+  // Accept `vt`, `$vt`, `VT`, `$VT` — strip a leading `$` then lowercase.
+  const raw = args[0].replace(/^\$/, "").toLowerCase();
+  if (!isIntelTokenSlug(raw)) {
+    const list = INTEL_TOKENS.map((t) => t.symbol).join(", ");
+    await sendMessage(
+      env,
+      chatId,
+      `Unknown ticker \`${sanitizeSlugForEcho(args[0])}\`. Available: ${list}.`,
+      "Markdown",
+    );
+    return;
+  }
+  const slug = raw;
+  const meta = getIntelToken(slug);
+  if (!meta) {
+    // Defensive — isIntelTokenSlug returned true so this branch should
+    // never fire, but tightens the type for the downstream interpolation.
+    await sendMessage(env, chatId, "Internal error: token metadata missing.");
+    return;
+  }
+
+  const baseUrl = (
+    env.INTEL_TOKEN_BASE_URL ??
+    "https://raw.githubusercontent.com/Vexorterminal0111/vexor-aeon/data/intel/tokens"
+  ).replace(/\/+$/, "");
+  const tokenUrl = `${baseUrl}/${slug}.json`;
+
+  let snapshot: PulsePremiumSnapshot | null = null;
+  let generatedAt: string | null = null;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    const res = await fetch(tokenUrl, {
+      signal: ctrl.signal,
+      cf: { cacheTtl: 60, cacheEverything: true },
+      headers: { "user-agent": "vexor-watchtower-worker/1" },
+    });
+    clearTimeout(timer);
+    if (res.ok) {
+      const data = (await res.json()) as PulsePremiumPayload;
+      snapshot = data?.market_snapshot ?? null;
+      generatedAt = typeof data?.generated_at === "string" ? data.generated_at : null;
+    }
+  } catch (err) {
+    console.warn(`watchtower: /chart fetch failed for ${slug}: ${String(err)}`);
+  }
+
+  const intelLink = `https://vexorterminal.com/intel/${slug}`;
+  const heading = `*${meta.symbol}* \u2014 ${escapeMarkdown(meta.name)}`;
+
+  if (!snapshot) {
+    await sendMessage(
+      env,
+      chatId,
+      `${heading}\nPulse Premium snapshot not available yet (cron may not have produced this token's feed).\n\nFull intel \u2192 ${intelLink}`,
+      "Markdown",
+    );
+    return;
+  }
+
+  const priceStr = fmtPriceMaybe(snapshot.price_usd ?? null);
+  const change24 = snapshot.price_change_24h_pct;
+  const chgStr =
+    typeof change24 === "number" && Number.isFinite(change24)
+      ? ` (${change24 >= 0 ? "+" : ""}${change24.toFixed(1)}% 24h)`
+      : "";
+  const vol = fmtUsdMaybe(snapshot.volume_24h_usd ?? null);
+  const liq = fmtUsdMaybe(snapshot.liquidity_usd ?? null);
+  const fdv = fmtUsdMaybe(snapshot.fdv_usd ?? null);
+  const ageLine = generatedAt ? `\nSnapshot: ${escapeMarkdown(generatedAt)}` : "";
+
+  const body = [
+    heading,
+    `${priceStr}${chgStr}`,
+    `vol ${vol}  \u00B7  liq ${liq}  \u00B7  FDV ${fdv}`,
+    ageLine,
+    "",
+    `Full intel \u2192 ${intelLink}`,
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
+
+  await sendMessage(env, chatId, body, "Markdown");
 }
 
 async function cmdStop(env: Env, chatId: number): Promise<void> {
