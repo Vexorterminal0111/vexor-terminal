@@ -571,7 +571,25 @@ async function cmdChart(env: Env, chatId: number, args: string[]): Promise<void>
     .filter((line) => line !== "")
     .join("\n");
 
-  await sendMessage(env, chatId, body, "Markdown", true);
+  // Try to attach the daily-rendered candlestick PNG via `sendPhoto`.
+  // Charts live on the vexor-aeon `data` branch under `intel/charts/`,
+  // refreshed daily at 12:30 UTC by the `vexor-pulse-charts` workflow.
+  // Telegram fetches the URL itself so we just pass the photo URL.
+  //
+  // If the photo isn't available yet (e.g. chart workflow hasn't run
+  // for this token, GitHub Raw is having a moment, Telegram couldn't
+  // fetch the URL), fall back to the previous text-only reply with an
+  // unfurled intel-page link preview so the user still gets something
+  // useful.
+  const chartBaseUrl = (
+    env.INTEL_CHART_BASE_URL ??
+    "https://raw.githubusercontent.com/Vexorterminal0111/vexor-aeon/data/intel/charts"
+  ).replace(/\/+$/, "");
+  const photoUrl = `${chartBaseUrl}/${slug}.png`;
+  const photoOk = await sendPhoto(env, chatId, photoUrl, body, "Markdown");
+  if (!photoOk) {
+    await sendMessage(env, chatId, body, "Markdown", true);
+  }
 }
 
 async function cmdStop(env: Env, chatId: number): Promise<void> {
@@ -859,6 +877,43 @@ async function sendMessage(
     const errText = await res.text().catch(() => "");
     console.warn(`watchtower: sendMessage ${res.status} ${errText}`);
   }
+}
+
+// Send a photo from a public URL with an optional Markdown caption.
+// Returns true on success so callers can fall back to a text-only reply
+// when the photo URL is unreachable (e.g. the daily chart render has
+// not produced this token's PNG yet).
+async function sendPhoto(
+  env: Env,
+  chatId: number,
+  photoUrl: string,
+  caption?: string,
+  parseMode?: "Markdown" | "MarkdownV2" | "HTML",
+): Promise<boolean> {
+  if (!env.TELEGRAM_BOT_TOKEN) {
+    console.warn("watchtower: TELEGRAM_BOT_TOKEN missing; cannot send photo");
+    return false;
+  }
+  const body: Record<string, unknown> = {
+    chat_id: chatId,
+    photo: photoUrl,
+  };
+  if (caption) body.caption = caption;
+  if (parseMode) body.parse_mode = parseMode;
+  const res = await fetch(
+    `${TELEGRAM_API_BASE}/bot${env.TELEGRAM_BOT_TOKEN}/sendPhoto`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    console.warn(`watchtower: sendPhoto ${res.status} ${errText}`);
+    return false;
+  }
+  return true;
 }
 
 // -----------------------------------------------------------------------------
