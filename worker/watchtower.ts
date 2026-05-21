@@ -544,6 +544,7 @@ async function cmdChart(env: Env, chatId: number, args: string[]): Promise<void>
       chatId,
       `${heading}\nPulse Premium snapshot not available yet (cron may not have produced this token's feed).\n\nFull intel \u2192 ${intelLink}`,
       "Markdown",
+      true, // unfurl the intel link so the per-token page preview shows
     );
     return;
   }
@@ -570,7 +571,7 @@ async function cmdChart(env: Env, chatId: number, args: string[]): Promise<void>
     .filter((line) => line !== "")
     .join("\n");
 
-  await sendMessage(env, chatId, body, "Markdown");
+  await sendMessage(env, chatId, body, "Markdown", true);
 }
 
 async function cmdStop(env: Env, chatId: number): Promise<void> {
@@ -829,6 +830,12 @@ async function sendMessage(
   chatId: number,
   text: string,
   parseMode?: "Markdown" | "MarkdownV2" | "HTML",
+  // `/chart` needs Telegram to unfurl the per-token intel link so the user
+  // sees the inline chart preview. Every other code path (alerts, help
+  // text, command responses) sends short URLs they don't want unfurling.
+  // Default keeps the previous behavior (no preview); opt-in for the
+  // commands that benefit from it.
+  enableLinkPreview = false,
 ): Promise<void> {
   if (!env.TELEGRAM_BOT_TOKEN) {
     console.warn("watchtower: TELEGRAM_BOT_TOKEN missing; cannot send message");
@@ -837,7 +844,7 @@ async function sendMessage(
   const body: Record<string, unknown> = {
     chat_id: chatId,
     text,
-    disable_web_page_preview: true,
+    disable_web_page_preview: !enableLinkPreview,
   };
   if (parseMode) body.parse_mode = parseMode;
   const res = await fetch(
