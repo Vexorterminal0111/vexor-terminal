@@ -28,6 +28,11 @@ export interface Env {
   // (Pulse Premium). Defaults to the vexor-aeon data branch
   // `intel/tokens/` directory.
   INTEL_TOKEN_BASE_URL?: string;
+  // Optional override for the per-token candlestick chart PNG base URL.
+  // Defaults to the vexor-aeon data branch `intel/charts/` directory.
+  // Watchtower's `/chart` command uses this when attaching a chart image
+  // to the reply via Telegram `sendPhoto`.
+  INTEL_CHART_BASE_URL?: string;
   // Watchtower (Telegram-native alerts).
   WATCHTOWER: KVNamespace;
   TELEGRAM_BOT_TOKEN: string;
