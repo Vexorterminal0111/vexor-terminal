@@ -19,6 +19,19 @@
     // Serve out/404.html on any unmatched path.
     "not_found_handling": "404-page"
   },
+  // Vexor Watchtower (Telegram-native alerting). Storage for per-chat
+  // subscriptions and per-token snapshots. See worker/watchtower.ts.
+  "kv_namespaces": [
+    {
+      "binding": "WATCHTOWER",
+      "id": "f781ca225f1f4407b4b1651bbb89fb92"
+    }
+  ],
+  // Hourly cron: refresh DexScreener snapshots for every subscribed token
+  // and fan out Telegram alerts when thresholds trip.
+  "triggers": {
+    "crons": ["0 * * * *"]
+  },
   "observability": {
     "enabled": true
   }
