@@ -42,6 +42,8 @@ Not a chatbot. Not an assistant. A self-improving multi-agent system.
 - **Wallet-gated console** — connect wallet, claim from faucet, stake, govern, all on Base Sepolia testnet during beta (mainnet migration alongside production launch).
 - **Production chat** — Groq Llama 3.3 70B proxied through a single Cloudflare Worker with strict CORS allowlist.
 - **Static-first frontend** — Next.js 16 static export, hosted as Worker Assets — fast edge delivery worldwide, no Node runtime in production.
+- **Vexor Intel** — daily autonomous market briefing at [`/intel`](https://vexorterminal.com/intel), powered by an [aeon-based agent](https://github.com/Vexorterminal0111/vexor-aeon) running on Claude via the Bankr gateway. Five cards refresh on a UTC cadence: Morning Brief, Token Pulse, On-Chain Pulse, DeFi Overview, Evening Recap.
+- **Vexor Pulse Premium** — per-token daily snapshots at [`/intel/<slug>`](https://vexorterminal.com/intel/vt) for 7 Base mainnet tokens ($VT, $AERO, $BRETT, $DEGEN, $TOSHI, $AEON, $BNKR). Price, 24h %, volume, liquidity, FDV, plus an LLM Token Pulse card sourced from DexScreener.
 
 ---
 
