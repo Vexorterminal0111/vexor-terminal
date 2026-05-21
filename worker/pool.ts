@@ -14,20 +14,7 @@
  */
 
 import type { Env } from "./index";
-
-// Ordered list of public Base mainnet RPCs. Tried sequentially: if one fails
-// (429 / 5xx / timeout / network error) we move on to the next. From the
-// Cloudflare edge, `mainnet.base.org` aggressively 429s due to shared outbound
-// IP space, so it's intentionally placed last as a final fallback. Provider
-// rate limits and uptime drift over time — anchor this list to whatever
-// currently behaves best from the edge.
-const RPC_URLS: ReadonlyArray<string> = [
-  "https://base-rpc.publicnode.com",
-  "https://base.meowrpc.com",
-  "https://1rpc.io/base",
-  "https://mainnet.base.org",
-] as const;
-const RPC_TIMEOUT_MS = 5000;
+import { rpcCall, padAddress, hexToBigInt, SEL } from "./rpc";
 
 const STAKING_CONTRACT = "0xE25f6243f848523c4577639e975B9F3E0fA57186";
 const VT_TOKEN = "0x2c684D666998436634EcEde1527EdA7975427Ba3";
@@ -35,9 +22,9 @@ const OWNER = "0x0259abb884050E19e787cF7E271b6984E13BD79B";
 const CHAIN_ID = 8453;
 const NETWORK_NAME = "base-mainnet";
 
-const SEL_TOTAL_STAKED = "0x817b1cd2"; // totalStaked()
-const SEL_ACC_REWARD = "0xcbce44b4"; // accRewardPerToken()
-const SEL_BALANCE_OF = "0x70a08231"; // balanceOf(address)
+const SEL_TOTAL_STAKED = SEL.totalStaked;
+const SEL_ACC_REWARD = SEL.accRewardPerToken;
+const SEL_BALANCE_OF = SEL.balanceOf;
 
 const TOPIC_REWARDS_PUSHED =
   "0xc1385e138caab1497b877640f7c64be52dcce8053e3e24b2b13d34af76d7d835";
@@ -111,59 +98,10 @@ interface PoolApiResponse {
   };
 }
 
-function padAddress(addr: string): string {
-  return "000000000000000000000000" + addr.slice(2).toLowerCase();
-}
-
-function hexToBigInt(hex: string): bigint {
-  return BigInt(hex.startsWith("0x") ? hex : "0x" + hex);
-}
-
 function formatVt(raw: bigint): string {
   // 4 decimal places, fixed
   const num = Number(raw / 10n ** 14n) / 10000;
   return num.toFixed(4);
-}
-
-async function rpcCallOnce(
-  url: string,
-  method: string,
-  params: unknown[],
-  signal: AbortSignal,
-): Promise<unknown> {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-    signal,
-  });
-  if (!res.ok) {
-    throw new Error(`RPC HTTP ${res.status}`);
-  }
-  const json = (await res.json()) as {
-    result?: unknown;
-    error?: { message?: string };
-  };
-  if (json.error) throw new Error(json.error.message || "RPC error");
-  return json.result;
-}
-
-async function rpcCall(method: string, params: unknown[]): Promise<unknown> {
-  let lastErr: unknown = new Error("no rpc endpoints configured");
-  for (const url of RPC_URLS) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), RPC_TIMEOUT_MS);
-    try {
-      const result = await rpcCallOnce(url, method, params, controller.signal);
-      clearTimeout(timer);
-      return result;
-    } catch (err) {
-      clearTimeout(timer);
-      lastErr = err;
-      // try next RPC
-    }
-  }
-  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
 }
 
 async function fetchLogsChunked(

@@ -38,6 +38,7 @@
 import type { Env } from "./index";
 import { INTEL_TOKENS, isIntelTokenSlug, getIntelToken } from "../src/lib/intel-tokens";
 import { parseResearchInput, produceResearchBrief, ResearchError } from "./researcher";
+import { rpcCall, padAddress, hexToBigInt, SEL } from "./rpc";
 
 const TELEGRAM_API_BASE = "https://api.telegram.org";
 
@@ -86,6 +87,19 @@ interface TelegramUpdate {
   message?: TelegramMessage;
   edited_message?: TelegramMessage;
   channel_post?: TelegramMessage;
+  inline_query?: TelegramInlineQuery;
+}
+
+// Subset of Telegram's `InlineQuery` payload. Inline mode lets users
+// invoke @VexorAeonWatchtowerbot from any chat (not just DMs) by typing
+// `@VexorAeonWatchtowerbot <query>` in the message composer. Telegram
+// forwards a `inline_query` update; we answer with up to 50 photo
+// results that the user can tap to share into the current chat.
+interface TelegramInlineQuery {
+  id: string;
+  from: { id: number; username?: string; first_name?: string };
+  query: string;
+  offset: string;
 }
 
 interface TelegramMessage {
@@ -187,6 +201,11 @@ export async function runWatchtowerCron(env: Env): Promise<void> {
 // -----------------------------------------------------------------------------
 
 async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
+  if (update.inline_query) {
+    await handleInlineQuery(update.inline_query, env);
+    return;
+  }
+
   const msg = update.message ?? update.edited_message;
   if (!msg || !msg.text) return;
   if (msg.chat.type !== "private") {
@@ -229,6 +248,9 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
     case "/chart":
       await cmdChart(env, msg.chat.id, rawArgs);
       break;
+    case "/portfolio":
+      await cmdPortfolio(env, msg.chat.id, rawArgs);
+      break;
     case "/stop":
       await cmdStop(env, msg.chat.id);
       break;
@@ -239,6 +261,87 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
         "Unknown command. Try /help.",
       );
   }
+}
+
+// Inline mode entry point. When inline mode is enabled in BotFather
+// (`/setinline`), users can invoke @VexorAeonWatchtowerbot from any
+// chat by typing `@VexorAeonWatchtowerbot <query>` in the composer.
+// We reply with up to 50 InlineQueryResultPhoto entries pointing at
+// the daily Pulse Charts PNGs published to the aeon `data` branch.
+async function handleInlineQuery(
+  iq: TelegramInlineQuery,
+  env: Env,
+): Promise<void> {
+  const chartBaseUrl = (
+    env.INTEL_CHART_BASE_URL ??
+    "https://raw.githubusercontent.com/Vexorterminal0111/vexor-aeon/data/intel/charts"
+  ).replace(/\/+$/, "");
+
+  const query = iq.query.trim().toLowerCase().replace(/^\$/, "");
+
+  // Pick which tokens to surface. Empty query = full roster (gallery),
+  // otherwise filter by slug or symbol prefix. Telegram caps inline
+  // responses at 50 results; we have 7, so no slicing required.
+  let matches = INTEL_TOKENS.slice();
+  if (query.length > 0) {
+    matches = INTEL_TOKENS.filter(
+      (t) =>
+        t.slug.startsWith(query) ||
+        t.symbol.toLowerCase().startsWith(query),
+    );
+  }
+
+  // Fan out snapshot fetches so we can include live price + 24h delta
+  // in the caption. Missing snapshots fall back to a generic caption
+  // pointing at the intel page.
+  const baseUrl = (
+    env.INTEL_TOKEN_BASE_URL ??
+    "https://raw.githubusercontent.com/Vexorterminal0111/vexor-aeon/data/intel/tokens"
+  ).replace(/\/+$/, "");
+  const snapshots = await Promise.all(
+    matches.map(async (t) => {
+      try {
+        const res = await fetch(`${baseUrl}/${t.slug}.json`, {
+          cf: { cacheTtl: 60, cacheEverything: true },
+          headers: { "user-agent": "vexor-watchtower-worker/1" },
+        });
+        if (!res.ok) return null;
+        return (await res.json()) as PulsePremiumPayload;
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  const results: InlineQueryResultPhoto[] = matches.map((t, i) => {
+    const photoUrl = `${chartBaseUrl}/${t.slug}.png`;
+    const snap = snapshots[i]?.market_snapshot;
+    const priceStr = fmtPriceMaybe(snap?.price_usd ?? null);
+    const chg = snap?.price_change_24h_pct;
+    const chgStr =
+      chg != null && Number.isFinite(chg)
+        ? ` (${chg >= 0 ? "+" : ""}${chg.toFixed(1)}% 24h)`
+        : "";
+    const caption = [
+      `*${t.symbol}*  \u00B7  ${t.name}`,
+      `${priceStr}${chgStr}`,
+      `Open: https://vexorterminal.com/intel/${t.slug}`,
+    ].join("\n");
+    return {
+      type: "photo",
+      id: t.slug,
+      photo_url: photoUrl,
+      thumb_url: photoUrl,
+      title: `$${t.symbol}  \u00B7  ${priceStr}`,
+      description: `${t.name}${chgStr}`,
+      caption,
+      parse_mode: "Markdown",
+    };
+  });
+
+  // 60s cache lines up with the Pulse Premium snapshot edge cache.
+  // After that Telegram will round-trip back for fresh data.
+  await answerInlineQuery(env, iq.id, results, 60);
 }
 
 // -----------------------------------------------------------------------------
@@ -269,6 +372,7 @@ async function cmdStart(env: Env, msg: TelegramMessage): Promise<void> {
     "/tokens \u2014 list every supported slug",
     `/research <slug|CA> \u2014 on-demand AI deep dive (${RESEARCH_DAILY_LIMIT}/day)`,
     "/chart <slug> \u2014 latest Pulse Premium snapshot (price, vol, liq)",
+    "/portfolio <0xWallet> \u2014 track your holdings + RevShare position",
     "/stop \u2014 unsubscribe entirely",
     "",
     "Examples: `/watch vt`  \u00B7  `/chart vt`  \u00B7  `/research aero`",  
@@ -285,6 +389,7 @@ async function cmdHelp(env: Env, chatId: number): Promise<void> {
     "/tokens \u2014 supported slugs",
     "/research <slug|CA> \u2014 on-demand AI deep dive",
     "/chart <slug> \u2014 latest snapshot (price, vol, liq, FDV)",
+    "/portfolio <0xWallet> \u2014 track your holdings + RevShare position",
     "/stop \u2014 unsubscribe everything",
     "",
     `Free-tier limits: ${MAX_TOKENS_PER_USER} watched tokens, ${RESEARCH_DAILY_LIMIT} researches/day.`,
@@ -592,6 +697,279 @@ async function cmdChart(env: Env, chatId: number, args: string[]): Promise<void>
   }
 }
 
+// `/portfolio` — read on-chain ERC-20 balances for the roster tokens
+// plus the user's $VT stake / pending rewards in VexorRevShare, multiply
+// by the latest Pulse Premium price, reply with a sorted USD breakdown.
+//
+// Sub-commands:
+//   /portfolio                    — show portfolio for the bound wallet
+//                                   (or usage hint if none is bound)
+//   /portfolio 0xWallet           — bind that wallet to this chat and
+//                                   show the portfolio for it
+//   /portfolio unbind             — clear the binding
+//
+// Binding lives in KV under `portfolio:<chatId>`. We deliberately do
+// NOT store anything on-chain — the chat <-> wallet link is purely
+// off-chain bookkeeping so the user can change wallets freely without
+// touching gas.
+const VEXOR_REVSHARE_ADDRESS = "0xE25f6243f848523c4577639e975B9F3E0fA57186";
+
+async function cmdPortfolio(
+  env: Env,
+  chatId: number,
+  args: string[],
+): Promise<void> {
+  const sub = args[0]?.toLowerCase();
+
+  if (sub === "unbind") {
+    await env.WATCHTOWER.delete(portfolioKey(chatId));
+    await sendMessage(
+      env,
+      chatId,
+      "Portfolio binding cleared. Use `/portfolio 0xYourWallet` to bind a new one.",
+      "Markdown",
+    );
+    return;
+  }
+
+  let wallet: string | null;
+  if (args.length === 0) {
+    wallet = await getPortfolioBinding(env, chatId);
+    if (!wallet) {
+      await sendMessage(
+        env,
+        chatId,
+        [
+          "Usage: `/portfolio 0xYourWalletAddress`",
+          "",
+          "I will track your holdings of every $VT-roster token + your $VT",
+          "stake and pending rewards in the VexorRevShare pool. Your wallet",
+          "address stays linked to this chat until you run `/portfolio unbind`.",
+          "",
+          "Example: `/portfolio 0x0259abb884050E19e787cF7E271b6984E13BD79B`",
+        ].join("\n"),
+        "Markdown",
+      );
+      return;
+    }
+  } else {
+    const candidate = args[0];
+    if (!isValidAddress(candidate)) {
+      await sendMessage(
+        env,
+        chatId,
+        `\`${sanitizeAddressForEcho(candidate)}\` does not look like a valid 0x address (need 0x + 40 hex chars).`,
+        "Markdown",
+      );
+      return;
+    }
+    wallet = candidate.toLowerCase();
+    await setPortfolioBinding(env, chatId, wallet);
+  }
+
+  // Acknowledge before the on-chain reads — the user sees something
+  // useful even if RPC is slow or a snapshot is missing.
+  await sendMessage(
+    env,
+    chatId,
+    `Reading portfolio for \`${wallet.slice(0, 6)}\u2026${wallet.slice(-4)}\` \u2014 hold on.`,
+    "Markdown",
+  );
+
+  let result: PortfolioRow[];
+  let staked: bigint;
+  let pendingReward: bigint;
+  try {
+    const data = await readPortfolio(env, wallet);
+    result = data.rows;
+    staked = data.staked;
+    pendingReward = data.pendingReward;
+  } catch (err) {
+    console.warn(`watchtower: /portfolio rpc failed for ${wallet}: ${String(err)}`);
+    await sendMessage(
+      env,
+      chatId,
+      "On-chain read failed (Base RPC is having a moment). Try again in a minute.",
+    );
+    return;
+  }
+
+  const lines: string[] = [
+    `*Portfolio* \u2014 \`${wallet.slice(0, 6)}\u2026${wallet.slice(-4)}\``,
+    "",
+  ];
+
+  // Sort by USD value descending; tokens with zero balance fall to the bottom.
+  result.sort((a, b) => (b.usdValue ?? 0) - (a.usdValue ?? 0));
+
+  let totalUsd = 0;
+  for (const row of result) {
+    if (row.amount === 0n) continue;
+    const amountStr = formatTokenAmount(row.amount, 18);
+    const usdStr =
+      row.usdValue != null ? `$${fmtUsd(row.usdValue)}` : "\u2014";
+    if (row.usdValue != null) totalUsd += row.usdValue;
+    lines.push(`\u2022 *${row.symbol}*  ${amountStr}  \u00B7  ${usdStr}`);
+  }
+  if (lines.length === 2) {
+    lines.push("_No roster-token balances detected._");
+  }
+
+  // RevShare block (only when there's something interesting to show).
+  if (staked > 0n || pendingReward > 0n) {
+    const vtPrice = result.find((r) => r.slug === "vt")?.priceUsd ?? null;
+    const stakedNum = bigintToNumber(staked, 18);
+    const pendingNum = bigintToNumber(pendingReward, 18);
+    const stakedUsd = vtPrice != null ? stakedNum * vtPrice : null;
+    const pendingUsd = vtPrice != null ? pendingNum * vtPrice : null;
+
+    lines.push("");
+    lines.push("*RevShare ($VT pool)*");
+    lines.push(
+      `Staked: ${formatTokenAmount(staked, 18)} VT` +
+        (stakedUsd != null ? `  \u00B7  $${fmtUsd(stakedUsd)}` : ""),
+    );
+    lines.push(
+      `Pending rewards: ${formatTokenAmount(pendingReward, 18)} VT` +
+        (pendingUsd != null ? `  \u00B7  $${fmtUsd(pendingUsd)}` : ""),
+    );
+    if (stakedUsd != null) totalUsd += stakedUsd;
+    if (pendingUsd != null) totalUsd += pendingUsd;
+  }
+
+  lines.push("");
+  lines.push(`*Total*: $${fmtUsd(totalUsd)} (where price was available)`);
+  lines.push("");
+  lines.push(
+    "Console: https://vexorterminal.com/console  \u00B7  `/portfolio unbind` to clear",
+  );
+
+  await sendMessage(env, chatId, lines.join("\n"), "Markdown", false);
+}
+
+interface PortfolioRow {
+  slug: string;
+  symbol: string;
+  amount: bigint;
+  priceUsd: number | null;
+  usdValue: number | null;
+}
+
+interface PortfolioReadResult {
+  rows: PortfolioRow[];
+  staked: bigint;
+  pendingReward: bigint;
+}
+
+async function readPortfolio(env: Env, wallet: string): Promise<PortfolioReadResult> {
+  const baseUrl = (
+    env.INTEL_TOKEN_BASE_URL ??
+    "https://raw.githubusercontent.com/Vexorterminal0111/vexor-aeon/data/intel/tokens"
+  ).replace(/\/+$/, "");
+
+  const paddedWallet = padAddress(wallet);
+
+  // Fan out RPC + snapshot fetches in parallel. balanceOf() for each
+  // roster token + RevShare balanceOf() and pending() for the same
+  // wallet. Snapshots are pulled in parallel from the GitHub Raw CDN
+  // (edge-cached for 60s) so this whole step usually finishes in well
+  // under a second once RPC settles.
+  const balanceCalls = INTEL_TOKENS.map((t) =>
+    rpcCall("eth_call", [
+      { to: t.ca, data: SEL.balanceOf + paddedWallet },
+      "latest",
+    ]).catch((err) => {
+      console.warn(`watchtower: balanceOf failed for ${t.slug}: ${String(err)}`);
+      return null;
+    }),
+  );
+  const snapshotFetches = INTEL_TOKENS.map(async (t) => {
+    try {
+      const res = await fetch(`${baseUrl}/${t.slug}.json`, {
+        cf: { cacheTtl: 60, cacheEverything: true },
+        headers: { "user-agent": "vexor-watchtower-worker/1" },
+      });
+      if (!res.ok) return null;
+      const data = (await res.json()) as PulsePremiumPayload;
+      return data?.market_snapshot?.price_usd ?? null;
+    } catch {
+      return null;
+    }
+  });
+
+  const stakedCall = rpcCall("eth_call", [
+    { to: VEXOR_REVSHARE_ADDRESS, data: SEL.balanceOf + paddedWallet },
+    "latest",
+  ]).catch(() => null);
+  const pendingCall = rpcCall("eth_call", [
+    { to: VEXOR_REVSHARE_ADDRESS, data: SEL.pending + paddedWallet },
+    "latest",
+  ]).catch(() => null);
+
+  const [balances, prices, stakedHex, pendingHex] = await Promise.all([
+    Promise.all(balanceCalls),
+    Promise.all(snapshotFetches),
+    stakedCall,
+    pendingCall,
+  ]);
+
+  const rows: PortfolioRow[] = INTEL_TOKENS.map((t, i) => {
+    const balHex = balances[i];
+    const amount = typeof balHex === "string" ? hexToBigInt(balHex) : 0n;
+    const priceUsd = prices[i];
+    const tokenAmount = bigintToNumber(amount, 18);
+    const usdValue = priceUsd != null ? tokenAmount * priceUsd : null;
+    return {
+      slug: t.slug,
+      symbol: t.symbol,
+      amount,
+      priceUsd,
+      usdValue,
+    };
+  });
+
+  const staked = typeof stakedHex === "string" ? hexToBigInt(stakedHex) : 0n;
+  const pendingReward =
+    typeof pendingHex === "string" ? hexToBigInt(pendingHex) : 0n;
+
+  return { rows, staked, pendingReward };
+}
+
+function isValidAddress(s: string): boolean {
+  return /^0x[a-fA-F0-9]{40}$/.test(s);
+}
+
+function sanitizeAddressForEcho(s: string): string {
+  // For Markdown safety — strip anything that's not 0-9/a-f/A-F/x.
+  const cleaned = s.replace(/[^a-fA-F0-9x]/g, "").slice(0, 64);
+  return cleaned || "?";
+}
+
+// 18-decimal token amount → human display. Uses 0 decimals above 1000,
+// 2 decimals between 1 and 1000, and a few significant digits for sub-1
+// dust so a tiny pending reward still shows something useful instead
+// of collapsing to "0".
+function formatTokenAmount(raw: bigint, decimals: number): string {
+  const num = bigintToNumber(raw, decimals);
+  if (num === 0) return "0";
+  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(2)}M`;
+  if (num >= 1_000) return num.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  if (num >= 1) return num.toFixed(2);
+  if (num >= 0.0001) return num.toFixed(4);
+  if (num >= 1e-8) return num.toFixed(8);
+  return num.toExponential(2);
+}
+
+function bigintToNumber(raw: bigint, decimals: number): number {
+  if (raw === 0n) return 0;
+  // Two-step divide to avoid precision loss on the BigInt → Number cast:
+  // grab the integer + fractional parts separately.
+  const divisor = 10n ** BigInt(decimals);
+  const whole = raw / divisor;
+  const frac = raw % divisor;
+  return Number(whole) + Number(frac) / Number(divisor);
+}
+
 async function cmdStop(env: Env, chatId: number): Promise<void> {
   await env.WATCHTOWER.delete(chatKey(chatId));
   await sendMessage(
@@ -755,6 +1133,29 @@ function snapKey(slug: string): string {
   return `snapshot:${slug}`;
 }
 
+function portfolioKey(chatId: number): string {
+  return `portfolio:${chatId}`;
+}
+
+async function getPortfolioBinding(
+  env: Env,
+  chatId: number,
+): Promise<string | null> {
+  const raw = await env.WATCHTOWER.get(portfolioKey(chatId));
+  if (!raw) return null;
+  // Stored as `0xabc...` lowercase. Validate to defend against legacy
+  // junk in KV from earlier experiments.
+  return /^0x[a-f0-9]{40}$/.test(raw) ? raw : null;
+}
+
+async function setPortfolioBinding(
+  env: Env,
+  chatId: number,
+  wallet: string,
+): Promise<void> {
+  await env.WATCHTOWER.put(portfolioKey(chatId), wallet.toLowerCase());
+}
+
 function researchCounterKey(chatId: number, utcDay: string): string {
   return `research-count:${chatId}:${utcDay}`;
 }
@@ -914,6 +1315,54 @@ async function sendPhoto(
     return false;
   }
   return true;
+}
+
+// Reply to a Telegram `inline_query`. Telegram requires this within
+// ~10s of receiving the query; after that the update is silently
+// dropped from the client UI. `cache_time` lets Telegram serve the
+// same result set to other users without round-tripping back to us.
+interface InlineQueryResultPhoto {
+  type: "photo";
+  id: string;
+  photo_url: string;
+  thumb_url: string;
+  photo_width?: number;
+  photo_height?: number;
+  title?: string;
+  description?: string;
+  caption?: string;
+  parse_mode?: "Markdown" | "MarkdownV2" | "HTML";
+}
+
+async function answerInlineQuery(
+  env: Env,
+  queryId: string,
+  results: InlineQueryResultPhoto[],
+  cacheSeconds: number,
+): Promise<void> {
+  if (!env.TELEGRAM_BOT_TOKEN) {
+    console.warn(
+      "watchtower: TELEGRAM_BOT_TOKEN missing; cannot answer inline query",
+    );
+    return;
+  }
+  const res = await fetch(
+    `${TELEGRAM_API_BASE}/bot${env.TELEGRAM_BOT_TOKEN}/answerInlineQuery`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        inline_query_id: queryId,
+        results,
+        cache_time: cacheSeconds,
+        is_personal: false,
+      }),
+    },
+  );
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    console.warn(`watchtower: answerInlineQuery ${res.status} ${errText}`);
+  }
 }
 
 // -----------------------------------------------------------------------------
