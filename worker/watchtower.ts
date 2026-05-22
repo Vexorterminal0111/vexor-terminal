@@ -91,6 +91,14 @@ interface ChatRecord {
   thresholds?: Record<string, number>;
   /** Per-token whale-transfer USD threshold. Missing = no whale alerts for that token. */
   whale_thresholds?: Record<string, number>;
+  /**
+   * Group-mode opt-in for passive cashtag detection. When true the bot
+   * scans every group message for `$VT` / `$AERO` / etc. and replies
+   * with the matching chart card (deduplicated per slug, 10 min TTL).
+   * Default false: groups must run `/enable_cashtags` explicitly. Always
+   * false / ignored for DMs.
+   */
+  cashtags_enabled?: boolean;
   created_at: string;
   last_seen: string;
 }
@@ -315,22 +323,28 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
 
   if (!msg.text) return;
 
-  // Per-group rate limit: anti-spam guard so a noisy group can't burn
-  // the bot's quota or rack up Telegram-side flood penalties. DMs are
-  // not rate-limited (one user, one chat → self-policing).
-  if (isGroup) {
-    const allowed = await checkGroupRateLimit(env, msg.chat.id);
-    if (!allowed) return; // drop silently to avoid spamming the group
-  }
-
   const text = msg.text.trim();
   const [rawCmd, ...rawArgs] = text.split(/\s+/);
   const cmd = rawCmd.toLowerCase().replace(/@.*/, "");
 
-  // In groups, ignore non-command messages entirely. Without this, the
-  // bot would silently churn through every chat line. Cashtag passive
-  // detection (PR-2) will hook in here once we wire it up.
-  if (isGroup && !cmd.startsWith("/")) return;
+  // In groups, non-command messages either trigger passive cashtag
+  // detection (if the group opted in via `/enable_cashtags`) or are
+  // dropped silently. We branch on this BEFORE the rate-limit check so
+  // ambient chat ("gm", "wen moon", …) in an active group does NOT
+  // burn the 30/min command budget — only real bot work consumes a
+  // slot. `maybeHandleCashtag` carries its own per-(group, slug) 10-min
+  // dedupe TTL so cashtag bursts are naturally bounded.
+  if (isGroup && !cmd.startsWith("/")) {
+    await maybeHandleCashtag(env, msg);
+    return;
+  }
+
+  // Per-group rate limit for actual commands. DMs are not rate-limited
+  // (one user, one chat → self-policing).
+  if (isGroup) {
+    const allowed = await checkGroupRateLimit(env, msg.chat.id);
+    if (!allowed) return; // drop silently to avoid spamming the group
+  }
 
   switch (cmd) {
     case "/start":
@@ -374,6 +388,14 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
       break;
     case "/stop":
       await cmdStop(env, msg.chat.id);
+      break;
+    case "/enable_cashtags":
+    case "/enablecashtags":
+      await cmdEnableCashtags(env, msg);
+      break;
+    case "/disable_cashtags":
+    case "/disablecashtags":
+      await cmdDisableCashtags(env, msg);
       break;
     default:
       // Stay quiet in groups so a random `/foo` typed by a member
@@ -468,6 +490,282 @@ async function checkGroupRateLimit(
     expirationTtl: GROUP_RATE_LIMIT_WINDOW_SEC * 2,
   });
   return true;
+}
+
+// -----------------------------------------------------------------------------
+// PR-2: passive cashtag listener (opt-in per group)
+// -----------------------------------------------------------------------------
+
+// Match `$AERO` / `$VT` / `$BNKR` etc. — uppercase ticker after a `$`,
+// 2-10 chars. We require a non-word boundary before the `$` so cashtags
+// embedded mid-word (e.g. `prefix$VT`) don't match — Telegram convention
+// is whitespace/start-of-message before the dollar sign. The cross-ref
+// against INTEL_TOKENS happens after the regex pass so a `$DOGE` in a
+// group does not trigger the bot.
+const CASHTAG_REGEX = /(?:^|[^A-Za-z0-9_])\$([A-Z]{2,10})\b/g;
+
+// Per-(group, slug) dedupe TTL. Picks the 10-minute wall-clock bucket so
+// the same cashtag mention bursts (e.g. 5 people typing `$VT` in a row)
+// only produce one reply per 10 min.
+const CASHTAG_DEDUPE_WINDOW_SEC = 600;
+
+// Up to this many distinct cashtag matches per message we reply to.
+// Caps the worst-case sendPhoto fan-out from a single spammy message.
+const CASHTAG_MAX_PER_MESSAGE = 3;
+
+async function cmdEnableCashtags(
+  env: Env,
+  msg: TelegramMessage,
+): Promise<void> {
+  const isGroup = msg.chat.type === "group" || msg.chat.type === "supergroup";
+  if (!isGroup) {
+    await sendMessage(
+      env,
+      msg.chat.id,
+      "`/enable_cashtags` only applies to group chats. In DMs the bot already replies to every message.",
+      "Markdown",
+    );
+    return;
+  }
+  // Admin gate: group members shouldn't unilaterally flip the bot into
+  // a noise-generating mode for everyone else. We trust Telegram's own
+  // role check rather than maintaining our own ACL.
+  if (!(await isGroupAdmin(env, msg.chat.id, msg.from?.id))) {
+    await sendMessage(
+      env,
+      msg.chat.id,
+      "Only group admins can toggle cashtag mode.",
+      "Markdown",
+    );
+    return;
+  }
+  const existing = (await getChat(env, msg.chat.id)) ?? {
+    tokens: [],
+    created_at: new Date().toISOString(),
+    last_seen: new Date().toISOString(),
+  };
+  existing.cashtags_enabled = true;
+  existing.last_seen = new Date().toISOString();
+  await putChat(env, msg.chat.id, existing);
+  const tickers = INTEL_TOKENS.map((t) => `$${t.symbol}`).join(", ");
+  await sendMessage(
+    env,
+    msg.chat.id,
+    `Cashtag mode *on* for this group. I'll auto-reply with a chart card whenever someone posts one of: ${tickers}. Disable any time with \`/disable_cashtags\`.\n\nNote: requires *Group Privacy = Disabled* for me in @BotFather, otherwise Telegram only shows me explicit commands.`,
+    "Markdown",
+  );
+}
+
+async function cmdDisableCashtags(
+  env: Env,
+  msg: TelegramMessage,
+): Promise<void> {
+  const isGroup = msg.chat.type === "group" || msg.chat.type === "supergroup";
+  if (!isGroup) {
+    await sendMessage(
+      env,
+      msg.chat.id,
+      "`/disable_cashtags` only applies to group chats.",
+      "Markdown",
+    );
+    return;
+  }
+  if (!(await isGroupAdmin(env, msg.chat.id, msg.from?.id))) {
+    await sendMessage(
+      env,
+      msg.chat.id,
+      "Only group admins can toggle cashtag mode.",
+      "Markdown",
+    );
+    return;
+  }
+  const existing = await getChat(env, msg.chat.id);
+  if (!existing || !existing.cashtags_enabled) {
+    await sendMessage(env, msg.chat.id, "Cashtag mode is already off for this group.");
+    return;
+  }
+  existing.cashtags_enabled = false;
+  existing.last_seen = new Date().toISOString();
+  await putChat(env, msg.chat.id, existing);
+  await sendMessage(env, msg.chat.id, "Cashtag mode *off* for this group.", "Markdown");
+}
+
+// Scan a group message for `$XXX` cashtags. If the group opted in via
+// `/enable_cashtags` and at least one cashtag matches the INTEL_TOKENS
+// roster, post a chart card per matched slug (capped, deduped).
+async function maybeHandleCashtag(
+  env: Env,
+  msg: TelegramMessage,
+): Promise<void> {
+  const text = msg.text;
+  if (!text) return;
+  // Cheap regex check first to skip the KV read on most messages.
+  const matches = new Set<string>();
+  for (const m of text.matchAll(CASHTAG_REGEX)) {
+    const slug = m[1].toLowerCase();
+    if (isIntelTokenSlug(slug)) matches.add(slug);
+    if (matches.size >= CASHTAG_MAX_PER_MESSAGE) break;
+  }
+  if (matches.size === 0) return;
+
+  // Opt-in check — group has to have run `/enable_cashtags`. We do this
+  // AFTER the regex so we don't pay a KV read for every chat line.
+  const chat = await getChat(env, msg.chat.id);
+  if (!chat || !chat.cashtags_enabled) return;
+
+  // Apply the same rate-limit budget here so a single spammy message
+  // mentioning many cashtags can't burn through Telegram's quota.
+  for (const slug of matches) {
+    const allowed = await checkGroupRateLimit(env, msg.chat.id);
+    if (!allowed) return;
+    if (await cashtagRecentlySent(env, msg.chat.id, slug)) continue;
+    await sendCashtagChartCard(env, msg.chat.id, slug);
+    await markCashtagSent(env, msg.chat.id, slug);
+  }
+}
+
+// 10-min per-(group, slug) dedupe so a cashtag mention burst only fires
+// once. We use a bucketed key (current 10-min window only) so freshness
+// is naturally enforced by KV TTL.
+async function cashtagRecentlySent(
+  env: Env,
+  chatId: number,
+  slug: string,
+): Promise<boolean> {
+  const bucket = Math.floor(Date.now() / 1000 / CASHTAG_DEDUPE_WINDOW_SEC);
+  const key = `cashtag-dedupe:${chatId}:${slug}:${bucket}`;
+  const raw = await env.WATCHTOWER.get(key);
+  return raw !== null;
+}
+
+async function markCashtagSent(
+  env: Env,
+  chatId: number,
+  slug: string,
+): Promise<void> {
+  const bucket = Math.floor(Date.now() / 1000 / CASHTAG_DEDUPE_WINDOW_SEC);
+  const key = `cashtag-dedupe:${chatId}:${slug}:${bucket}`;
+  await env.WATCHTOWER.put(key, "1", {
+    expirationTtl: CASHTAG_DEDUPE_WINDOW_SEC * 2,
+  });
+}
+
+// Compact `/chart`-style reply for a cashtag match. We reuse the same
+// Pulse Premium snapshot fetch + daily PNG chart attachment that
+// `cmdChart` uses, but skip the usage / help paths since the user
+// didn't explicitly request the chart.
+async function sendCashtagChartCard(
+  env: Env,
+  chatId: number,
+  slug: string,
+): Promise<void> {
+  const meta = getIntelToken(slug);
+  if (!meta) return;
+
+  const baseUrl = (
+    env.INTEL_TOKEN_BASE_URL ??
+    "https://raw.githubusercontent.com/Vexorterminal0111/vexor-aeon/data/intel/tokens"
+  ).replace(/\/+$/, "");
+  const tokenUrl = `${baseUrl}/${slug}.json`;
+
+  let snapshot: PulsePremiumSnapshot | null = null;
+  let generatedAt: string | null = null;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    const res = await fetch(tokenUrl, {
+      signal: ctrl.signal,
+      cf: { cacheTtl: 60, cacheEverything: true },
+      headers: { "user-agent": "vexor-watchtower-worker/1" },
+    });
+    clearTimeout(timer);
+    if (res.ok) {
+      const data = (await res.json()) as PulsePremiumPayload;
+      snapshot = data?.market_snapshot ?? null;
+      generatedAt = typeof data?.generated_at === "string" ? data.generated_at : null;
+    }
+  } catch (err) {
+    console.warn(`watchtower: cashtag fetch failed for ${slug}: ${String(err)}`);
+  }
+
+  const intelLink = `https://vexorterminal.com/intel/${slug}`;
+  const heading = `*${meta.symbol}* \u2014 ${escapeMarkdown(meta.name)}`;
+
+  if (!snapshot) {
+    await sendMessage(
+      env,
+      chatId,
+      `${heading}\nPulse Premium snapshot not available yet.\n\nFull intel \u2192 ${intelLink}`,
+      "Markdown",
+      true,
+    );
+    return;
+  }
+
+  const priceStr = fmtPriceMaybe(snapshot.price_usd ?? null);
+  const change24 = snapshot.price_change_24h_pct;
+  const chgStr =
+    typeof change24 === "number" && Number.isFinite(change24)
+      ? ` (${change24 >= 0 ? "+" : ""}${change24.toFixed(1)}% 24h)`
+      : "";
+  const vol = fmtUsdMaybe(snapshot.volume_24h_usd ?? null);
+  const liq = fmtUsdMaybe(snapshot.liquidity_usd ?? null);
+  const fdv = fmtUsdMaybe(snapshot.fdv_usd ?? null);
+  const ageLine = generatedAt ? `\nSnapshot: ${escapeMarkdown(generatedAt)}` : "";
+
+  const body = [
+    heading,
+    `${priceStr}${chgStr}`,
+    `vol ${vol}  \u00B7  liq ${liq}  \u00B7  FDV ${fdv}`,
+    ageLine,
+    "",
+    `Full intel \u2192 ${intelLink}`,
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
+
+  const chartBaseUrl = (
+    env.INTEL_CHART_BASE_URL ??
+    "https://raw.githubusercontent.com/Vexorterminal0111/vexor-aeon/data/intel/charts"
+  ).replace(/\/+$/, "");
+  const photoUrl = `${chartBaseUrl}/${slug}.png`;
+  const photoOk = await sendPhoto(env, chatId, photoUrl, body, "Markdown");
+  if (!photoOk) {
+    await sendMessage(env, chatId, body, "Markdown", true);
+  }
+}
+
+// Ask Telegram whether a user holds an admin role in a chat. Used to
+// gate `/enable_cashtags` / `/disable_cashtags`. Falls back to "not
+// admin" if the API call fails — we'd rather under-grant than
+// over-grant. `creator` and `administrator` are the two statuses that
+// count as admin per Telegram's getChatMember spec.
+async function isGroupAdmin(
+  env: Env,
+  chatId: number,
+  userId: number | undefined,
+): Promise<boolean> {
+  if (!userId) return false;
+  if (!env.TELEGRAM_BOT_TOKEN) return false;
+  try {
+    const url = `${TELEGRAM_API_BASE}/bot${env.TELEGRAM_BOT_TOKEN}/getChatMember`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, user_id: userId }),
+    });
+    if (!res.ok) return false;
+    const data = (await res.json()) as {
+      ok?: boolean;
+      result?: { status?: string };
+    };
+    if (!data?.ok || !data.result) return false;
+    const status = data.result.status;
+    return status === "creator" || status === "administrator";
+  } catch (err) {
+    console.warn(`watchtower: getChatMember failed: ${String(err)}`);
+    return false;
+  }
 }
 
 // Inline mode entry point. When inline mode is enabled in BotFather
@@ -616,6 +914,8 @@ async function cmdHelp(env: Env, chatId: number): Promise<void> {
     "/research <slug|CA> \u2014 on-demand AI deep dive",
     "/chart <slug> \u2014 latest snapshot (price, vol, liq, FDV)",
     "/portfolio <0xWallet> \u2014 track your holdings + RevShare position",
+    "/enable_cashtags \u2014 (groups, admin) auto-reply on `$VT`/`$AERO`/\u2026 mentions",
+    "/disable_cashtags \u2014 (groups, admin) turn cashtag auto-reply off",
     "/stop \u2014 unsubscribe everything",
     "",
     `Free-tier limits: ${MAX_TOKENS_PER_USER} watched tokens, ${RESEARCH_DAILY_LIMIT} researches/day.`,
