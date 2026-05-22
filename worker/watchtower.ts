@@ -615,10 +615,14 @@ async function maybeHandleCashtag(
 
   // Apply the same rate-limit budget here so a single spammy message
   // mentioning many cashtags can't burn through Telegram's quota.
+  // The dedupe check comes BEFORE the rate-limit decrement so a busy
+  // group where everyone keeps typing `$VT` (the exact target use case)
+  // doesn't burn the 30/min slot on a no-op while real commands like
+  // `/watch` get silently dropped for the rest of the minute.
   for (const slug of matches) {
+    if (await cashtagRecentlySent(env, msg.chat.id, slug)) continue;
     const allowed = await checkGroupRateLimit(env, msg.chat.id);
     if (!allowed) return;
-    if (await cashtagRecentlySent(env, msg.chat.id, slug)) continue;
     await sendCashtagChartCard(env, msg.chat.id, slug);
     await markCashtagSent(env, msg.chat.id, slug);
   }
