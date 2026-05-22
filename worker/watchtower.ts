@@ -1388,8 +1388,8 @@ async function cmdChart(env: Env, chatId: number, args: string[]): Promise<void>
     return;
   }
 
-  // Accept `vt`, `$vt`, `VT`, `$VT` — strip a leading `$` then lowercase.
-  const raw = args[0].replace(/^\$/, "").toLowerCase();
+  // Accept `vt`, `$vt`, `VT`, `$VT`.
+  const raw = normalizeSlugArg(args[0]);
   if (!isIntelTokenSlug(raw)) {
     const list = INTEL_TOKENS.map((t) => t.symbol).join(", ");
     await sendMessage(
@@ -1609,8 +1609,8 @@ async function cmdCompare(
     );
     return;
   }
-  const slugA = args[0].replace(/^\$/, "").toLowerCase();
-  const slugB = args[1].replace(/^\$/, "").toLowerCase();
+  const slugA = normalizeSlugArg(args[0]);
+  const slugB = normalizeSlugArg(args[1]);
   if (!isIntelTokenSlug(slugA)) {
     await sendMessage(
       env,
@@ -1727,7 +1727,7 @@ async function cmdExplain(
     );
     return;
   }
-  const slug = args[0].replace(/^\$/, "").toLowerCase();
+  const slug = normalizeSlugArg(args[0]);
   if (!isIntelTokenSlug(slug)) {
     await sendMessage(
       env,
@@ -2206,8 +2206,14 @@ async function refreshAndAlertToken(
 
   // Compute observed magnitudes once; per-chat filter below decides who
   // gets alerted.
+  // Guard against bad upstream data: DexScreener occasionally returns a
+  // `priceUsd: "0"` for very-low-liquidity pairs, which would compute as
+  // a -100% delta and spam every watcher with a fake "down" alert. A
+  // genuine rug is still caught by the liq_drop branch below (and by
+  // /watch's existing -25% liquidity threshold), so dropping the price
+  // alert when `live.price_usd` is non-positive is safe.
   const pricePct =
-    live.price_usd != null && prev.price_usd > 0
+    live.price_usd != null && live.price_usd > 0 && prev.price_usd > 0
       ? ((live.price_usd - prev.price_usd) / prev.price_usd) * 100
       : null;
   const liqPct =
@@ -2373,7 +2379,11 @@ async function scanWhaleTransfers(
     for (const rec of subscribers) {
       const chatId = (rec as ChatRecord & { __chat_id?: number }).__chat_id;
       if (chatId == null) continue;
-      const threshold = rec.whale_thresholds?.[slug] ?? DEFAULT_WHALE_USD;
+      // `subscribers` is pre-filtered to only include records with a
+      // configured whale threshold for this slug, so this lookup is
+      // guaranteed to be defined. The `?? DEFAULT_WHALE_USD` fallback
+      // was dead code and is dropped.
+      const threshold = rec.whale_thresholds![slug];
       if (usd < threshold) continue;
       sends.push(
         sendWhaleAlert(env, chatId, slug, {
