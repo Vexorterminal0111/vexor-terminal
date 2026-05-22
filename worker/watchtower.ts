@@ -1966,29 +1966,42 @@ async function cmdLeaderboard(env: Env, chatId: number): Promise<void> {
 }
 
 async function broadcastDailyLeaderboard(env: Env): Promise<void> {
-  // Per-UTC-day dedupe. Set BEFORE the fanout so concurrent cron
-  // retries during the same hour don't kick off a parallel broadcast,
-  // then refresh after the fanout to extend the guard window.
+  // Per-UTC-day dedupe guard. The guard is checked first to short-circuit
+  // a same-day retry, but it's only WRITTEN after `buildLeaderboardBody`
+  // succeeds AND we know we have at least one recipient. A transient
+  // Pulse Premium fetch failure (snapshots not yet produced, network
+  // hiccup, etc.) must not burn the entire UTC-day broadcast window.
   const day = new Date().toISOString().slice(0, 10);
   const guardKey = `leaderboard:broadcast:${day}`;
   if (await env.WATCHTOWER.get(guardKey)) {
     console.log(`watchtower cron: leaderboard already broadcast for ${day}`);
     return;
   }
-  await env.WATCHTOWER.put(guardKey, new Date().toISOString(), {
-    expirationTtl: LEADERBOARD_BROADCAST_TTL_SECONDS,
-  });
 
   const body = await buildLeaderboardBody(env);
   if (!body) {
-    console.warn("watchtower cron: leaderboard body empty, skipping fanout");
+    console.warn(
+      "watchtower cron: leaderboard body empty, skipping fanout (guard not written, will retry next cron tick)",
+    );
     return;
   }
   const chats = await listAllChats(env);
   const recipients = chats.filter(
     ({ record }) => Array.isArray(record.tokens) && record.tokens.length > 0,
   );
-  if (recipients.length === 0) return;
+  if (recipients.length === 0) {
+    // No recipients = nothing to dedupe. Don't burn the guard so a chat
+    // that runs /watch in the next hour still gets the broadcast on the
+    // next 12:00 UTC tick (well, next day, but the behavior is correct).
+    return;
+  }
+
+  // Body built + recipients found: commit the guard before fanout so a
+  // concurrent cron retry mid-broadcast cannot kick off a second
+  // parallel fanout.
+  await env.WATCHTOWER.put(guardKey, new Date().toISOString(), {
+    expirationTtl: LEADERBOARD_BROADCAST_TTL_SECONDS,
+  });
   console.log(
     `watchtower cron: broadcasting leaderboard to ${recipients.length} chats`,
   );
