@@ -55,7 +55,10 @@ export function parseResearchInput(raw: string): ResearchInput | null {
     const ca = s;
     return { kind: "ca", raw: s.toLowerCase(), ca, label: shortAddr(ca) };
   }
-  const slugCandidate = s.toLowerCase();
+  // Strip an optional `$` cashtag prefix so `/research $vt` works the
+  // same as `/research vt`. Crypto-Telegram users naturally type
+  // `$VT` from cashtag convention.
+  const slugCandidate = s.replace(/^\$/, "").toLowerCase();
   const meta = getIntelToken(slugCandidate);
   if (meta) {
     return {

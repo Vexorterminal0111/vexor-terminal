@@ -904,7 +904,17 @@ async function cmdStart(env: Env, msg: TelegramMessage): Promise<void> {
     "/tokens \u2014 list every supported slug",
     `/research <slug|CA> \u2014 on-demand AI deep dive (${RESEARCH_DAILY_LIMIT}/day)`,
     "/chart <slug> \u2014 latest Pulse Premium snapshot (price, vol, liq)",
+    "/staking \u2014 live $VT RevShare pool stats (TVL, APR, distributed)",
+    "/compare <slug> <slug> \u2014 side-by-side stats for two tokens",
+    `/explain <slug> \u2014 AI commentary (${EXPLAIN_DAILY_LIMIT}/day)`,
+    ...(isGroup
+      ? [
+          "/enable_cashtags \u2014 (admin) auto-reply on $TICKER mentions",
+          "/disable_cashtags \u2014 (admin) turn cashtag auto-reply off",
+        ]
+      : []),
     portfolioLine,
+    "/help \u2014 full command reference",
     "/stop \u2014 unsubscribe entirely",
     "",
     "Examples: `/watch vt`  \u00B7  `/alert vt 5`  \u00B7  `/whale aero 100000`",
@@ -978,7 +988,7 @@ async function cmdWatch(env: Env, chatId: number, args: string[]): Promise<void>
     await sendMessage(env, chatId, "Usage: `/watch <slug>` (e.g. `/watch vt`).", "Markdown");
     return;
   }
-  const slug = args[0].toLowerCase();
+  const slug = normalizeSlugArg(args[0]);
   if (!isIntelTokenSlug(slug)) {
     await sendMessage(
       env,
@@ -1036,7 +1046,7 @@ async function cmdAlert(
     );
     return;
   }
-  const slug = args[0].toLowerCase();
+  const slug = normalizeSlugArg(args[0]);
   if (!isIntelTokenSlug(slug)) {
     await sendMessage(
       env,
@@ -1100,7 +1110,7 @@ async function cmdUnalert(
     );
     return;
   }
-  const slug = args[0].toLowerCase();
+  const slug = normalizeSlugArg(args[0]);
   const chat = await getChat(env, chatId);
   if (!chat || !chat.thresholds || chat.thresholds[slug] == null) {
     await sendMessage(
@@ -1115,10 +1125,11 @@ async function cmdUnalert(
   if (Object.keys(chat.thresholds).length === 0) delete chat.thresholds;
   chat.last_seen = new Date().toISOString();
   await putChat(env, chatId, chat);
+  const meta = getIntelToken(slug);
   await sendMessage(
     env,
     chatId,
-    `Reverted \`${slug}\` to default \u00B1${PRICE_THRESHOLD_PCT}% / 1h.`,
+    `Reverted *${meta?.symbol ?? slug.toUpperCase()}* to default \u00B1${PRICE_THRESHOLD_PCT}% / 1h.`,
     "Markdown",
   );
 }
@@ -1137,7 +1148,7 @@ async function cmdWhale(
     );
     return;
   }
-  const slug = args[0].toLowerCase();
+  const slug = normalizeSlugArg(args[0]);
   if (!isIntelTokenSlug(slug)) {
     await sendMessage(
       env,
@@ -1195,7 +1206,7 @@ async function cmdUnwhale(
     await sendMessage(env, chatId, "Usage: `/unwhale <slug>`.", "Markdown");
     return;
   }
-  const slug = args[0].toLowerCase();
+  const slug = normalizeSlugArg(args[0]);
   const chat = await getChat(env, chatId);
   if (
     !chat ||
@@ -1216,10 +1227,11 @@ async function cmdUnwhale(
   }
   chat.last_seen = new Date().toISOString();
   await putChat(env, chatId, chat);
+  const meta = getIntelToken(slug);
   await sendMessage(
     env,
     chatId,
-    `Whale alerts off for \`${slug}\`.`,
+    `Whale alerts off for *${meta?.symbol ?? slug.toUpperCase()}*.`,
     "Markdown",
   );
 }
@@ -1228,6 +1240,16 @@ function parsePctArg(raw: string): number | null {
   const cleaned = raw.replace(/[%\s]/g, "");
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : null;
+}
+
+// Normalize a user-typed slug arg: strip an optional `$` cashtag prefix,
+// trim whitespace, and lowercase. Crypto-Telegram users naturally type
+// `$VT` from cashtag convention, so every command that takes a slug
+// arg accepts both `vt` and `$VT`. Mirrors the inline parsing in
+// cmdChart / cmdCompare / cmdExplain so all 14 slug-taking commands
+// behave identically.
+function normalizeSlugArg(raw: string): string {
+  return raw.trim().replace(/^\$/, "").toLowerCase();
 }
 
 function parseUsdArg(raw: string): number | null {
@@ -1248,7 +1270,7 @@ async function cmdUnwatch(env: Env, chatId: number, args: string[]): Promise<voi
     await sendMessage(env, chatId, "Usage: `/unwatch <slug>`.", "Markdown");
     return;
   }
-  const slug = args[0].toLowerCase();
+  const slug = normalizeSlugArg(args[0]);
   const existing = await getChat(env, chatId);
   if (!existing || !existing.tokens.includes(slug)) {
     await sendMessage(
