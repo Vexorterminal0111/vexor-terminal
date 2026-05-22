@@ -156,6 +156,26 @@ export function Footer() {
             <ul className="mt-4 space-y-2 text-sm">
               <li>
                 <a
+                  href="https://t.me/VexorAeonWatchtowerbot?startgroup=true"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-cyan-300 hover:text-white transition-colors"
+                >
+                  Add Bot to Group ↗
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://t.me/VexorAeonWatchtowerbot"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-white/70 hover:text-white transition-colors"
+                >
+                  Telegram (DM)
+                </a>
+              </li>
+              <li>
+                <a
                   href="https://x.com/vexorterminal"
                   target="_blank"
                   rel="noreferrer"
