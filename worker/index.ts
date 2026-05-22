@@ -33,6 +33,10 @@ export interface Env {
   // Watchtower's `/chart` command uses this when attaching a chart image
   // to the reply via Telegram `sendPhoto`.
   INTEL_CHART_BASE_URL?: string;
+  // Optional override for the per-token AI sentiment JSON base URL.
+  // Defaults to the vexor-aeon data branch `intel/sentiment/` directory.
+  // Produced daily at 12:45 UTC by the vexor-sentiment workflow.
+  INTEL_SENTIMENT_BASE_URL?: string;
   // Watchtower (Telegram-native alerts).
   WATCHTOWER: KVNamespace;
   TELEGRAM_BOT_TOKEN: string;

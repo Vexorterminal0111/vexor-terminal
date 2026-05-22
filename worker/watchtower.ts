@@ -129,6 +129,23 @@ interface PulsePremiumPayload {
   market_snapshot?: PulsePremiumSnapshot;
 }
 
+// Per-token AI sentiment JSON written by `vexor-aeon`'s
+// `generate-sentiment.py` (cron 12:45 UTC). Fields mirror the
+// vexor-sentiment.yml workflow's output schema exactly — keep in sync.
+type SentimentLabel = "bullish" | "bearish" | "neutral";
+type SentimentConfidence = "high" | "med" | "low";
+
+interface SentimentPayload {
+  schema_version?: string;
+  slug?: string;
+  symbol?: string;
+  generated_at?: string;
+  source_snapshot_at?: string;
+  label?: SentimentLabel | string;
+  confidence?: SentimentConfidence | string;
+  rationale?: string;
+}
+
 interface TelegramUpdate {
   update_id: number;
   message?: TelegramMessage;
@@ -419,6 +436,9 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
     case "/leaderboard":
       await cmdLeaderboard(env, msg.chat.id);
       break;
+    case "/trending":
+      await cmdTrending(env, msg.chat.id);
+      break;
     default:
       // Stay quiet in groups so a random `/foo` typed by a member
       // doesn't draw an unsolicited reply from the bot.
@@ -694,24 +714,35 @@ async function sendCashtagChartCard(
   ).replace(/\/+$/, "");
   const tokenUrl = `${baseUrl}/${slug}.json`;
 
+  // Fetch snapshot + sentiment in parallel — both come from the same
+  // aeon `data` branch CDN.
   let snapshot: PulsePremiumSnapshot | null = null;
   let generatedAt: string | null = null;
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 5000);
-    const res = await fetch(tokenUrl, {
-      signal: ctrl.signal,
-      cf: { cacheTtl: 60, cacheEverything: true },
-      headers: { "user-agent": "vexor-watchtower-worker/1" },
-    });
-    clearTimeout(timer);
-    if (res.ok) {
-      const data = (await res.json()) as PulsePremiumPayload;
-      snapshot = data?.market_snapshot ?? null;
-      generatedAt = typeof data?.generated_at === "string" ? data.generated_at : null;
-    }
-  } catch (err) {
-    console.warn(`watchtower: cashtag fetch failed for ${slug}: ${String(err)}`);
+  const [snapResult, sentiment] = await Promise.all([
+    (async () => {
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 5000);
+        const res = await fetch(tokenUrl, {
+          signal: ctrl.signal,
+          cf: { cacheTtl: 60, cacheEverything: true },
+          headers: { "user-agent": "vexor-watchtower-worker/1" },
+        });
+        clearTimeout(timer);
+        if (res.ok) {
+          return (await res.json()) as PulsePremiumPayload;
+        }
+      } catch (err) {
+        console.warn(`watchtower: cashtag fetch failed for ${slug}: ${String(err)}`);
+      }
+      return null;
+    })(),
+    fetchSentiment(env, slug),
+  ]);
+  if (snapResult) {
+    snapshot = snapResult?.market_snapshot ?? null;
+    generatedAt =
+      typeof snapResult?.generated_at === "string" ? snapResult.generated_at : null;
   }
 
   const intelLink = `https://vexorterminal.com/intel/${slug}`;
@@ -739,10 +770,20 @@ async function sendCashtagChartCard(
   const fdv = fmtUsdMaybe(snapshot.fdv_usd ?? null);
   const ageLine = generatedAt ? `\nSnapshot: ${escapeMarkdown(generatedAt)}` : "";
 
+  const sentTag = formatSentimentTag(sentiment);
+  const rationale = typeof sentiment?.rationale === "string" ? sentiment.rationale : "";
+  const sentLine =
+    sentTag && rationale
+      ? `_${sentTag} \u2014 ${escapeMarkdown(rationale)}_`
+      : sentTag
+        ? `_${sentTag}_`
+        : "";
+
   const body = [
     heading,
     `${priceStr}${chgStr}`,
     `vol ${vol}  \u00B7  liq ${liq}  \u00B7  FDV ${fdv}`,
+    sentLine,
     ageLine,
     "",
     `Full intel \u2192 ${intelLink}`,
@@ -955,6 +996,7 @@ async function cmdHelp(env: Env, chatId: number): Promise<void> {
     "/compare <slug> <slug> \u2014 side-by-side stats for two tokens",
     "/explain <slug> \u2014 AI commentary on recent price + on-chain context",
     "/leaderboard \u2014 top 24h gainers + losers across the roster (also auto-broadcast daily at 12 UTC)",
+    "/trending \u2014 hottest tokens by vol/liq activity score + AI sentiment",
     "/enable_cashtags \u2014 (groups, admin) auto-reply on `$VT`/`$AERO`/\u2026 mentions",
     "/disable_cashtags \u2014 (groups, admin) turn cashtag auto-reply off",
     "/stop \u2014 unsubscribe everything",
@@ -979,11 +1021,19 @@ async function cmdList(env: Env, chatId: number): Promise<void> {
   const rows = await Promise.all(
     chat.tokens.map(async (slug) => {
       const meta = getIntelToken(slug);
-      const snap = await getSnapshot(env, slug);
+      // Fan out snapshot + sentiment in parallel — both come from the
+      // same aeon `data` branch CDN, so the overall latency is bounded
+      // by the slower of the two (typically <100ms edge-cached).
+      const [snap, sentiment] = await Promise.all([
+        getSnapshot(env, slug),
+        fetchSentiment(env, slug),
+      ]);
       const price = snap?.price_usd != null ? `$${fmtUsd(snap.price_usd)}` : "\u2014";
       const customPct = chat.thresholds?.[slug];
       const whaleUsd = chat.whale_thresholds?.[slug];
       const tags: string[] = [];
+      const sentTag = formatSentimentTag(sentiment);
+      if (sentTag) tags.push(sentTag);
       if (customPct != null) tags.push(`alert \u00B1${customPct}%`);
       if (whaleUsd != null) tags.push(`whale \u2265$${fmtUsd(whaleUsd)}`);
       const tagStr = tags.length > 0 ? `  _${tags.join(" \u00B7 ")}_` : "";
@@ -1430,24 +1480,36 @@ async function cmdChart(env: Env, chatId: number, args: string[]): Promise<void>
   ).replace(/\/+$/, "");
   const tokenUrl = `${baseUrl}/${slug}.json`;
 
+  // Fetch snapshot + sentiment in parallel. Sentiment is optional —
+  // /chart still renders if it's missing; we just skip the appended
+  // rationale line.
   let snapshot: PulsePremiumSnapshot | null = null;
   let generatedAt: string | null = null;
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 5000);
-    const res = await fetch(tokenUrl, {
-      signal: ctrl.signal,
-      cf: { cacheTtl: 60, cacheEverything: true },
-      headers: { "user-agent": "vexor-watchtower-worker/1" },
-    });
-    clearTimeout(timer);
-    if (res.ok) {
-      const data = (await res.json()) as PulsePremiumPayload;
-      snapshot = data?.market_snapshot ?? null;
-      generatedAt = typeof data?.generated_at === "string" ? data.generated_at : null;
-    }
-  } catch (err) {
-    console.warn(`watchtower: /chart fetch failed for ${slug}: ${String(err)}`);
+  const [snapResult, sentiment] = await Promise.all([
+    (async () => {
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 5000);
+        const res = await fetch(tokenUrl, {
+          signal: ctrl.signal,
+          cf: { cacheTtl: 60, cacheEverything: true },
+          headers: { "user-agent": "vexor-watchtower-worker/1" },
+        });
+        clearTimeout(timer);
+        if (res.ok) {
+          return (await res.json()) as PulsePremiumPayload;
+        }
+      } catch (err) {
+        console.warn(`watchtower: /chart fetch failed for ${slug}: ${String(err)}`);
+      }
+      return null;
+    })(),
+    fetchSentiment(env, slug),
+  ]);
+  if (snapResult) {
+    snapshot = snapResult?.market_snapshot ?? null;
+    generatedAt =
+      typeof snapResult?.generated_at === "string" ? snapResult.generated_at : null;
   }
 
   const intelLink = `https://vexorterminal.com/intel/${slug}`;
@@ -1475,10 +1537,20 @@ async function cmdChart(env: Env, chatId: number, args: string[]): Promise<void>
   const fdv = fmtUsdMaybe(snapshot.fdv_usd ?? null);
   const ageLine = generatedAt ? `\nSnapshot: ${escapeMarkdown(generatedAt)}` : "";
 
+  const sentTag = formatSentimentTag(sentiment);
+  const rationale = typeof sentiment?.rationale === "string" ? sentiment.rationale : "";
+  const sentLine =
+    sentTag && rationale
+      ? `_${sentTag} \u2014 ${escapeMarkdown(rationale)}_`
+      : sentTag
+        ? `_${sentTag}_`
+        : "";
+
   const body = [
     heading,
     `${priceStr}${chgStr}`,
     `vol ${vol}  \u00B7  liq ${liq}  \u00B7  FDV ${fdv}`,
+    sentLine,
     ageLine,
     "",
     `Full intel \u2192 ${intelLink}`,
@@ -1722,6 +1794,56 @@ async function fetchPulseSnapshot(
   }
 }
 
+// Fetch the per-token AI sentiment JSON produced by the vexor-sentiment
+// workflow. Returns null on any failure (missing file, network blip,
+// JSON parse error). The Telegram surfaces ALWAYS degrade gracefully:
+// no sentiment data = no tag/badge/rationale, never a hard error.
+//
+// 5 min CF cache TTL — the source updates once daily at 12:45 UTC, so
+// even 5 min is overkill for freshness but minimizes Raw GitHub egress.
+async function fetchSentiment(
+  env: Env,
+  slug: string,
+): Promise<SentimentPayload | null> {
+  const baseUrl = (
+    env.INTEL_SENTIMENT_BASE_URL ??
+    "https://raw.githubusercontent.com/Vexorterminal0111/vexor-aeon/data/intel/sentiment"
+  ).replace(/\/+$/, "");
+  const url = `${baseUrl}/${slug}.json`;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch(url, {
+      signal: ctrl.signal,
+      cf: { cacheTtl: 300, cacheEverything: true },
+      headers: { "user-agent": "vexor-watchtower-worker/1" },
+    });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const data = (await res.json()) as SentimentPayload;
+    const label = typeof data?.label === "string" ? data.label.toLowerCase() : "";
+    if (label !== "bullish" && label !== "bearish" && label !== "neutral") {
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.warn(`watchtower: sentiment fetch failed for ${slug}: ${String(err)}`);
+    return null;
+  }
+}
+
+// Compact label suitable for inline italic tags (e.g. /list rows).
+// Returns null when there's no usable sentiment, so callers can drop
+// the tag instead of rendering an empty placeholder.
+function formatSentimentTag(s: SentimentPayload | null): string | null {
+  if (!s || typeof s.label !== "string") return null;
+  const label = s.label.toLowerCase();
+  if (label === "bullish") return "\uD83D\uDFE2 bullish";
+  if (label === "bearish") return "\uD83D\uDD34 bearish";
+  if (label === "neutral") return "\u26AA neutral";
+  return null;
+}
+
 // `/explain <slug>` — Groq LLM commentary on recent price + on-chain
 // context. Rate-limited per-chat to bound LLM cost.
 const EXPLAIN_DAILY_LIMIT = 5;
@@ -1898,13 +2020,16 @@ interface LeaderboardRow {
 }
 
 async function buildLeaderboardBody(env: Env): Promise<string | null> {
+  // Fetch snapshot + sentiment per token in parallel. Sentiment is
+  // optional — we just append the label after the row if present.
   const fetches = INTEL_TOKENS.map(async (tok) => ({
     tok,
     snap: await fetchPulseSnapshot(env, tok.slug),
+    sent: await fetchSentiment(env, tok.slug),
   }));
   const results = await Promise.all(fetches);
-  const rows: LeaderboardRow[] = [];
-  for (const { tok, snap } of results) {
+  const rows: (LeaderboardRow & { sentLabel: string | null })[] = [];
+  for (const { tok, snap, sent } of results) {
     if (!snap) continue;
     const pct = snap.price_change_24h_pct;
     if (pct == null || !Number.isFinite(pct)) continue;
@@ -1913,6 +2038,7 @@ async function buildLeaderboardBody(env: Env): Promise<string | null> {
       symbol: tok.symbol,
       pct,
       price_usd: snap.price_usd ?? null,
+      sentLabel: formatSentimentTag(sent),
     });
   }
   if (rows.length === 0) return null;
@@ -1926,8 +2052,10 @@ async function buildLeaderboardBody(env: Env): Promise<string | null> {
     .sort((a, b) => a.pct - b.pct)
     .slice(0, LEADERBOARD_TOP_N);
 
-  const fmtRow = (r: LeaderboardRow): string =>
-    `\u2022 *${r.symbol}* ${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%  \u00B7  ${fmtPriceMaybe(r.price_usd)}`;
+  const fmtRow = (r: LeaderboardRow & { sentLabel: string | null }): string => {
+    const base = `\u2022 *${r.symbol}* ${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%  \u00B7  ${fmtPriceMaybe(r.price_usd)}`;
+    return r.sentLabel ? `${base}  _${r.sentLabel}_` : base;
+  };
 
   const day = new Date().toISOString().slice(0, 10);
   const lines: string[] = [
@@ -2025,6 +2153,84 @@ async function broadcastDailyLeaderboard(env: Env): Promise<void> {
       await new Promise((r) => setTimeout(r, 250));
     }
   }
+}
+
+// `/trending` — rank the 7-token roster by a "trending score": the
+// ratio of 24h volume to liquidity (vol / liq). This is a proxy for
+// unusual relative activity. Higher vol/liq = more action relative to
+// the pool depth. Returns the top 3 trending tokens with the score,
+// price, and sentiment label when available.
+
+async function cmdTrending(env: Env, chatId: number): Promise<void> {
+  const fetches = INTEL_TOKENS.map(async (tok) => ({
+    tok,
+    snap: await fetchPulseSnapshot(env, tok.slug),
+    sent: await fetchSentiment(env, tok.slug),
+  }));
+  const results = await Promise.all(fetches);
+
+  interface TrendingRow {
+    symbol: string;
+    slug: string;
+    score: number;
+    vol: number;
+    liq: number;
+    pct24: number | null;
+    sentLabel: string | null;
+  }
+
+  const rows: TrendingRow[] = [];
+  for (const { tok, snap, sent } of results) {
+    if (!snap) continue;
+    const vol = snap.volume_24h_usd;
+    const liq = snap.liquidity_usd;
+    if (vol == null || liq == null || liq <= 0) continue;
+    rows.push({
+      symbol: tok.symbol,
+      slug: tok.slug,
+      score: vol / liq,
+      vol,
+      liq,
+      pct24: snap.price_change_24h_pct ?? null,
+      sentLabel: formatSentimentTag(sent),
+    });
+  }
+
+  if (rows.length === 0) {
+    await sendMessage(
+      env,
+      chatId,
+      "Trending unavailable \u2014 Pulse Premium snapshots not yet produced. Try again after the next 12:00 UTC refresh.",
+    );
+    return;
+  }
+
+  rows.sort((a, b) => b.score - a.score);
+  const top = rows.slice(0, 3);
+
+  const lines: string[] = [
+    "\uD83D\uDD25 *Trending on Base* (by vol/liq ratio)",
+    "",
+  ];
+  for (let i = 0; i < top.length; i++) {
+    const r = top[i];
+    const medal = i === 0 ? "\uD83E\uDD47" : i === 1 ? "\uD83E\uDD48" : "\uD83E\uDD49";
+    const chgStr =
+      r.pct24 != null && Number.isFinite(r.pct24)
+        ? ` ${r.pct24 >= 0 ? "+" : ""}${r.pct24.toFixed(1)}%`
+        : "";
+    const sentStr = r.sentLabel ? `  _${r.sentLabel}_` : "";
+    lines.push(
+      `${medal} *${r.symbol}*  \u00B7  score ${r.score.toFixed(2)}\u00D7${chgStr}${sentStr}`,
+    );
+    lines.push(
+      `   vol ${fmtUsdMaybe(r.vol)}  /  liq ${fmtUsdMaybe(r.liq)}`,
+    );
+  }
+  lines.push("");
+  lines.push("Score = 24h volume \u00F7 liquidity. Higher = more relative action.");
+  lines.push("Open chart \u2192 `/chart <ticker>`");
+  await sendMessage(env, chatId, lines.join("\n"), "Markdown");
 }
 
 // `/portfolio` — read on-chain ERC-20 balances for the roster tokens
