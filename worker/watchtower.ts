@@ -1981,7 +1981,9 @@ async function broadcastDailyLeaderboard(env: Env): Promise<void> {
   const body = await buildLeaderboardBody(env);
   if (!body) {
     console.warn(
-      "watchtower cron: leaderboard body empty, skipping fanout (guard not written, will retry next cron tick)",
+      "watchtower cron: leaderboard body empty, skipping fanout " +
+        "(guard not written; broadcast only fires on the 12:00 UTC cron tick, " +
+        "so the next automatic retry is ~24h away — manual cron dispatch can retry sooner)",
     );
     return;
   }
