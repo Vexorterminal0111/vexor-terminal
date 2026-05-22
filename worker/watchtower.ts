@@ -397,6 +397,15 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
     case "/disablecashtags":
       await cmdDisableCashtags(env, msg);
       break;
+    case "/staking":
+      await cmdStaking(env, msg.chat.id);
+      break;
+    case "/compare":
+      await cmdCompare(env, msg.chat.id, rawArgs);
+      break;
+    case "/explain":
+      await cmdExplain(env, msg.chat.id, rawArgs);
+      break;
     default:
       // Stay quiet in groups so a random `/foo` typed by a member
       // doesn't draw an unsolicited reply from the bot.
@@ -918,6 +927,9 @@ async function cmdHelp(env: Env, chatId: number): Promise<void> {
     "/research <slug|CA> \u2014 on-demand AI deep dive",
     "/chart <slug> \u2014 latest snapshot (price, vol, liq, FDV)",
     "/portfolio <0xWallet> \u2014 track your holdings + RevShare position",
+    "/staking \u2014 live $VT RevShare pool stats (TVL, APR, distributed)",
+    "/compare <slug> <slug> \u2014 side-by-side stats for two tokens",
+    "/explain <slug> \u2014 AI commentary on recent price + on-chain context",
     "/enable_cashtags \u2014 (groups, admin) auto-reply on `$VT`/`$AERO`/\u2026 mentions",
     "/disable_cashtags \u2014 (groups, admin) turn cashtag auto-reply off",
     "/stop \u2014 unsubscribe everything",
@@ -1456,6 +1468,372 @@ async function cmdChart(env: Env, chatId: number, args: string[]): Promise<void>
   if (!photoOk) {
     await sendMessage(env, chatId, body, "Markdown", true);
   }
+}
+
+// -----------------------------------------------------------------------------
+// Bot trio v2: /staking, /compare, /explain
+// -----------------------------------------------------------------------------
+
+// `/staking` — live $VT RevShare pool stats. We hit the worker's own
+// public `/api/pool` endpoint (edge-cached 60s) so we get a single
+// normalized JSON payload covering on-chain + market data, and don't
+// duplicate the multi-RPC + log-window aggregation logic here.
+interface PoolApiPayload {
+  fetched_at?: string;
+  block_number?: number;
+  pool?: {
+    total_staked_vt?: string;
+    pool_balance_vt?: string;
+  };
+  rewards?: {
+    total_distributed_vt?: string;
+    estimated_apr_percent?: number | null;
+    avg_push_interval_hours?: number | null;
+  };
+  market?: {
+    vt_price_usd?: number | null;
+    market_cap_usd?: number | null;
+    fdv_usd?: number | null;
+  };
+  links?: {
+    site?: string;
+    docs?: string;
+    basescan_revshare?: string;
+  };
+}
+
+async function cmdStaking(env: Env, chatId: number): Promise<void> {
+  let payload: PoolApiPayload | null = null;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    // Hit our own origin so the response is served from the same edge
+    // cache the landing widget uses. In Workers we can use a relative
+    // URL via the ASSETS fetcher fallback, but the simplest portable
+    // option is the canonical vexorterminal.com host.
+    const res = await fetch("https://vexorterminal.com/api/pool", {
+      signal: ctrl.signal,
+      cf: { cacheTtl: 60, cacheEverything: true },
+      headers: { "user-agent": "vexor-watchtower-worker/1" },
+    });
+    clearTimeout(timer);
+    if (res.ok) {
+      payload = (await res.json()) as PoolApiPayload;
+    }
+  } catch (err) {
+    console.warn(`watchtower: /staking fetch failed: ${String(err)}`);
+  }
+
+  if (!payload || !payload.pool) {
+    await sendMessage(
+      env,
+      chatId,
+      "Couldn't read the RevShare pool right now. Try again in a minute, or check https://vexorterminal.com/docs/staking.",
+      "Markdown",
+    );
+    return;
+  }
+
+  const totalStakedVt = Number(payload.pool.total_staked_vt ?? "0");
+  const poolBalanceVt = Number(payload.pool.pool_balance_vt ?? "0");
+  const distributed = Number(payload.rewards?.total_distributed_vt ?? "0");
+  const apr = payload.rewards?.estimated_apr_percent;
+  const intervalHours = payload.rewards?.avg_push_interval_hours;
+  const vtPrice = payload.market?.vt_price_usd ?? null;
+  const tvlUsd =
+    typeof vtPrice === "number" && Number.isFinite(vtPrice)
+      ? totalStakedVt * vtPrice
+      : null;
+  const fdv = payload.market?.fdv_usd ?? null;
+
+  const aprStr =
+    typeof apr === "number" && Number.isFinite(apr)
+      ? `${apr.toFixed(1)}%`
+      : "\u2014";
+  const intervalStr =
+    typeof intervalHours === "number" && Number.isFinite(intervalHours)
+      ? `~${intervalHours.toFixed(1)}h between reward pushes (30d avg)`
+      : "no recent reward pushes in the 30d window";
+
+  const body = [
+    "*VexorRevShare pool* \u2014 Base mainnet",
+    "",
+    `TVL: ${fmtUsdMaybe(tvlUsd)}  (${totalStakedVt.toFixed(2)} VT staked)`,
+    `Estimated APR: *${aprStr}*  \u00B7  ${intervalStr}`,
+    `Pool balance: ${poolBalanceVt.toFixed(2)} VT pending push`,
+    `Lifetime distributed: ${distributed.toFixed(2)} VT`,
+    "",
+    `VT price: ${fmtPriceMaybe(vtPrice)}  \u00B7  FDV: ${fmtUsdMaybe(fdv)}`,
+    "",
+    `Stake $VT \u2192 https://vexorterminal.com/console`,
+    `Docs \u2192 https://vexorterminal.com/docs/staking`,
+  ].join("\n");
+  await sendMessage(env, chatId, body, "Markdown", true);
+}
+
+// `/compare <slug> <slug>` — side-by-side Pulse Premium snapshots.
+async function cmdCompare(
+  env: Env,
+  chatId: number,
+  args: string[],
+): Promise<void> {
+  if (args.length < 2) {
+    const list = INTEL_TOKENS.map((t) => t.symbol).join(", ");
+    await sendMessage(
+      env,
+      chatId,
+      `Usage: \`/compare <slug> <slug>\`\nAvailable: ${list}\n\nExample: \`/compare vt aero\``,
+      "Markdown",
+    );
+    return;
+  }
+  const slugA = args[0].replace(/^\$/, "").toLowerCase();
+  const slugB = args[1].replace(/^\$/, "").toLowerCase();
+  if (!isIntelTokenSlug(slugA)) {
+    await sendMessage(
+      env,
+      chatId,
+      `Unknown ticker \`${sanitizeSlugForEcho(args[0])}\`. Run /tokens.`,
+      "Markdown",
+    );
+    return;
+  }
+  if (!isIntelTokenSlug(slugB)) {
+    await sendMessage(
+      env,
+      chatId,
+      `Unknown ticker \`${sanitizeSlugForEcho(args[1])}\`. Run /tokens.`,
+      "Markdown",
+    );
+    return;
+  }
+  if (slugA === slugB) {
+    await sendMessage(
+      env,
+      chatId,
+      "Pass two *different* slugs to compare. (Use `/chart <slug>` for a single token.)",
+      "Markdown",
+    );
+    return;
+  }
+
+  const [snapA, snapB] = await Promise.all([
+    fetchPulseSnapshot(env, slugA),
+    fetchPulseSnapshot(env, slugB),
+  ]);
+  const metaA = getIntelToken(slugA);
+  const metaB = getIntelToken(slugB);
+  if (!metaA || !metaB) {
+    await sendMessage(env, chatId, "Internal error: token metadata missing.");
+    return;
+  }
+
+  const lines: string[] = [
+    `*${metaA.symbol}* vs *${metaB.symbol}*`,
+    "",
+    compareRow("Price", fmtPriceMaybe(snapA?.price_usd ?? null), fmtPriceMaybe(snapB?.price_usd ?? null)),
+    compareRow("24h", changePctStr(snapA?.price_change_24h_pct), changePctStr(snapB?.price_change_24h_pct)),
+    compareRow("Vol 24h", fmtUsdMaybe(snapA?.volume_24h_usd ?? null), fmtUsdMaybe(snapB?.volume_24h_usd ?? null)),
+    compareRow("Liquidity", fmtUsdMaybe(snapA?.liquidity_usd ?? null), fmtUsdMaybe(snapB?.liquidity_usd ?? null)),
+    compareRow("FDV", fmtUsdMaybe(snapA?.fdv_usd ?? null), fmtUsdMaybe(snapB?.fdv_usd ?? null)),
+    "",
+    `${metaA.symbol} \u2192 https://vexorterminal.com/intel/${slugA}`,
+    `${metaB.symbol} \u2192 https://vexorterminal.com/intel/${slugB}`,
+  ];
+  await sendMessage(env, chatId, lines.join("\n"), "Markdown");
+}
+
+// Format a `Label   valueA  vs  valueB` row with monospaced alignment.
+// Telegram legacy Markdown doesn't support tables, so we render inside a
+// fenced code block separately — here we just emit a single-line pair.
+function compareRow(label: string, a: string, b: string): string {
+  const labelPad = label.padEnd(10, " ");
+  return `\`${labelPad}\`  ${a}  vs  ${b}`;
+}
+
+function changePctStr(n: number | null | undefined): string {
+  if (typeof n !== "number" || !Number.isFinite(n)) return "\u2014";
+  return `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`;
+}
+
+// Pulse Premium snapshot fetch helper — reused by `/compare` and
+// `/explain`. Same edge-cached path as `cmdChart` uses.
+async function fetchPulseSnapshot(
+  env: Env,
+  slug: string,
+): Promise<PulsePremiumSnapshot | null> {
+  const baseUrl = (
+    env.INTEL_TOKEN_BASE_URL ??
+    "https://raw.githubusercontent.com/Vexorterminal0111/vexor-aeon/data/intel/tokens"
+  ).replace(/\/+$/, "");
+  const tokenUrl = `${baseUrl}/${slug}.json`;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    const res = await fetch(tokenUrl, {
+      signal: ctrl.signal,
+      cf: { cacheTtl: 60, cacheEverything: true },
+      headers: { "user-agent": "vexor-watchtower-worker/1" },
+    });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const data = (await res.json()) as PulsePremiumPayload;
+    return data?.market_snapshot ?? null;
+  } catch (err) {
+    console.warn(`watchtower: pulse snapshot fetch failed for ${slug}: ${String(err)}`);
+    return null;
+  }
+}
+
+// `/explain <slug>` — Groq LLM commentary on recent price + on-chain
+// context. Rate-limited per-chat to bound LLM cost.
+const EXPLAIN_DAILY_LIMIT = 5;
+const EXPLAIN_KEY_TTL_SECONDS = 2 * 24 * 60 * 60;
+
+async function cmdExplain(
+  env: Env,
+  chatId: number,
+  args: string[],
+): Promise<void> {
+  if (args.length === 0) {
+    const list = INTEL_TOKENS.map((t) => t.symbol).join(", ");
+    await sendMessage(
+      env,
+      chatId,
+      `Usage: \`/explain <slug>\`\nAvailable: ${list}\n\nExample: \`/explain vt\``,
+      "Markdown",
+    );
+    return;
+  }
+  const slug = args[0].replace(/^\$/, "").toLowerCase();
+  if (!isIntelTokenSlug(slug)) {
+    await sendMessage(
+      env,
+      chatId,
+      `Unknown ticker \`${sanitizeSlugForEcho(args[0])}\`. Run /tokens.`,
+      "Markdown",
+    );
+    return;
+  }
+  if (!env.GROQ_API_KEY) {
+    await sendMessage(
+      env,
+      chatId,
+      "AI commentary is not configured on this deploy (no GROQ_API_KEY).",
+    );
+    return;
+  }
+
+  // Per-chat daily budget. Same wall-clock-day bucket scheme as /research.
+  const day = new Date().toISOString().slice(0, 10);
+  const limitKey = `explain:${chatId}:${day}`;
+  const usedRaw = await env.WATCHTOWER.get(limitKey);
+  const used = usedRaw ? Number(usedRaw) : 0;
+  if (used >= EXPLAIN_DAILY_LIMIT) {
+    await sendMessage(
+      env,
+      chatId,
+      `Daily \`/explain\` limit reached (${EXPLAIN_DAILY_LIMIT}/day). Resets at 00:00 UTC.`,
+      "Markdown",
+    );
+    return;
+  }
+
+  const meta = getIntelToken(slug);
+  if (!meta) {
+    await sendMessage(env, chatId, "Internal error: token metadata missing.");
+    return;
+  }
+  const snap = await fetchPulseSnapshot(env, slug);
+  if (!snap) {
+    await sendMessage(
+      env,
+      chatId,
+      `No Pulse Premium snapshot for \`${slug}\` yet \u2014 cron may not have produced this token's feed today.`,
+      "Markdown",
+    );
+    return;
+  }
+
+  const facts = [
+    `Token: $${meta.symbol} (${meta.name})`,
+    `Chain: Base mainnet`,
+    `Price (USD): ${snap.price_usd ?? "n/a"}`,
+    `24h change: ${snap.price_change_24h_pct ?? "n/a"}%`,
+    `24h volume: $${snap.volume_24h_usd ?? "n/a"}`,
+    `Liquidity: $${snap.liquidity_usd ?? "n/a"}`,
+    `FDV: $${snap.fdv_usd ?? "n/a"}`,
+  ].join("\n");
+
+  const systemPrompt = `You are Vexor Watchtower's market commentary mode. Given a single Base-mainnet token's latest market snapshot, write a concise commentary in 2-3 short paragraphs covering: (1) what the 24h price action implies about momentum, (2) how the liquidity / volume ratio compares to a healthy mid-cap DEX pair (call out thin liquidity if liq < 100k), (3) one neutral risk callout and one neutral bullish callout. Avoid price predictions and "wen moon" language. Do not invent on-chain numbers beyond what is provided. End with a one-line disclaimer that this is not financial advice. Keep total length under 1500 chars.`;
+  const userPrompt = `Latest snapshot:\n${facts}\n\nWrite the commentary now.`;
+
+  let reply = "";
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
+    const groqRes = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        signal: ctrl.signal,
+        headers: {
+          authorization: `Bearer ${env.GROQ_API_KEY}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model: env.GROQ_MODEL ?? "llama-3.3-70b-versatile",
+          max_tokens: 600,
+          temperature: 0.4,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+        }),
+      },
+    );
+    clearTimeout(timer);
+    if (!groqRes.ok) {
+      const errText = await groqRes.text().catch(() => "");
+      console.warn(`watchtower: /explain groq ${groqRes.status} ${errText}`);
+      await sendMessage(
+        env,
+        chatId,
+        "AI commentary upstream errored. Try again in a moment.",
+      );
+      return;
+    }
+    const data = (await groqRes.json().catch(() => ({}))) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    reply = (data.choices?.[0]?.message?.content ?? "").trim();
+  } catch (err) {
+    console.warn(`watchtower: /explain fetch failed: ${String(err)}`);
+    await sendMessage(env, chatId, "AI commentary network error. Try again.");
+    return;
+  }
+
+  if (!reply) {
+    await sendMessage(env, chatId, "AI commentary returned empty. Try again.");
+    return;
+  }
+
+  // Bump the daily counter only after a successful reply so failed
+  // attempts don't burn the user's budget.
+  await env.WATCHTOWER.put(limitKey, String(used + 1), {
+    expirationTtl: EXPLAIN_KEY_TTL_SECONDS,
+  });
+
+  // Send plain text (no Markdown parse) because Groq output can include
+  // unbalanced `*` / `_` that Telegram would reject. The chart card
+  // below is opt-in for users that want both.
+  const header = `*${meta.symbol}* \u2014 AI commentary\n`;
+  const footer = `\n\n_${EXPLAIN_DAILY_LIMIT - used - 1} \`/explain\` calls left today._`;
+  // Send header in Markdown, body in plain text, footer in Markdown via
+  // a separate small message so we never have to escape the body.
+  await sendMessage(env, chatId, header.trim(), "Markdown");
+  await sendMessage(env, chatId, reply);
+  await sendMessage(env, chatId, footer.trim(), "Markdown");
 }
 
 // `/portfolio` — read on-chain ERC-20 balances for the roster tokens
