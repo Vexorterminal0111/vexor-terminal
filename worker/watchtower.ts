@@ -144,10 +144,26 @@ interface TelegramInlineQuery {
 interface TelegramMessage {
   message_id: number;
   from?: { id: number; username?: string; first_name?: string };
-  chat: { id: number; type: string };
+  chat: { id: number; type: string; title?: string };
   date: number;
   text?: string;
   entities?: Array<{ type: string; offset: number; length: number }>;
+  // Telegram lifecycle event: present when one or more members were added
+  // to a chat (including the bot itself being added to a group).
+  new_chat_members?: Array<{
+    id: number;
+    is_bot?: boolean;
+    username?: string;
+    first_name?: string;
+  }>;
+  // Telegram lifecycle event: present when a member left or was removed.
+  // We use it to drop group records when the bot itself is kicked.
+  left_chat_member?: {
+    id: number;
+    is_bot?: boolean;
+    username?: string;
+    first_name?: string;
+  };
 }
 
 interface DexScreenerPair {
@@ -268,21 +284,53 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
   }
 
   const msg = update.message ?? update.edited_message;
-  if (!msg || !msg.text) return;
-  if (msg.chat.type !== "private") {
-    // V1: only private chats. Group chats are noisy and require per-user
-    // subscription disambiguation we don't want to design yet.
-    await sendMessage(
-      env,
-      msg.chat.id,
-      "Watchtower V1 only supports private chats. DM @VexorAeonWatchtowerbot to subscribe.",
-    );
+  if (!msg) return;
+
+  const chatType = msg.chat.type;
+  const isGroup = chatType === "group" || chatType === "supergroup";
+
+  // Lifecycle: bot added to a group → welcome onboarding message.
+  // We also bootstrap an empty ChatRecord for the group so /watch /alert
+  // etc. behave identically to the private-chat path on first use.
+  if (msg.new_chat_members && msg.new_chat_members.length > 0) {
+    if (isGroup && msg.new_chat_members.some((m) => m.is_bot && isOwnBot(m, env))) {
+      await onBotJoinedGroup(env, msg);
+    }
     return;
+  }
+
+  // Lifecycle: bot kicked from a group → drop the chat record so we
+  // stop firing alerts to a chat we can no longer reach. We do NOT
+  // delete `portfolio:<chat>` because that's user-private data; portfolio
+  // is gated to DMs anyway.
+  if (
+    msg.left_chat_member &&
+    isGroup &&
+    msg.left_chat_member.is_bot &&
+    isOwnBot(msg.left_chat_member, env)
+  ) {
+    await env.WATCHTOWER.delete(`chat:${msg.chat.id}`);
+    return;
+  }
+
+  if (!msg.text) return;
+
+  // Per-group rate limit: anti-spam guard so a noisy group can't burn
+  // the bot's quota or rack up Telegram-side flood penalties. DMs are
+  // not rate-limited (one user, one chat → self-policing).
+  if (isGroup) {
+    const allowed = await checkGroupRateLimit(env, msg.chat.id);
+    if (!allowed) return; // drop silently to avoid spamming the group
   }
 
   const text = msg.text.trim();
   const [rawCmd, ...rawArgs] = text.split(/\s+/);
   const cmd = rawCmd.toLowerCase().replace(/@.*/, "");
+
+  // In groups, ignore non-command messages entirely. Without this, the
+  // bot would silently churn through every chat line. Cashtag passive
+  // detection (PR-2) will hook in here once we wire it up.
+  if (isGroup && !cmd.startsWith("/")) return;
 
   switch (cmd) {
     case "/start":
@@ -310,7 +358,7 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
       await cmdChart(env, msg.chat.id, rawArgs);
       break;
     case "/portfolio":
-      await cmdPortfolio(env, msg.chat.id, rawArgs);
+      await cmdPortfolio(env, msg, rawArgs);
       break;
     case "/alert":
       await cmdAlert(env, msg.chat.id, rawArgs);
@@ -328,12 +376,98 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
       await cmdStop(env, msg.chat.id);
       break;
     default:
-      await sendMessage(
-        env,
-        msg.chat.id,
-        "Unknown command. Try /help.",
-      );
+      // Stay quiet in groups so a random `/foo` typed by a member
+      // doesn't draw an unsolicited reply from the bot.
+      if (!isGroup) {
+        await sendMessage(env, msg.chat.id, "Unknown command. Try /help.");
+      }
   }
+}
+
+// -----------------------------------------------------------------------------
+// Group-mode helpers (PR-1: public group support)
+// -----------------------------------------------------------------------------
+
+/**
+ * Compare a Telegram user record against the configured bot identity.
+ * The bot's numeric user_id is the prefix of the bot token issued by
+ * BotFather (e.g. `8085047757:AAFi…` → user_id `8085047757`). We use that
+ * to detect when the bot itself was added to, or removed from, a group.
+ */
+function isOwnBot(
+  member: { id: number; is_bot?: boolean },
+  env: Env,
+): boolean {
+  if (!member.is_bot) return false;
+  const token = env.TELEGRAM_BOT_TOKEN;
+  if (!token) return false;
+  const prefix = token.split(":", 1)[0];
+  const botId = Number(prefix);
+  return Number.isFinite(botId) && botId === member.id;
+}
+
+/**
+ * Fires once when the bot is added to a new group. Bootstraps an empty
+ * `ChatRecord` keyed on the (negative) group chat id so subsequent
+ * /watch, /alert, etc. behave identically to the private-chat path on
+ * first use — and posts a single welcome message that links to the
+ * landing page and demonstrates the three highest-signal commands.
+ */
+async function onBotJoinedGroup(
+  env: Env,
+  msg: TelegramMessage,
+): Promise<void> {
+  const chatId = msg.chat.id;
+  const title = msg.chat.title ?? "this group";
+  // Bootstrap empty ChatRecord if not already present. This is the same
+  // shape cmdStart writes for DMs — keeps the cron pipeline schema-uniform.
+  const existing = await getChat(env, chatId);
+  if (!existing) {
+    await putChat(env, chatId, {
+      tokens: [],
+      created_at: new Date().toISOString(),
+      last_seen: new Date().toISOString(),
+    });
+  }
+  const lines = [
+    `Vexor Watchtower is live in *${escapeMarkdown(title)}*.`,
+    "",
+    "This bot tracks 7 Base-mainnet tokens (VT, AERO, BRETT, DEGEN, TOSHI, AEON, BNKR) and pushes alerts on price moves, whale transfers, and volatility spikes.",
+    "",
+    "Try:",
+    "• `/chart vt` — latest snapshot + chart",
+    "• `/watch aero` — subscribe this group to AERO alerts",
+    "• `/help` — full command list",
+    "",
+    `Watches set here apply to the group as a whole. Personal data (\`/portfolio\`) stays in DM with me to keep wallets private.`,
+    "",
+    "More: https://vexorterminal.com",
+  ];
+  await sendMessage(env, chatId, lines.join("\n"), "Markdown");
+}
+
+// Per-group rate limit: anti-spam guard so a noisy group cannot burn
+// the bot's Telegram-side quota or generate flood penalties. We allow up
+// to GROUP_RATE_LIMIT_BURST messages within GROUP_RATE_LIMIT_WINDOW_SEC.
+const GROUP_RATE_LIMIT_BURST = 30;
+const GROUP_RATE_LIMIT_WINDOW_SEC = 60;
+
+async function checkGroupRateLimit(
+  env: Env,
+  chatId: number,
+): Promise<boolean> {
+  // Bucket key tied to the wall-clock minute. KV is eventually consistent
+  // so this is best-effort across regions; it's strict enough to bound
+  // worst-case spam without a coordination layer.
+  const bucket = Math.floor(Date.now() / 1000 / GROUP_RATE_LIMIT_WINDOW_SEC);
+  const key = `rl:group:${chatId}:${bucket}`;
+  const raw = await env.WATCHTOWER.get(key);
+  const count = raw ? Number(raw) : 0;
+  if (count >= GROUP_RATE_LIMIT_BURST) return false;
+  await env.WATCHTOWER.put(key, String(count + 1), {
+    expirationTtl: GROUP_RATE_LIMIT_WINDOW_SEC * 2,
+  });
+  return true;
 }
 
 // Inline mode entry point. When inline mode is enabled in BotFather
@@ -422,7 +556,11 @@ async function handleInlineQuery(
 // -----------------------------------------------------------------------------
 
 async function cmdStart(env: Env, msg: TelegramMessage): Promise<void> {
-  const name = escapeMarkdown(msg.from?.first_name ?? "anon");
+  const isGroup =
+    msg.chat.type === "group" || msg.chat.type === "supergroup";
+  const subject = isGroup
+    ? `*${escapeMarkdown(msg.chat.title ?? "this group")}*`
+    : escapeMarkdown(msg.from?.first_name ?? "anon");
   const existing = await getChat(env, msg.chat.id);
   if (!existing) {
     await putChat(env, msg.chat.id, {
@@ -431,10 +569,16 @@ async function cmdStart(env: Env, msg: TelegramMessage): Promise<void> {
       last_seen: new Date().toISOString(),
     });
   }
+  const scopeNote = isGroup
+    ? "Watches set here apply to the whole group. Personal data (`/portfolio`) stays in DM."
+    : "";
+  const portfolioLine = isGroup
+    ? "/portfolio <0xWallet> \u2014 one-shot wallet lookup (DM me to bind a wallet privately)"
+    : "/portfolio <0xWallet> \u2014 track your holdings + RevShare position";
   const greet = [
-    `Vexor Watchtower live, ${name}.`,
+    `Vexor Watchtower live in ${subject}.`,
     "",
-    "I push you a Telegram alert when one of your watched tokens makes a sharp move:",
+    "I push a Telegram alert when one of your watched tokens makes a sharp move:",
     `\u2022 price moves \u00B1${PRICE_THRESHOLD_PCT}% within 1h (custom: /alert <slug> <pct>)`,
     `\u2022 liquidity drops \u2265${Math.abs(LIQ_DROP_THRESHOLD_PCT)}% within 1h (rug signal)`,
     `\u2022 whale transfers \u2265 $${fmtUsd(DEFAULT_WHALE_USD)} (opt-in: /whale <slug>)`,
@@ -449,10 +593,11 @@ async function cmdStart(env: Env, msg: TelegramMessage): Promise<void> {
     "/tokens \u2014 list every supported slug",
     `/research <slug|CA> \u2014 on-demand AI deep dive (${RESEARCH_DAILY_LIMIT}/day)`,
     "/chart <slug> \u2014 latest Pulse Premium snapshot (price, vol, liq)",
-    "/portfolio <0xWallet> \u2014 track your holdings + RevShare position",
+    portfolioLine,
     "/stop \u2014 unsubscribe entirely",
     "",
     "Examples: `/watch vt`  \u00B7  `/alert vt 5`  \u00B7  `/whale aero 100000`",
+    ...(scopeNote ? ["", scopeNote] : []),
   ].join("\n");
   await sendMessage(env, msg.chat.id, greet, "Markdown");
 }
@@ -1028,10 +1173,27 @@ const VEXOR_REVSHARE_ADDRESS = "0xE25f6243f848523c4577639e975B9F3E0fA57186";
 
 async function cmdPortfolio(
   env: Env,
-  chatId: number,
+  msg: TelegramMessage,
   args: string[],
 ): Promise<void> {
+  const chatId = msg.chat.id;
+  const isGroup = msg.chat.type === "group" || msg.chat.type === "supergroup";
   const sub = args[0]?.toLowerCase();
+
+  // Privacy guard: in groups we never bind a wallet to the chat (would
+  // leak holdings of whoever bound it to every member) and we never
+  // honor a previously-bound wallet (same reason). One-off read of an
+  // explicit address is allowed because the address is public anyway,
+  // but bind / unbind / bare /portfolio always redirect to DM.
+  if (isGroup && (sub === "unbind" || args.length === 0)) {
+    await sendMessage(
+      env,
+      chatId,
+      "`/portfolio` is private \u2014 DM me at @VexorAeonWatchtowerbot to bind your wallet. Read-only lookups still work here if you pass an explicit address: `/portfolio 0x\u2026`.",
+      "Markdown",
+    );
+    return;
+  }
 
   if (sub === "unbind") {
     await env.WATCHTOWER.delete(portfolioKey(chatId));
@@ -1046,6 +1208,7 @@ async function cmdPortfolio(
 
   let wallet: string | null;
   if (args.length === 0) {
+    // Unreachable in groups (handled above); only DM users reach this branch.
     wallet = await getPortfolioBinding(env, chatId);
     if (!wallet) {
       await sendMessage(
@@ -1076,7 +1239,12 @@ async function cmdPortfolio(
       return;
     }
     wallet = candidate.toLowerCase();
-    await setPortfolioBinding(env, chatId, wallet);
+    // Only persist the binding in DMs. Group lookups are one-shot reads
+    // — we never remember a wallet for a group chat to avoid leaking
+    // whoever-typed-first's holdings on every subsequent `/portfolio`.
+    if (!isGroup) {
+      await setPortfolioBinding(env, chatId, wallet);
+    }
   }
 
   // Acknowledge before the on-chain reads — the user sees something
