@@ -279,6 +279,16 @@ export async function runWatchtowerCron(env: Env): Promise<void> {
       ]);
     }),
   );
+
+  // 3. Daily leaderboard broadcast — fires only on the 12:00 UTC cron
+  //    tick. Because the cron runs hourly the hour-of-day check is the
+  //    schedule gate; `broadcastDailyLeaderboard` carries its own
+  //    per-day dedupe so a manual cron replay never double-sends.
+  if (new Date().getUTCHours() === LEADERBOARD_BROADCAST_UTC_HOUR) {
+    await broadcastDailyLeaderboard(env).catch((err) => {
+      console.warn(`watchtower cron: leaderboard broadcast failed: ${err}`);
+    });
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -405,6 +415,9 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
       break;
     case "/explain":
       await cmdExplain(env, msg.chat.id, rawArgs);
+      break;
+    case "/leaderboard":
+      await cmdLeaderboard(env, msg.chat.id);
       break;
     default:
       // Stay quiet in groups so a random `/foo` typed by a member
@@ -907,6 +920,7 @@ async function cmdStart(env: Env, msg: TelegramMessage): Promise<void> {
     "/staking \u2014 live $VT RevShare pool stats (TVL, APR, distributed)",
     "/compare <slug> <slug> \u2014 side-by-side stats for two tokens",
     `/explain <slug> \u2014 AI commentary (${EXPLAIN_DAILY_LIMIT}/day)`,
+    "/leaderboard \u2014 top 24h gainers/losers (auto-broadcast daily)",
     ...(isGroup
       ? [
           "/enable_cashtags \u2014 (admin) auto-reply on $TICKER mentions",
@@ -940,6 +954,7 @@ async function cmdHelp(env: Env, chatId: number): Promise<void> {
     "/staking \u2014 live $VT RevShare pool stats (TVL, APR, distributed)",
     "/compare <slug> <slug> \u2014 side-by-side stats for two tokens",
     "/explain <slug> \u2014 AI commentary on recent price + on-chain context",
+    "/leaderboard \u2014 top 24h gainers + losers across the roster (also auto-broadcast daily at 12 UTC)",
     "/enable_cashtags \u2014 (groups, admin) auto-reply on `$VT`/`$AERO`/\u2026 mentions",
     "/disable_cashtags \u2014 (groups, admin) turn cashtag auto-reply off",
     "/stop \u2014 unsubscribe everything",
@@ -1856,6 +1871,145 @@ async function cmdExplain(
   await sendMessage(env, chatId, header.trim(), "Markdown");
   await sendMessage(env, chatId, reply);
   await sendMessage(env, chatId, footer.trim(), "Markdown");
+}
+
+// -----------------------------------------------------------------------------
+// /leaderboard — daily 24h gainer/loser ranking across the 7-token roster.
+//
+// Reads the latest Pulse Premium snapshot for each token (24h % change),
+// formats top-N up and down lists. Used both as an on-demand bot command
+// and as a daily 12:00 UTC broadcast to every chat with a non-empty
+// watchlist. The same body string is shared by both paths so the on-demand
+// reply and the broadcast cannot drift in formatting.
+// -----------------------------------------------------------------------------
+
+const LEADERBOARD_TOP_N = 3;
+const LEADERBOARD_BROADCAST_UTC_HOUR = 12;
+// 36h outlasts the 24h gap between broadcast triggers, so the dedupe
+// key is guaranteed alive across the entire broadcast window even if
+// the cron fires twice within the same UTC hour (e.g. retry).
+const LEADERBOARD_BROADCAST_TTL_SECONDS = 36 * 60 * 60;
+
+interface LeaderboardRow {
+  slug: string;
+  symbol: string;
+  pct: number;
+  price_usd: number | null;
+}
+
+async function buildLeaderboardBody(env: Env): Promise<string | null> {
+  const fetches = INTEL_TOKENS.map(async (tok) => ({
+    tok,
+    snap: await fetchPulseSnapshot(env, tok.slug),
+  }));
+  const results = await Promise.all(fetches);
+  const rows: LeaderboardRow[] = [];
+  for (const { tok, snap } of results) {
+    if (!snap) continue;
+    const pct = snap.price_change_24h_pct;
+    if (pct == null || !Number.isFinite(pct)) continue;
+    rows.push({
+      slug: tok.slug,
+      symbol: tok.symbol,
+      pct,
+      price_usd: snap.price_usd ?? null,
+    });
+  }
+  if (rows.length === 0) return null;
+
+  const gainers = rows
+    .filter((r) => r.pct > 0)
+    .sort((a, b) => b.pct - a.pct)
+    .slice(0, LEADERBOARD_TOP_N);
+  const losers = rows
+    .filter((r) => r.pct < 0)
+    .sort((a, b) => a.pct - b.pct)
+    .slice(0, LEADERBOARD_TOP_N);
+
+  const fmtRow = (r: LeaderboardRow): string =>
+    `\u2022 *${r.symbol}* ${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%  \u00B7  ${fmtPriceMaybe(r.price_usd)}`;
+
+  const day = new Date().toISOString().slice(0, 10);
+  const lines: string[] = [
+    `\uD83D\uDCCA *Vexor Leaderboard* \u2014 ${day} UTC`,
+    "",
+  ];
+  if (gainers.length > 0) {
+    lines.push("\uD83D\uDFE2 Top gainers (24h):");
+    lines.push(...gainers.map(fmtRow));
+    lines.push("");
+  }
+  if (losers.length > 0) {
+    lines.push("\uD83D\uDD34 Top losers (24h):");
+    lines.push(...losers.map(fmtRow));
+    lines.push("");
+  }
+  if (gainers.length === 0 && losers.length === 0) {
+    lines.push("All 7 tokens flat on 24h. Quiet day on Base.");
+    lines.push("");
+  }
+  lines.push("Open chart \u2192 `/chart <ticker>`  \u00B7  Full intel \u2192 https://vexorterminal.com/intel");
+  return lines.join("\n");
+}
+
+async function cmdLeaderboard(env: Env, chatId: number): Promise<void> {
+  const body = await buildLeaderboardBody(env);
+  if (!body) {
+    await sendMessage(
+      env,
+      chatId,
+      "Leaderboard unavailable \u2014 Pulse Premium snapshots not produced yet for any roster token. Try again after the next 12:00 UTC refresh.",
+    );
+    return;
+  }
+  await sendMessage(env, chatId, body, "Markdown");
+}
+
+async function broadcastDailyLeaderboard(env: Env): Promise<void> {
+  // Per-UTC-day dedupe. Set BEFORE the fanout so concurrent cron
+  // retries during the same hour don't kick off a parallel broadcast,
+  // then refresh after the fanout to extend the guard window.
+  const day = new Date().toISOString().slice(0, 10);
+  const guardKey = `leaderboard:broadcast:${day}`;
+  if (await env.WATCHTOWER.get(guardKey)) {
+    console.log(`watchtower cron: leaderboard already broadcast for ${day}`);
+    return;
+  }
+  await env.WATCHTOWER.put(guardKey, new Date().toISOString(), {
+    expirationTtl: LEADERBOARD_BROADCAST_TTL_SECONDS,
+  });
+
+  const body = await buildLeaderboardBody(env);
+  if (!body) {
+    console.warn("watchtower cron: leaderboard body empty, skipping fanout");
+    return;
+  }
+  const chats = await listAllChats(env);
+  const recipients = chats.filter(
+    ({ record }) => Array.isArray(record.tokens) && record.tokens.length > 0,
+  );
+  if (recipients.length === 0) return;
+  console.log(
+    `watchtower cron: broadcasting leaderboard to ${recipients.length} chats`,
+  );
+
+  // Telegram global rate limit is 30 msg/sec. We process 6 chats per
+  // batch and sleep 250ms between batches — 24 msg/sec sustained,
+  // comfortably under the cap for any realistic chat count.
+  const BATCH_SIZE = 6;
+  for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+    const batch = recipients.slice(i, i + BATCH_SIZE);
+    await Promise.all(
+      batch.map(({ chat_id }) =>
+        sendMessage(env, chat_id, body, "Markdown").catch((e) => {
+          console.warn(`watchtower cron: leaderboard send to ${chat_id} failed: ${e}`);
+        }),
+      ),
+    );
+    if (i + BATCH_SIZE < recipients.length) {
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  }
 }
 
 // `/portfolio` — read on-chain ERC-20 balances for the roster tokens
