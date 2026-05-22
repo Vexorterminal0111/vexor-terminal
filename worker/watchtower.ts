@@ -1,8 +1,8 @@
 /**
- * Vexor Watchtower — Telegram-native per-token alerting (V1)
+ * Vexor Watchtower — Telegram-native per-token alerting (V2)
  *
  * Telegram bot @VexorAeonWatchtowerbot. The bot is the UI: there is no
- * /watch web page in V1. Users subscribe via Telegram commands; an hourly
+ * /watch web page. Users subscribe via Telegram commands; an hourly
  * Cloudflare Cron Trigger compares the live DexScreener snapshot for each
  * watched token against the previous snapshot stored in KV and pushes a
  * Telegram alert to every subscriber when a threshold trips.
@@ -15,9 +15,19 @@
  *   incoming webhook requests
  *
  * KV schema:
- * - `chat:<chat_id>` → { tokens: string[], created_at, last_seen }
+ * - `chat:<chat_id>` → ChatRecord
+ *      { tokens: string[],
+ *        thresholds?: Record<slug, pct>,        // custom /alert override
+ *        whale_thresholds?: Record<slug, usd>,  // /whale opt-in
+ *        created_at, last_seen }
  * - `snapshot:<slug>` → { price_usd, liquidity_usd, volume_24h_usd,
  *                         fetched_at, last_alert_at, last_alert_dir }
+ * - `cd:<chat_id>:<slug>:<dir>` → per-chat price-alert cooldown timestamp
+ *   (TTL = ALERT_COOLDOWN_MS)
+ * - `whale-block:<slug>` → last Base block scanned for whale transfers
+ * - `whale-dedupe:<slug>:<tx>:<idx>` → seen-whale-log de-dupe (TTL 2h)
+ * - `vol-alert:<slug>` → volatility-spike cooldown timestamp (TTL 24h)
+ * - `dec:<ca>` → cached ERC-20 decimals() return (one-time on-chain read)
  *
  * Routes (registered in worker/index.ts):
  * - `POST /api/watchtower/webhook` — Telegram webhook target. Always
@@ -26,13 +36,20 @@
  *
  * Cron entrypoint:
  * - `scheduled()` in worker/index.ts dispatches to `runWatchtowerCron()`
- *   here. Cron cadence is set in wrangler.jsonc.
+ *   here. Cron cadence is set in wrangler.jsonc (hourly).
  *
- * Alert thresholds (V1, hardcoded):
- * - Price: ±10% / 1h move from last snapshot
- * - Liquidity drop: -25% / 1h (rug signal)
- * - Cooldown: one alert per direction per token per hour (so a token
- *   that keeps moving doesn't spam users every cron tick).
+ * Alert pipelines (each cron tick):
+ * 1. Price + liquidity check (per-chat custom threshold via /alert)
+ *    - Default: ±10% / 1h price, ≥25% / 1h liquidity drop
+ *    - Per-user override: /alert <slug> <pct> (range 1–50%)
+ *    - Cooldown: one alert per (chat, slug, direction) per hour
+ * 2. Whale transfer scan (per-chat opt-in via /whale)
+ *    - Scans ERC-20 Transfer logs since last seen block
+ *    - Alerts when transfer USD value ≥ user's /whale threshold
+ * 3. Volatility spike (broadcast, no per-user config)
+ *    - 24h DexScreener volume ≥ 3× median of 30d daily volume
+ *    - Requires ≥14 days of GeckoTerminal OHLC history
+ *    - Cooldown: one alert per token per 24h
  */
 
 import type { Env } from "./index";
@@ -42,16 +59,38 @@ import { rpcCall, padAddress, hexToBigInt, SEL } from "./rpc";
 
 const TELEGRAM_API_BASE = "https://api.telegram.org";
 
-const PRICE_THRESHOLD_PCT = 10; // alert on ±10% / 1h
+const PRICE_THRESHOLD_PCT = 10; // default ±% / 1h move (overridable via /alert)
+const MIN_PRICE_THRESHOLD_PCT = 1;
+const MAX_PRICE_THRESHOLD_PCT = 50;
 const LIQ_DROP_THRESHOLD_PCT = -25; // alert on ≤-25% / 1h
-const ALERT_COOLDOWN_MS = 60 * 60 * 1000; // 1h per direction per token
+const ALERT_COOLDOWN_MS = 60 * 60 * 1000; // 1h per direction per token per chat
 const SNAPSHOT_FRESH_WINDOW_MS = 2 * 60 * 60 * 1000; // ignore baselines older than 2h
 const MAX_TOKENS_PER_USER = 5; // free-tier ceiling
 const RESEARCH_DAILY_LIMIT = 3; // free-tier `/research` quota per chat per UTC day
 const RESEARCH_KEY_TTL_SECONDS = 60 * 60 * 36; // 36h so the counter is around long enough to span the day
 
+// Whale-transfer scanner (Feature 2)
+const DEFAULT_WHALE_USD = 50_000;
+const MIN_WHALE_USD = 1_000;
+const MAX_WHALE_USD = 10_000_000;
+const WHALE_MAX_BLOCK_RANGE = 1500; // per cron tick; Base ~2s blocks ⇒ ~50min window
+const WHALE_RECENT_FALLBACK_BLOCKS = 1800; // first-time scan: last ~1h
+const WHALE_COOLDOWN_TTL_SECONDS = 60 * 60 * 2; // de-dupe key TTL
+const TRANSFER_TOPIC =
+  "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+
+// Volatility-spike scanner (Feature 3)
+const VOLATILITY_SPIKE_FACTOR = 3; // fire when 24h vol ≥ 3× 30d median
+const VOLATILITY_MIN_DAYS = 14; // need ≥ N daily candles before triggering
+const VOLATILITY_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 1 alert/token/24h
+const VOLATILITY_MIN_USD = 5_000; // ignore tokens with negligible volume
+
 interface ChatRecord {
   tokens: string[];
+  /** Per-token custom price-move threshold (percent). Missing = use default. */
+  thresholds?: Record<string, number>;
+  /** Per-token whale-transfer USD threshold. Missing = no whale alerts for that token. */
+  whale_thresholds?: Record<string, number>;
   created_at: string;
   last_seen: string;
 }
@@ -172,15 +211,26 @@ export async function handleWatchtowerWebhook(
  * DexScreener snapshot, and pushes alerts when thresholds trip.
  */
 export async function runWatchtowerCron(env: Env): Promise<void> {
-  // 1. Gather the union set of watched tokens across all chats.
+  // 1. Gather the union set of watched tokens across all chats and the
+  //    per-chat ChatRecord (so each pipeline can read /alert and /whale
+  //    overrides without a second listAllChats pass).
   const chats = await listAllChats(env);
-  const tokenWatchers = new Map<string, number[]>(); // slug -> [chat_id, ...]
+  const tokenWatchers = new Map<string, ChatRecord[]>(); // slug -> [record, ...]
+  const tokenWatcherIds = new Map<string, number[]>(); // slug -> [chat_id, ...]
   for (const { chat_id, record } of chats) {
+    const withId: ChatRecord = { ...record, last_seen: record.last_seen };
+    // Stash chat_id on the record under a private field so downstream
+    // helpers can map back. Using a Symbol-ish key keeps it off the
+    // serialized KV payload.
+    (withId as ChatRecord & { __chat_id?: number }).__chat_id = chat_id;
     for (const slug of record.tokens) {
       if (!isIntelTokenSlug(slug)) continue;
-      const arr = tokenWatchers.get(slug) ?? [];
-      arr.push(chat_id);
-      tokenWatchers.set(slug, arr);
+      const recArr = tokenWatchers.get(slug) ?? [];
+      recArr.push(withId);
+      tokenWatchers.set(slug, recArr);
+      const idArr = tokenWatcherIds.get(slug) ?? [];
+      idArr.push(chat_id);
+      tokenWatcherIds.set(slug, idArr);
     }
   }
 
@@ -189,10 +239,21 @@ export async function runWatchtowerCron(env: Env): Promise<void> {
     return;
   }
 
-  // 2. Refresh every watched token in parallel.
+  // 2. For each token: run price-refresh FIRST so it writes a fresh
+  //    snapshot, then run whale + volatility scans in parallel against
+  //    that fresh snapshot. Tokens are processed in parallel; the
+  //    pipelines within each token are serialized to avoid races on the
+  //    `snapshot:<slug>` KV key.
   const slugs = [...tokenWatchers.keys()];
   await Promise.all(
-    slugs.map((slug) => refreshAndAlertToken(slug, tokenWatchers.get(slug)!, env)),
+    slugs.map(async (slug) => {
+      const records = tokenWatchers.get(slug)!;
+      await refreshAndAlertToken(slug, records, env);
+      await Promise.all([
+        scanWhaleTransfers(slug, records, env),
+        checkVolatilitySpike(slug, tokenWatcherIds.get(slug)!, env),
+      ]);
+    }),
   );
 }
 
@@ -250,6 +311,18 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
       break;
     case "/portfolio":
       await cmdPortfolio(env, msg.chat.id, rawArgs);
+      break;
+    case "/alert":
+      await cmdAlert(env, msg.chat.id, rawArgs);
+      break;
+    case "/unalert":
+      await cmdUnalert(env, msg.chat.id, rawArgs);
+      break;
+    case "/whale":
+      await cmdWhale(env, msg.chat.id, rawArgs);
+      break;
+    case "/unwhale":
+      await cmdUnwhale(env, msg.chat.id, rawArgs);
       break;
     case "/stop":
       await cmdStop(env, msg.chat.id);
@@ -362,20 +435,24 @@ async function cmdStart(env: Env, msg: TelegramMessage): Promise<void> {
     `Vexor Watchtower live, ${name}.`,
     "",
     "I push you a Telegram alert when one of your watched tokens makes a sharp move:",
-    `\u2022 price moves \u00B1${PRICE_THRESHOLD_PCT}% within 1h`,
+    `\u2022 price moves \u00B1${PRICE_THRESHOLD_PCT}% within 1h (custom: /alert <slug> <pct>)`,
     `\u2022 liquidity drops \u2265${Math.abs(LIQ_DROP_THRESHOLD_PCT)}% within 1h (rug signal)`,
+    `\u2022 whale transfers \u2265 $${fmtUsd(DEFAULT_WHALE_USD)} (opt-in: /whale <slug>)`,
+    `\u2022 24h volume \u2265 ${VOLATILITY_SPIKE_FACTOR}\u00D7 median (auto)`,
     "",
     "Commands:",
     "/watch <slug> \u2014 start watching a token (max " + MAX_TOKENS_PER_USER + ")",
     "/unwatch <slug> \u2014 stop watching",
     "/list \u2014 your active watches",
+    "/alert <slug> <pct> \u2014 set custom price-move threshold",
+    "/whale <slug> <usd> \u2014 set whale-transfer threshold",
     "/tokens \u2014 list every supported slug",
     `/research <slug|CA> \u2014 on-demand AI deep dive (${RESEARCH_DAILY_LIMIT}/day)`,
     "/chart <slug> \u2014 latest Pulse Premium snapshot (price, vol, liq)",
     "/portfolio <0xWallet> \u2014 track your holdings + RevShare position",
     "/stop \u2014 unsubscribe entirely",
     "",
-    "Examples: `/watch vt`  \u00B7  `/chart vt`  \u00B7  `/research aero`",  
+    "Examples: `/watch vt`  \u00B7  `/alert vt 5`  \u00B7  `/whale aero 100000`",
   ].join("\n");
   await sendMessage(env, msg.chat.id, greet, "Markdown");
 }
@@ -385,7 +462,11 @@ async function cmdHelp(env: Env, chatId: number): Promise<void> {
     "Commands:",
     "/watch <slug> \u2014 watch a token (e.g. `/watch vt`)",
     "/unwatch <slug> \u2014 stop watching a token",
-    "/list \u2014 your watchlist",
+    "/list \u2014 your watchlist + custom alert configs",
+    "/alert <slug> <pct> \u2014 custom price-move threshold (e.g. `/alert vt 5`)",
+    "/unalert <slug> \u2014 reset to default \u00B1" + PRICE_THRESHOLD_PCT + "%",
+    "/whale <slug> <usd> \u2014 alert on transfers \u2265 $X (e.g. `/whale aero 100000`)",
+    "/unwhale <slug> \u2014 turn off whale alerts for a token",
     "/tokens \u2014 supported slugs",
     "/research <slug|CA> \u2014 on-demand AI deep dive",
     "/chart <slug> \u2014 latest snapshot (price, vol, liq, FDV)",
@@ -393,7 +474,7 @@ async function cmdHelp(env: Env, chatId: number): Promise<void> {
     "/stop \u2014 unsubscribe everything",
     "",
     `Free-tier limits: ${MAX_TOKENS_PER_USER} watched tokens, ${RESEARCH_DAILY_LIMIT} researches/day.`,
-    "Watch thresholds: price \u00B110% / 1h, liquidity \u2264-25% / 1h.",
+    `Defaults: price \u00B1${PRICE_THRESHOLD_PCT}% / 1h, liquidity \u2264-${Math.abs(LIQ_DROP_THRESHOLD_PCT)}% / 1h, volatility \u2265${VOLATILITY_SPIKE_FACTOR}\u00D7 median.`,
   ];
   await sendMessage(env, chatId, lines.join("\n"), "Markdown");
 }
@@ -414,7 +495,13 @@ async function cmdList(env: Env, chatId: number): Promise<void> {
       const meta = getIntelToken(slug);
       const snap = await getSnapshot(env, slug);
       const price = snap?.price_usd != null ? `$${fmtUsd(snap.price_usd)}` : "\u2014";
-      return `\u2022 *${meta?.symbol ?? slug.toUpperCase()}* (\`${slug}\`) ${price}`;
+      const customPct = chat.thresholds?.[slug];
+      const whaleUsd = chat.whale_thresholds?.[slug];
+      const tags: string[] = [];
+      if (customPct != null) tags.push(`alert \u00B1${customPct}%`);
+      if (whaleUsd != null) tags.push(`whale \u2265$${fmtUsd(whaleUsd)}`);
+      const tagStr = tags.length > 0 ? `  _${tags.join(" \u00B7 ")}_` : "";
+      return `\u2022 *${meta?.symbol ?? slug.toUpperCase()}* (\`${slug}\`) ${price}${tagStr}`;
     }),
   );
   await sendMessage(
@@ -465,9 +552,234 @@ async function cmdWatch(env: Env, chatId: number, args: string[]): Promise<void>
   await sendMessage(
     env,
     chatId,
-    `Watching *${meta?.symbol ?? slug.toUpperCase()}*. You will get an alert on \u00B1${PRICE_THRESHOLD_PCT}% / 1h moves.`,
+    `Watching *${meta?.symbol ?? slug.toUpperCase()}*. You will get an alert on \u00B1${PRICE_THRESHOLD_PCT}% / 1h moves. Customize with \`/alert ${slug} <pct>\` or add whale tracking via \`/whale ${slug} <usd>\`.`,
     "Markdown",
   );
+}
+
+// -----------------------------------------------------------------------------
+// Custom-threshold commands
+// -----------------------------------------------------------------------------
+
+async function cmdAlert(
+  env: Env,
+  chatId: number,
+  args: string[],
+): Promise<void> {
+  if (args.length < 2) {
+    await sendMessage(
+      env,
+      chatId,
+      `Usage: \`/alert <slug> <pct>\` (e.g. \`/alert vt 5\`). Range ${MIN_PRICE_THRESHOLD_PCT}\u2013${MAX_PRICE_THRESHOLD_PCT}%.`,
+      "Markdown",
+    );
+    return;
+  }
+  const slug = args[0].toLowerCase();
+  if (!isIntelTokenSlug(slug)) {
+    await sendMessage(
+      env,
+      chatId,
+      `Unknown slug \`${sanitizeSlugForEcho(slug)}\`. Run /tokens to see supported tokens.`,
+      "Markdown",
+    );
+    return;
+  }
+  const pct = parsePctArg(args[1]);
+  if (
+    pct == null ||
+    pct < MIN_PRICE_THRESHOLD_PCT ||
+    pct > MAX_PRICE_THRESHOLD_PCT
+  ) {
+    await sendMessage(
+      env,
+      chatId,
+      `Threshold must be a number between ${MIN_PRICE_THRESHOLD_PCT} and ${MAX_PRICE_THRESHOLD_PCT}. Got \`${escapeMarkdown(args[1])}\`.`,
+      "Markdown",
+    );
+    return;
+  }
+  const chat = (await getChat(env, chatId)) ?? {
+    tokens: [],
+    created_at: new Date().toISOString(),
+    last_seen: new Date().toISOString(),
+  };
+  if (!chat.tokens.includes(slug)) {
+    await sendMessage(
+      env,
+      chatId,
+      `Not watching \`${slug}\` yet. Run \`/watch ${slug}\` first.`,
+      "Markdown",
+    );
+    return;
+  }
+  chat.thresholds = { ...(chat.thresholds ?? {}), [slug]: pct };
+  chat.last_seen = new Date().toISOString();
+  await putChat(env, chatId, chat);
+  const meta = getIntelToken(slug);
+  await sendMessage(
+    env,
+    chatId,
+    `Alert threshold for *${meta?.symbol ?? slug.toUpperCase()}* set to \u00B1${pct}% / 1h.`,
+    "Markdown",
+  );
+}
+
+async function cmdUnalert(
+  env: Env,
+  chatId: number,
+  args: string[],
+): Promise<void> {
+  if (args.length === 0) {
+    await sendMessage(
+      env,
+      chatId,
+      "Usage: `/unalert <slug>` (reverts to default \u00B1" + PRICE_THRESHOLD_PCT + "%).",
+      "Markdown",
+    );
+    return;
+  }
+  const slug = args[0].toLowerCase();
+  const chat = await getChat(env, chatId);
+  if (!chat || !chat.thresholds || chat.thresholds[slug] == null) {
+    await sendMessage(
+      env,
+      chatId,
+      `No custom alert set for \`${sanitizeSlugForEcho(slug)}\` (already on default).`,
+      "Markdown",
+    );
+    return;
+  }
+  delete chat.thresholds[slug];
+  if (Object.keys(chat.thresholds).length === 0) delete chat.thresholds;
+  chat.last_seen = new Date().toISOString();
+  await putChat(env, chatId, chat);
+  await sendMessage(
+    env,
+    chatId,
+    `Reverted \`${slug}\` to default \u00B1${PRICE_THRESHOLD_PCT}% / 1h.`,
+    "Markdown",
+  );
+}
+
+async function cmdWhale(
+  env: Env,
+  chatId: number,
+  args: string[],
+): Promise<void> {
+  if (args.length < 2) {
+    await sendMessage(
+      env,
+      chatId,
+      `Usage: \`/whale <slug> <usd>\` (e.g. \`/whale vt 25000\`). Range $${fmtUsd(MIN_WHALE_USD)}\u2013$${fmtUsd(MAX_WHALE_USD)}.`,
+      "Markdown",
+    );
+    return;
+  }
+  const slug = args[0].toLowerCase();
+  if (!isIntelTokenSlug(slug)) {
+    await sendMessage(
+      env,
+      chatId,
+      `Unknown slug \`${sanitizeSlugForEcho(slug)}\`. Run /tokens to see supported tokens.`,
+      "Markdown",
+    );
+    return;
+  }
+  const usd = parseUsdArg(args[1]);
+  if (usd == null || usd < MIN_WHALE_USD || usd > MAX_WHALE_USD) {
+    await sendMessage(
+      env,
+      chatId,
+      `Whale threshold must be a number between ${MIN_WHALE_USD} and ${MAX_WHALE_USD}. Got \`${escapeMarkdown(args[1])}\`.`,
+      "Markdown",
+    );
+    return;
+  }
+  const chat = (await getChat(env, chatId)) ?? {
+    tokens: [],
+    created_at: new Date().toISOString(),
+    last_seen: new Date().toISOString(),
+  };
+  if (!chat.tokens.includes(slug)) {
+    await sendMessage(
+      env,
+      chatId,
+      `Not watching \`${slug}\` yet. Run \`/watch ${slug}\` first.`,
+      "Markdown",
+    );
+    return;
+  }
+  chat.whale_thresholds = {
+    ...(chat.whale_thresholds ?? {}),
+    [slug]: usd,
+  };
+  chat.last_seen = new Date().toISOString();
+  await putChat(env, chatId, chat);
+  const meta = getIntelToken(slug);
+  await sendMessage(
+    env,
+    chatId,
+    `Whale alerts on for *${meta?.symbol ?? slug.toUpperCase()}* at \u2265 $${fmtUsd(usd)} per transfer.`,
+    "Markdown",
+  );
+}
+
+async function cmdUnwhale(
+  env: Env,
+  chatId: number,
+  args: string[],
+): Promise<void> {
+  if (args.length === 0) {
+    await sendMessage(env, chatId, "Usage: `/unwhale <slug>`.", "Markdown");
+    return;
+  }
+  const slug = args[0].toLowerCase();
+  const chat = await getChat(env, chatId);
+  if (
+    !chat ||
+    !chat.whale_thresholds ||
+    chat.whale_thresholds[slug] == null
+  ) {
+    await sendMessage(
+      env,
+      chatId,
+      `No whale alert set for \`${sanitizeSlugForEcho(slug)}\`.`,
+      "Markdown",
+    );
+    return;
+  }
+  delete chat.whale_thresholds[slug];
+  if (Object.keys(chat.whale_thresholds).length === 0) {
+    delete chat.whale_thresholds;
+  }
+  chat.last_seen = new Date().toISOString();
+  await putChat(env, chatId, chat);
+  await sendMessage(
+    env,
+    chatId,
+    `Whale alerts off for \`${slug}\`.`,
+    "Markdown",
+  );
+}
+
+function parsePctArg(raw: string): number | null {
+  const cleaned = raw.replace(/[%\s]/g, "");
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : null;
+}
+
+function parseUsdArg(raw: string): number | null {
+  // Accepts: 50000, 50_000, 50,000, $50000, 50k, 1.5m
+  const cleaned = raw.replace(/[$,\s_]/g, "").toLowerCase();
+  const match = cleaned.match(/^([\d.]+)([km])?$/);
+  if (!match) return null;
+  const n = Number(match[1]);
+  if (!Number.isFinite(n)) return null;
+  const suffix = match[2];
+  if (suffix === "k") return n * 1_000;
+  if (suffix === "m") return n * 1_000_000;
+  return n;
 }
 
 async function cmdUnwatch(env: Env, chatId: number, args: string[]): Promise<void> {
@@ -985,7 +1297,7 @@ async function cmdStop(env: Env, chatId: number): Promise<void> {
 
 async function refreshAndAlertToken(
   slug: string,
-  watchers: number[],
+  watchers: ChatRecord[],
   env: Env,
 ): Promise<void> {
   const meta = getIntelToken(slug);
@@ -1020,32 +1332,469 @@ async function refreshAndAlertToken(
     return;
   }
 
-  // Direction + magnitude.
-  let trigger: { dir: "up" | "down" | "liq_drop"; pct: number } | null = null;
-  if (live.price_usd != null && prev.price_usd > 0) {
-    const pct = ((live.price_usd - prev.price_usd) / prev.price_usd) * 100;
-    if (pct >= PRICE_THRESHOLD_PCT) trigger = { dir: "up", pct };
-    else if (pct <= -PRICE_THRESHOLD_PCT) trigger = { dir: "down", pct };
-  }
-  if (!trigger && live.liquidity_usd != null && prev.liquidity_usd > 0) {
-    const pct = ((live.liquidity_usd - prev.liquidity_usd) / prev.liquidity_usd) * 100;
-    if (pct <= LIQ_DROP_THRESHOLD_PCT) trigger = { dir: "liq_drop", pct };
-  }
+  // Compute observed magnitudes once; per-chat filter below decides who
+  // gets alerted.
+  const pricePct =
+    live.price_usd != null && prev.price_usd > 0
+      ? ((live.price_usd - prev.price_usd) / prev.price_usd) * 100
+      : null;
+  const liqPct =
+    live.liquidity_usd != null && prev.liquidity_usd > 0
+      ? ((live.liquidity_usd - prev.liquidity_usd) / prev.liquidity_usd) * 100
+      : null;
 
-  if (trigger) {
-    // Cooldown: same direction within ALERT_COOLDOWN_MS is suppressed.
-    const cooldownOk =
-      !prev.last_alert_at ||
-      prev.last_alert_dir !== trigger.dir ||
-      Date.now() - Date.parse(prev.last_alert_at) >= ALERT_COOLDOWN_MS;
-    if (cooldownOk) {
-      newSnap.last_alert_at = fetchedAt;
-      newSnap.last_alert_dir = trigger.dir;
-      await fanOutAlert(env, slug, trigger, prev, live, watchers);
+  // Per-chat fan-out: each watcher may have a custom threshold via
+  // /alert. Liquidity drop uses the global threshold (no per-user
+  // override) because rug-risk semantics are not user-tunable.
+  const sends: Promise<unknown>[] = [];
+  for (const rec of watchers) {
+    const chatId = (rec as ChatRecord & { __chat_id?: number }).__chat_id;
+    if (chatId == null) continue;
+    const userThreshold = rec.thresholds?.[slug] ?? PRICE_THRESHOLD_PCT;
+    let trigger: { dir: "up" | "down" | "liq_drop"; pct: number } | null = null;
+    if (pricePct != null) {
+      if (pricePct >= userThreshold) trigger = { dir: "up", pct: pricePct };
+      else if (pricePct <= -userThreshold)
+        trigger = { dir: "down", pct: pricePct };
     }
+    if (!trigger && liqPct != null && liqPct <= LIQ_DROP_THRESHOLD_PCT) {
+      trigger = { dir: "liq_drop", pct: liqPct };
+    }
+    if (!trigger) continue;
+
+    // Per-(chat, slug, dir) cooldown via KV. Avoids one chatty user
+    // suppressing another user's alert (which the old global cooldown
+    // would do).
+    const cooldownKey = priceCooldownKey(chatId, slug, trigger.dir);
+    const last = await env.WATCHTOWER.get(cooldownKey);
+    if (last) continue; // TTL'd key still alive = on cooldown
+    sends.push(
+      env.WATCHTOWER.put(cooldownKey, fetchedAt, {
+        expirationTtl: Math.ceil(ALERT_COOLDOWN_MS / 1000),
+      }),
+      sendPriceAlert(env, chatId, slug, trigger, prev, live, userThreshold),
+    );
+  }
+  await Promise.all(sends);
+
+  // Keep snapshot.last_alert_* in sync with whatever trigger (if any)
+  // fired this tick — used by debug tooling and not strictly required.
+  if (pricePct != null && Math.abs(pricePct) >= PRICE_THRESHOLD_PCT) {
+    newSnap.last_alert_at = fetchedAt;
+    newSnap.last_alert_dir = pricePct >= 0 ? "up" : "down";
+  } else if (liqPct != null && liqPct <= LIQ_DROP_THRESHOLD_PCT) {
+    newSnap.last_alert_at = fetchedAt;
+    newSnap.last_alert_dir = "liq_drop";
+  }
+  await putSnapshot(env, slug, newSnap);
+}
+
+async function sendPriceAlert(
+  env: Env,
+  chatId: number,
+  slug: string,
+  trigger: { dir: "up" | "down" | "liq_drop"; pct: number },
+  prev: SnapshotRecord,
+  live: LiveSnap,
+  userThreshold: number,
+): Promise<void> {
+  const meta = getIntelToken(slug);
+  const symbol = meta?.symbol ?? slug.toUpperCase();
+  const usingCustom = userThreshold !== PRICE_THRESHOLD_PCT;
+  const headline =
+    trigger.dir === "liq_drop"
+      ? `\u26A0\uFE0F *${symbol}* liquidity dropped ${Math.abs(trigger.pct).toFixed(1)}% / 1h`
+      : trigger.dir === "up"
+        ? `\uD83D\uDFE2 *${symbol}* +${trigger.pct.toFixed(1)}% / 1h`
+        : `\uD83D\uDD34 *${symbol}* ${trigger.pct.toFixed(1)}% / 1h`;
+  const lines = [
+    headline,
+    "",
+    `Price: ${fmtPriceMaybe(prev.price_usd)} \u2192 ${fmtPriceMaybe(live.price_usd)}`,
+    `Liquidity: ${fmtUsdMaybe(prev.liquidity_usd)} \u2192 ${fmtUsdMaybe(live.liquidity_usd)}`,
+    `24h volume: ${fmtUsdMaybe(live.volume_24h_usd)}`,
+  ];
+  if (usingCustom && trigger.dir !== "liq_drop") {
+    lines.push(`Threshold: \u00B1${userThreshold}% (custom)`);
+  }
+  lines.push("", `Open: https://vexorterminal.com/intel/${slug}`);
+  await sendMessage(env, chatId, lines.join("\n"), "Markdown").catch((e) => {
+    console.warn(`watchtower cron: sendMessage failed for ${chatId}: ${e}`);
+  });
+}
+
+// -----------------------------------------------------------------------------
+// Whale-transfer scanner (Feature 2)
+// -----------------------------------------------------------------------------
+
+async function scanWhaleTransfers(
+  slug: string,
+  watchers: ChatRecord[],
+  env: Env,
+): Promise<void> {
+  // Anyone opted in for this token?
+  const subscribers = watchers.filter(
+    (w) => w.whale_thresholds && w.whale_thresholds[slug] != null,
+  );
+  if (subscribers.length === 0) return;
+
+  const meta = getIntelToken(slug);
+  if (!meta) return;
+
+  // Resolve scan range.
+  const headHex = (await rpcCall("eth_blockNumber", []).catch(() => null)) as
+    | string
+    | null;
+  if (!headHex) {
+    console.warn(`watchtower whale: failed to read head block for ${slug}`);
+    return;
+  }
+  const head = Number(hexToBigInt(headHex));
+  if (!Number.isFinite(head) || head <= 0) return;
+
+  const lastRaw = await env.WATCHTOWER.get(whaleBlockKey(slug));
+  const lastScanned = lastRaw ? Number(lastRaw) : NaN;
+  const from = Number.isFinite(lastScanned) && lastScanned > 0
+    ? Math.max(lastScanned + 1, head - WHALE_MAX_BLOCK_RANGE)
+    : head - WHALE_RECENT_FALLBACK_BLOCKS;
+  const to = Math.min(head, from + WHALE_MAX_BLOCK_RANGE);
+  if (from > to) {
+    // Already up to date.
+    await env.WATCHTOWER.put(whaleBlockKey(slug), String(to));
+    return;
   }
 
-  await putSnapshot(env, slug, newSnap);
+  // Get current price + decimals so we can convert raw token amounts → USD.
+  const [logs, decimals, snap] = await Promise.all([
+    fetchTransferLogs(meta.ca, from, to).catch((e) => {
+      console.warn(`watchtower whale: eth_getLogs failed for ${slug}: ${e}`);
+      return [];
+    }),
+    getTokenDecimals(env, meta.ca),
+    getSnapshot(env, slug),
+  ]);
+  const priceUsd = snap?.price_usd ?? null;
+  if (priceUsd == null || !Number.isFinite(priceUsd) || priceUsd <= 0) {
+    // Without a live price we cannot convert wei → USD. Bump the cursor
+    // anyway so we don't accumulate a backlog when DexScreener is down.
+    await env.WATCHTOWER.put(whaleBlockKey(slug), String(to));
+    return;
+  }
+
+  // For each log, compute USD value and fan out to each subscriber whose
+  // threshold is met.
+  const sends: Promise<unknown>[] = [];
+  for (const log of logs) {
+    const value = parseTransferValue(log.data);
+    if (value === 0n) continue;
+    const tokens = Number(value) / Math.pow(10, decimals);
+    if (!Number.isFinite(tokens)) continue;
+    const usd = tokens * priceUsd;
+    if (!Number.isFinite(usd) || usd < MIN_WHALE_USD) continue;
+
+    const from_addr = topicToAddress(log.topics[1]);
+    const to_addr = topicToAddress(log.topics[2]);
+    const dedupeKey = whaleDedupeKey(slug, log.transactionHash, log.logIndex);
+    const already = await env.WATCHTOWER.get(dedupeKey);
+    if (already) continue;
+
+    for (const rec of subscribers) {
+      const chatId = (rec as ChatRecord & { __chat_id?: number }).__chat_id;
+      if (chatId == null) continue;
+      const threshold = rec.whale_thresholds?.[slug] ?? DEFAULT_WHALE_USD;
+      if (usd < threshold) continue;
+      sends.push(
+        sendWhaleAlert(env, chatId, slug, {
+          from_addr,
+          to_addr,
+          tokens,
+          usd,
+          tx_hash: log.transactionHash,
+        }),
+      );
+    }
+    sends.push(
+      env.WATCHTOWER.put(dedupeKey, String(Date.now()), {
+        expirationTtl: WHALE_COOLDOWN_TTL_SECONDS,
+      }),
+    );
+  }
+
+  sends.push(env.WATCHTOWER.put(whaleBlockKey(slug), String(to)));
+  await Promise.all(sends);
+}
+
+interface TransferLog {
+  topics: string[];
+  data: string;
+  transactionHash: string;
+  logIndex: string;
+  blockNumber: string;
+}
+
+async function fetchTransferLogs(
+  ca: string,
+  fromBlock: number,
+  toBlock: number,
+): Promise<TransferLog[]> {
+  const result = await rpcCall("eth_getLogs", [
+    {
+      address: ca,
+      fromBlock: "0x" + fromBlock.toString(16),
+      toBlock: "0x" + toBlock.toString(16),
+      topics: [TRANSFER_TOPIC],
+    },
+  ]);
+  if (!Array.isArray(result)) return [];
+  return result.filter((l): l is TransferLog => {
+    if (!l || typeof l !== "object") return false;
+    const x = l as Partial<TransferLog>;
+    return (
+      Array.isArray(x.topics) &&
+      typeof x.data === "string" &&
+      typeof x.transactionHash === "string" &&
+      typeof x.logIndex === "string"
+    );
+  });
+}
+
+function parseTransferValue(dataHex: string): bigint {
+  // ERC-20 Transfer: data = value (single 32-byte word).
+  if (!dataHex || !dataHex.startsWith("0x")) return 0n;
+  // Take the first 64 hex chars after `0x` to defend against malformed logs.
+  const valHex = dataHex.slice(0, 66);
+  try {
+    return hexToBigInt(valHex);
+  } catch {
+    return 0n;
+  }
+}
+
+function topicToAddress(topic: string | undefined): string {
+  if (!topic || !topic.startsWith("0x") || topic.length < 66) return "";
+  return "0x" + topic.slice(-40);
+}
+
+async function getTokenDecimals(env: Env, ca: string): Promise<number> {
+  const key = `dec:${ca.toLowerCase()}`;
+  const cached = await env.WATCHTOWER.get(key);
+  if (cached) {
+    const n = Number(cached);
+    if (Number.isFinite(n) && n > 0 && n <= 30) return n;
+  }
+  try {
+    const res = await rpcCall("eth_call", [
+      { to: ca, data: "0x313ce567" },
+      "latest",
+    ]);
+    if (typeof res === "string") {
+      const n = Number(hexToBigInt(res));
+      if (Number.isFinite(n) && n > 0 && n <= 30) {
+        await env.WATCHTOWER.put(key, String(n));
+        return n;
+      }
+    }
+  } catch (e) {
+    console.warn(`watchtower whale: decimals query failed for ${ca}: ${e}`);
+  }
+  // ERC-20 default. All 7 Pulse Premium tokens are 18 decimals.
+  return 18;
+}
+
+async function sendWhaleAlert(
+  env: Env,
+  chatId: number,
+  slug: string,
+  whale: {
+    from_addr: string;
+    to_addr: string;
+    tokens: number;
+    usd: number;
+    tx_hash: string;
+  },
+): Promise<void> {
+  const meta = getIntelToken(slug);
+  const symbol = meta?.symbol ?? slug.toUpperCase();
+  const fromShort = shortAddr(whale.from_addr);
+  const toShort = shortAddr(whale.to_addr);
+  const lines = [
+    `\uD83D\uDC0B *${symbol}* whale transfer \u2014 $${fmtUsd(whale.usd)}`,
+    "",
+    `Tokens: ${fmtUsd(whale.tokens)} ${symbol}`,
+    `From: \`${fromShort}\`  \u2192  \`${toShort}\``,
+    `Tx: https://basescan.org/tx/${whale.tx_hash}`,
+  ];
+  await sendMessage(env, chatId, lines.join("\n"), "Markdown").catch((e) => {
+    console.warn(`watchtower whale: sendMessage failed for ${chatId}: ${e}`);
+  });
+}
+
+function shortAddr(addr: string): string {
+  if (!addr || addr.length < 10) return addr || "\u2014";
+  return `${addr.slice(0, 6)}\u2026${addr.slice(-4)}`;
+}
+
+// -----------------------------------------------------------------------------
+// Volatility-spike scanner (Feature 3)
+// -----------------------------------------------------------------------------
+
+async function checkVolatilitySpike(
+  slug: string,
+  watchers: number[],
+  env: Env,
+): Promise<void> {
+  if (watchers.length === 0) return;
+  const snap = await getSnapshot(env, slug);
+  if (!snap) return; // need price pipeline to have populated baseline first
+  const today24h = snap.volume_24h_usd;
+  if (today24h == null || today24h < VOLATILITY_MIN_USD) return;
+
+  // Don't re-alert if we already fired within VOLATILITY_COOLDOWN_MS.
+  // Use a dedicated KV key (not the snapshot) so we don't race with
+  // refreshAndAlertToken's snapshot writes.
+  const cooldownRaw = await env.WATCHTOWER.get(volAlertKey(slug));
+  if (cooldownRaw) return; // TTL'd key still alive
+
+  // Discover the pool address from the per-token Pulse Premium feed.
+  const baseUrl = (
+    env.INTEL_TOKEN_BASE_URL ??
+    "https://raw.githubusercontent.com/Vexorterminal0111/vexor-aeon/data/intel/tokens"
+  ).replace(/\/+$/, "");
+  let poolAddress: string | null = null;
+  try {
+    const res = await fetch(`${baseUrl}/${slug}.json`, {
+      cf: { cacheTtl: 300, cacheEverything: true },
+      headers: { "user-agent": "vexor-watchtower-worker/1" },
+    });
+    if (res.ok) {
+      const data = (await res.json()) as {
+        market_snapshot?: { top_pool?: { address?: string } };
+      };
+      poolAddress = data?.market_snapshot?.top_pool?.address ?? null;
+    }
+  } catch (e) {
+    console.warn(`watchtower vol: pulse premium fetch failed for ${slug}: ${e}`);
+  }
+  if (!poolAddress) return;
+
+  const ohlc = await fetchDailyVolumeUsd(poolAddress).catch((e) => {
+    console.warn(`watchtower vol: GeckoTerminal fetch failed for ${slug}: ${e}`);
+    return null;
+  });
+  if (!ohlc || ohlc.length < VOLATILITY_MIN_DAYS) return;
+
+  // Drop today's incomplete candle (first or last depending on ordering)
+  // by sorting descending and using ohlc[1..] as the history baseline.
+  const sorted = [...ohlc].sort((a, b) => b.ts - a.ts);
+  const history = sorted.slice(1, 1 + 30).map((d) => d.volume_usd).filter((v) => v > 0);
+  if (history.length < VOLATILITY_MIN_DAYS) return;
+  const median = median0(history);
+  if (median <= 0) return;
+  const ratio = today24h / median;
+  if (ratio < VOLATILITY_SPIKE_FACTOR) return;
+
+  // Fire.
+  const fetchedAt = new Date().toISOString();
+  await Promise.all([
+    env.WATCHTOWER.put(volAlertKey(slug), fetchedAt, {
+      expirationTtl: Math.ceil(VOLATILITY_COOLDOWN_MS / 1000),
+    }),
+    ...watchers.map((id) =>
+      sendVolatilityAlert(env, id, slug, today24h, median, ratio),
+    ),
+  ]);
+}
+
+interface DailyVol {
+  ts: number;
+  volume_usd: number;
+}
+
+async function fetchDailyVolumeUsd(pool: string): Promise<DailyVol[]> {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 7000);
+  try {
+    const res = await fetch(
+      `https://api.geckoterminal.com/api/v2/networks/base/pools/${pool}/ohlcv/day?aggregate=1&limit=60&currency=usd`,
+      {
+        signal: ctl.signal,
+        cf: { cacheTtl: 1800, cacheEverything: true },
+        headers: { "user-agent": "vexor-watchtower-worker/1" },
+      },
+    );
+    if (!res.ok) return [];
+    const json = (await res.json()) as {
+      data?: { attributes?: { ohlcv_list?: Array<Array<number>> } };
+    };
+    const list = json?.data?.attributes?.ohlcv_list;
+    if (!Array.isArray(list)) return [];
+    return list
+      .filter(
+        (row): row is number[] =>
+          Array.isArray(row) && row.length >= 6 && typeof row[5] === "number",
+      )
+      .map((row) => ({ ts: row[0], volume_usd: row[5] }));
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+function median0(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
+}
+
+async function sendVolatilityAlert(
+  env: Env,
+  chatId: number,
+  slug: string,
+  today24h: number,
+  median30d: number,
+  ratio: number,
+): Promise<void> {
+  const meta = getIntelToken(slug);
+  const symbol = meta?.symbol ?? slug.toUpperCase();
+  const lines = [
+    `\uD83D\uDD25 *${symbol}* volume spike \u2014 ${ratio.toFixed(1)}\u00D7 median`,
+    "",
+    `24h volume: $${fmtUsd(today24h)}`,
+    `30d median: $${fmtUsd(median30d)}`,
+    "",
+    `Open: https://vexorterminal.com/intel/${slug}`,
+  ];
+  await sendMessage(env, chatId, lines.join("\n"), "Markdown").catch((e) => {
+    console.warn(`watchtower vol: sendMessage failed for ${chatId}: ${e}`);
+  });
+}
+
+// -----------------------------------------------------------------------------
+// KV-key helpers (new alerts pipelines)
+// -----------------------------------------------------------------------------
+
+function priceCooldownKey(
+  chatId: number,
+  slug: string,
+  dir: "up" | "down" | "liq_drop",
+): string {
+  return `cd:${chatId}:${slug}:${dir}`;
+}
+
+function whaleBlockKey(slug: string): string {
+  return `whale-block:${slug}`;
+}
+
+function whaleDedupeKey(slug: string, txHash: string, logIndex: string): string {
+  return `whale-dedupe:${slug}:${txHash}:${logIndex}`;
+}
+
+function volAlertKey(slug: string): string {
+  return `vol-alert:${slug}`;
 }
 
 interface LiveSnap {
@@ -1086,39 +1835,6 @@ async function fetchDexScreenerSnapshot(ca: string): Promise<LiveSnap | null> {
   } finally {
     clearTimeout(t);
   }
-}
-
-async function fanOutAlert(
-  env: Env,
-  slug: string,
-  trigger: { dir: "up" | "down" | "liq_drop"; pct: number },
-  prev: SnapshotRecord,
-  live: LiveSnap,
-  chatIds: number[],
-): Promise<void> {
-  const meta = getIntelToken(slug);
-  const symbol = meta?.symbol ?? slug.toUpperCase();
-  const headline =
-    trigger.dir === "liq_drop"
-      ? `\u26A0\uFE0F *${symbol}* liquidity dropped ${Math.abs(trigger.pct).toFixed(1)}% / 1h`
-      : trigger.dir === "up"
-        ? `\uD83D\uDFE2 *${symbol}* +${trigger.pct.toFixed(1)}% / 1h`
-        : `\uD83D\uDD34 *${symbol}* ${trigger.pct.toFixed(1)}% / 1h`;
-  const lines = [
-    headline,
-    "",
-    `Price: ${fmtPriceMaybe(prev.price_usd)} \u2192 ${fmtPriceMaybe(live.price_usd)}`,
-    `Liquidity: ${fmtUsdMaybe(prev.liquidity_usd)} \u2192 ${fmtUsdMaybe(live.liquidity_usd)}`,
-    `24h volume: ${fmtUsdMaybe(live.volume_24h_usd)}`,
-    "",
-    `Open: https://vexorterminal.com/intel/${slug}`,
-  ];
-  const body = lines.join("\n");
-  await Promise.all(
-    chatIds.map((id) => sendMessage(env, id, body, "Markdown").catch((e) => {
-      console.warn(`watchtower cron: sendMessage failed for ${id}: ${e}`);
-    })),
-  );
 }
 
 // -----------------------------------------------------------------------------
