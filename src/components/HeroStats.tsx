@@ -12,7 +12,7 @@ const STATS: Stat[] = [
   { value: "9", label: "Sub-Agents" },
   { value: "—", label: "RevShare APR", hint: "coming soon" },
   { value: "—", label: "Pool TVL", hint: "coming soon" },
-  { value: "—", label: "$VT Price", hint: "coming soon" },
+  { value: "—", label: "$VEXOR Price", hint: "coming soon" },
 ];
 
 export function HeroStats() {

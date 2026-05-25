@@ -68,7 +68,7 @@ const CARD_ORDER: ReadonlyArray<{ slug: string; label: string; kicker: string; a
   {
     slug: "token-report",
     label: "Token Pulse",
-    kicker: "$VT + benchmark snapshot",
+    kicker: "$VEXOR + benchmark snapshot",
     accent: "#a78bfa",
     gradient: "from-violet-400/40 via-purple-500/20 to-transparent",
   },
@@ -186,7 +186,7 @@ export function IntelFeed() {
             Autonomous briefings, on a schedule.
           </h1>
           <p className="mt-4 text-white/65 text-base sm:text-lg leading-relaxed">
-            Five cron-driven briefings tuned for $VT — morning priority list,
+            Five cron-driven briefings tuned for $VEXOR — morning priority list,
             token pulse, on-chain events, DeFi overview, and an evening recap.
             Produced by an{" "}
             <a

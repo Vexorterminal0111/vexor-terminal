@@ -51,10 +51,10 @@ const SUB_AGENTS = [
 
 const TIERS = [
   { name: "—", min: "0", note: "Connect wallet to read on-chain state" },
-  { name: "Bronze", min: "1,000 $VT", note: "Priority chat slot, 1-block latency" },
-  { name: "Silver", min: "10,000 $VT", note: "Private channels + early sub-agents" },
-  { name: "Gold", min: "100,000 $VT", note: "Beta sub-agents + private memory" },
-  { name: "Black", min: "1,000,000 $VT", note: "Revenue dashboard + governance lead" },
+  { name: "Bronze", min: "1,000 $VEXOR", note: "Priority chat slot, 1-block latency" },
+  { name: "Silver", min: "10,000 $VEXOR", note: "Private channels + early sub-agents" },
+  { name: "Gold", min: "100,000 $VEXOR", note: "Beta sub-agents + private memory" },
+  { name: "Black", min: "1,000,000 $VEXOR", note: "Revenue dashboard + governance lead" },
 ];
 
 const LOCK_TIERS = [
@@ -66,28 +66,28 @@ const LOCK_TIERS = [
 
 const FAQ = [
   {
-    q: "Is $VT live on Base mainnet?",
-    a: "Not yet — $VT is coming soon. The token contract has not been deployed and the on-chain staking pool is not active. Once the contract is verified on Basescan, the address and Console will go live on this site.",
+    q: "Is $VEXOR live on Base mainnet?",
+    a: "Not yet — $VEXOR is coming soon. The token contract has not been deployed and the on-chain staking pool is not active. Once the contract is verified on Basescan, the address and Console will go live on this site.",
   },
   {
     q: "When will the Console open?",
-    a: "The interactive Console (wallet, faucet, stake, govern) will open once $VT is deployed to Base. We will announce the exact launch date on @vexorterminal on X and via the Watchtower Telegram bot.",
+    a: "The interactive Console (wallet, faucet, stake, govern) will open once $VEXOR is deployed to Base. We will announce the exact launch date on @vexorterminal on X and via the Watchtower Telegram bot.",
   },
   {
-    q: "Can I buy $VT anywhere right now?",
-    a: "No. There is no live $VT contract yet — anything marketed as $VT today is not associated with Vexor Terminal. Wait for the official launch announcement before interacting with any contract claiming to be $VT.",
+    q: "Can I buy $VEXOR anywhere right now?",
+    a: "No. There is no live $VEXOR contract yet — anything marketed as $VEXOR today is not associated with Vexor Terminal. Wait for the official launch announcement before interacting with any contract claiming to be $VEXOR.",
   },
   {
     q: "How will staking yield work at launch?",
-    a: "Stakers will receive a pro-rata share of protocol revenue, denominated in $VT. The current design is flat single-sided staking (no lock, withdraw anytime) with rewards pushed by the protocol periodically. Exact economics will be finalized before launch.",
+    a: "Stakers will receive a pro-rata share of protocol revenue, denominated in $VEXOR. The current design is flat single-sided staking (no lock, withdraw anytime) with rewards pushed by the protocol periodically. Exact economics will be finalized before launch.",
   },
   {
     q: "Is the chat free?",
-    a: "Yes during this pre-launch phase — hosted Llama 3.3 70B via Groq, wallet-gated and rate-limited. Production billing in $VT will be activated once the token launches.",
+    a: "Yes during this pre-launch phase — hosted Llama 3.3 70B via Groq, wallet-gated and rate-limited. Production billing in $VEXOR will be activated once the token launches.",
   },
   {
     q: "Where can I see the contract source code?",
-    a: "Solidity source lives in the contracts/ directory of the repo (VexorToken.sol, VexorStaking.sol, VexorGovernor.sol, VexorRevShare.sol). Built with Foundry + OpenZeppelin v5. The verified mainnet contracts will be linked here once $VT is deployed.",
+    a: "Solidity source lives in the contracts/ directory of the repo (VexorToken.sol, VexorStaking.sol, VexorGovernor.sol, VexorRevShare.sol). Built with Foundry + OpenZeppelin v5. The verified mainnet contracts will be linked here once $VEXOR is deployed.",
   },
 ];
 
@@ -178,7 +178,7 @@ export function Docs() {
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/70 w-fit">
             <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
-            Docs · v0.1.0 · $VT coming soon
+            Docs · v0.1.0 · $VEXOR coming soon
           </div>
           <h1 className="font-mono text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight text-white max-w-3xl break-words">
             Drive the <span className="text-cyan-300">terminal</span>.
@@ -186,7 +186,7 @@ export function Docs() {
           <p className="max-w-2xl text-[15px] sm:text-base md:text-lg text-white/65 leading-relaxed">
             Vexor Terminal is a personal AI orchestrator commanding 9
             specialized sub-agents. The terminal will be owned and governed
-            by $VT on Base — the token launch is coming soon. This page
+            by $VEXOR on Base — the token launch is coming soon. This page
             covers the orchestrator design, sub-agents, and the planned
             token economy.
           </p>
@@ -255,14 +255,14 @@ export function Docs() {
               </nav>
               <div className="mt-8 rounded-lg border border-cyan-400/30 bg-cyan-500/[0.06] p-4">
                 <div className="font-mono text-[10px] uppercase tracking-widest text-cyan-300">
-                  $VT · coming soon
+                  $VEXOR · coming soon
                 </div>
                 <p className="mt-2 text-[11px] text-white/70 leading-snug">
                   Planned ERC-20 on Base. 100B supply, 18 decimals.
                 </p>
                 <p className="mt-3 text-[10px] text-white/45 leading-relaxed">
                   The token contract has not been deployed yet. The Console
-                  and on-chain governance will open with the $VT launch.
+                  and on-chain governance will open with the $VEXOR launch.
                 </p>
               </div>
             </div>
@@ -280,7 +280,7 @@ export function Docs() {
               </p>
               <p>
                 The terminal is owned and governed by{" "}
-                <span className="text-cyan-300">$VT</span>, an ERC-20Votes
+                <span className="text-cyan-300">$VEXOR</span>, an ERC-20Votes
                 token on Base. Hold it to access elevated tiers, stake it to
                 earn a pro-rata share of agent revenue, vote with it to direct
                 protocol evolution.
@@ -296,7 +296,7 @@ export function Docs() {
                   <div className="font-mono text-[10px] uppercase tracking-widest text-white/45">
                     Token
                   </div>
-                  <div className="mt-1 font-mono text-white">$VT — soon</div>
+                  <div className="mt-1 font-mono text-white">$VEXOR — soon</div>
                 </div>
                 <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
                   <div className="font-mono text-[10px] uppercase tracking-widest text-white/45">
@@ -312,7 +312,7 @@ export function Docs() {
             <Section id="quickstart" kicker="02" title="Quickstart">
               <p>
                 The interactive Console (claim / stake / govern) is not live
-                yet — it will open once the $VT contract is deployed and
+                yet — it will open once the $VEXOR contract is deployed and
                 verified on Base. At launch, the flow below will be live
                 end-to-end.
               </p>
@@ -322,17 +322,17 @@ export function Docs() {
                   auto-switch your chain to Base. MetaMask, Rainbow, and
                   Coinbase Wallet will all be supported.
                 </Step>
-                <Step n={2} icon={Coins} title="Acquire $VT">
-                  Once $VT is live on Base, the contract address will be
+                <Step n={2} icon={Coins} title="Acquire $VEXOR">
+                  Once $VEXOR is live on Base, the contract address will be
                   posted on this site and on @vexorterminal. You can then
-                  acquire $VT via the listed liquidity venues.
+                  acquire $VEXOR via the listed liquidity venues.
                 </Step>
                 <Step n={3} icon={Vote} title="Self-delegate for voting power">
-                  $VT will be ERC-20Votes. A one-time self-delegate tx will
+                  $VEXOR will be ERC-20Votes. A one-time self-delegate tx will
                   activate your voting power for governance proposals.
                 </Step>
-                <Step n={4} icon={Lock} title="Stake $VT, earn revenue">
-                  The RevShare pool will accept $VT deposits. Stakers will
+                <Step n={4} icon={Lock} title="Stake $VEXOR, earn revenue">
+                  The RevShare pool will accept $VEXOR deposits. Stakers will
                   receive a pro-rata share of protocol revenue — flat
                   staking, withdraw any time.
                 </Step>
@@ -359,7 +359,7 @@ export function Docs() {
 
             <Section id="contracts" kicker="03" title="Smart contract addresses">
               <p>
-                The $VT token and the revenue-share staking pool are not yet
+                The $VEXOR token and the revenue-share staking pool are not yet
                 deployed on Base. Once the contracts ship, this section will
                 list the verified mainnet addresses with direct links to
                 Basescan.
@@ -371,7 +371,7 @@ export function Docs() {
                     Pre-launch
                   </div>
                   <p className="mt-1 text-sm text-white/70">
-                    The $VT contract address has not been published. Follow{" "}
+                    The $VEXOR contract address has not been published. Follow{" "}
                     <a
                       href="https://x.com/vexorterminal"
                       target="_blank"
@@ -390,7 +390,7 @@ export function Docs() {
             <Section id="console" kicker="04" title="Console walkthrough">
               <p className="text-white/65">
                 The following describes the on-chain Console flow that will
-                open at $VT launch. None of these actions are live yet — the
+                open at $VEXOR launch. None of these actions are live yet — the
                 token contract has not been deployed.
               </p>
               <div className="space-y-6">
@@ -399,7 +399,7 @@ export function Docs() {
                     <Wallet className="h-4 w-4 text-cyan-300" /> Wallet tab
                   </h3>
                   <p className="mt-2">
-                    At launch, will show your address, current chain, $VT
+                    At launch, will show your address, current chain, $VEXOR
                     balance, and voting power. Two actions will be exposed:
                   </p>
                   <ul className="mt-2 list-disc list-inside text-sm text-white/65 space-y-1 ml-2">
@@ -419,7 +419,7 @@ export function Docs() {
                     <Lock className="h-4 w-4 text-cyan-300" /> Stake tab
                   </h3>
                   <p className="mt-2">
-                    Will let you stake $VT under one of four lock tiers.
+                    Will let you stake $VEXOR under one of four lock tiers.
                     Longer lock = higher reward weight. Your share of the
                     reward stream will equal your weighted stake ÷ total
                     weighted stake.
@@ -462,7 +462,7 @@ export function Docs() {
                   </h3>
                   <p className="mt-2">
                     Will use OpenZeppelin Governor v5. Proposals will require
-                    ≥100 $VT voting power. Each voter will choose{" "}
+                    ≥100 $VEXOR voting power. Each voter will choose{" "}
                     <span className="text-cyan-300">For</span> /{" "}
                     <span className="text-cyan-300">Against</span> /{" "}
                     <span className="text-cyan-300">Abstain</span>.
@@ -471,7 +471,7 @@ export function Docs() {
                     <li>Voting delay: 1 block</li>
                     <li>Voting period: 7,200 blocks (~4 hours)</li>
                     <li>Quorum: 4% of total supply</li>
-                    <li>Proposal threshold: 100 $VT</li>
+                    <li>Proposal threshold: 100 $VEXOR</li>
                   </ul>
                 </div>
 
@@ -481,15 +481,15 @@ export function Docs() {
                   </h3>
                   <p className="mt-2">
                     Will show your current tier and progress to the next
-                    based on $VT balance. See the full table below.
+                    based on $VEXOR balance. See the full table below.
                   </p>
                 </div>
               </div>
             </Section>
 
-            <Section id="tokenomics" kicker="05" title="$VT tokenomics">
+            <Section id="tokenomics" kicker="05" title="$VEXOR tokenomics">
               <p>
-                <span className="text-cyan-300">$VT</span> is an ERC-20Votes
+                <span className="text-cyan-300">$VEXOR</span> is an ERC-20Votes
                 + EIP-2612 Permit token. Voting power requires self-delegation
                 (one-time, no fee beyond gas).
               </p>
@@ -505,7 +505,7 @@ export function Docs() {
               <ul className="list-disc list-inside text-sm text-white/70 space-y-1 ml-2">
                 <li>
                   <span className="text-white">Pay for Runtime</span> — burn
-                  $VT per chat / task. Premium dispatch will cost more.
+                  $VEXOR per chat / task. Premium dispatch will cost more.
                 </li>
                 <li>
                   <span className="text-white">Stake to Earn</span> — receive
@@ -523,7 +523,7 @@ export function Docs() {
                 </li>
               </ul>
               <p className="mt-2 text-sm text-white/55">
-                $VT will be deployed on Base with 100B total supply at 18
+                $VEXOR will be deployed on Base with 100B total supply at 18
                 decimals. The token has not launched yet — the verified
                 contract address will be linked in the Contracts section
                 once it ships. Distribution and launch venue will be
@@ -555,7 +555,7 @@ export function Docs() {
 
             <Section id="tiers" kicker="07" title="Tier table">
               <p>
-                Token-gated tiers are computed from your $VT balance at
+                Token-gated tiers are computed from your $VEXOR balance at
                 read time. They are not enforced on-chain (no NFT) — they're
                 a soft access ladder applied by the protocol layer.
               </p>
@@ -592,7 +592,7 @@ export function Docs() {
               <p>
                 Vexor Terminal is a static frontend + a thin LLM proxy +
                 a Solidity protocol layer that will deploy alongside the
-                $VT launch on Base.
+                $VEXOR launch on Base.
               </p>
               <div className="mt-2 rounded-xl border border-white/10 bg-white/[0.02] p-5 font-mono text-xs text-white/70 leading-relaxed overflow-x-auto">
                 <pre className="whitespace-pre">{`┌──────────────────────────────────────────────┐
@@ -618,7 +618,7 @@ export function Docs() {
               <p className="mt-2 text-sm text-white/65">
                 The frontend and chat backend are live today. The protocol
                 layer (~600 lines of audited-pattern Solidity) will deploy
-                to Base alongside the $VT launch.
+                to Base alongside the $VEXOR launch.
               </p>
             </Section>
 
@@ -654,7 +654,7 @@ export function Docs() {
                   Watch for the launch.
                 </div>
                 <div className="mt-1 text-sm text-white/65">
-                  The Console will open with the $VT launch on Base. Until
+                  The Console will open with the $VEXOR launch on Base. Until
                   then, follow @vexorterminal for the announcement.
                 </div>
               </div>

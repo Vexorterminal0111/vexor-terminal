@@ -14,7 +14,7 @@ export function Console() {
         <SectionHeader
           kicker="Coming soon"
           title="The Console — wallet, stake, governance."
-          description="Connect, claim, stake, and vote. A single on-chain dashboard for the $VT economy on Base. The interactive console will open alongside the $VT token launch."
+          description="Connect, claim, stake, and vote. A single on-chain dashboard for the $VEXOR economy on Base. The interactive console will open alongside the $VEXOR token launch."
         />
 
         <motion.div
@@ -46,11 +46,11 @@ export function Console() {
               Pending token launch
             </div>
             <h3 className="mt-3 font-mono text-2xl sm:text-3xl text-white">
-              The Console opens with $VT launch.
+              The Console opens with $VEXOR launch.
             </h3>
             <p className="mt-3 max-w-xl text-sm sm:text-[15px] text-white/60 leading-relaxed">
               The interactive on-chain console — wallet, faucet, stake,
-              govern — will be enabled once $VT is deployed and verified on
+              govern — will be enabled once $VEXOR is deployed and verified on
               Base. Until then, follow the channels below for launch
               updates.
             </p>

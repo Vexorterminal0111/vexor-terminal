@@ -7,7 +7,7 @@ import { SectionHeader } from "./SectionHeader";
 const services = [
   {
     title: "Launch Console",
-    body: "Connect your wallet on Base Sepolia. Claim 1,000 $VT from the faucet, stake with a lock multiplier, propose & vote — all live on-chain.",
+    body: "Connect your wallet on Base Sepolia. Claim 1,000 $VEXOR from the faucet, stake with a lock multiplier, propose & vote — all live on-chain.",
     cta: "Open console",
     href: "#console",
     badge: "Live",
@@ -38,7 +38,7 @@ export function Services() {
         <SectionHeader
           kicker="Services"
           title="Ways to deploy Vexor."
-          description="Whether you want a personal orchestrator, exposure to the $VT token, or you&apos;re building agentic features into your own product — Vexor scales with you."
+          description="Whether you want a personal orchestrator, exposure to the $VEXOR token, or you&apos;re building agentic features into your own product — Vexor scales with you."
         />
 
         <div className="mt-10 sm:mt-14 grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">

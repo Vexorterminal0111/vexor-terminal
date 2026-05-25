@@ -6,7 +6,7 @@ import { IntelFeed } from "./IntelFeed";
 export const metadata: Metadata = {
   title: "Vexor Intel — Autonomous Briefings",
   description:
-    "Cron-driven $VT briefings produced by a customized aeon fork on GitHub Actions: morning brief, token pulse, on-chain pulse, DeFi overview, and evening recap. Public, read-only.",
+    "Cron-driven $VEXOR briefings produced by a customized aeon fork on GitHub Actions: morning brief, token pulse, on-chain pulse, DeFi overview, and evening recap. Public, read-only.",
 };
 
 export default function IntelPage() {

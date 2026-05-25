@@ -16,12 +16,12 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-4 max-w-md text-sm text-white/55 leading-relaxed">
-              An autonomous AI orchestrator with 9 sub-agents. The $VT token
+              An autonomous AI orchestrator with 9 sub-agents. The $VEXOR token
               economy — runtime payment, staking, and governance — is
               coming soon to Base.
             </p>
             <div className="mt-5 inline-flex items-center gap-2 rounded-md border border-cyan-400/30 bg-cyan-500/[0.06] px-3 py-2 font-mono text-[10px] sm:text-[11px] uppercase tracking-widest text-cyan-200">
-              <span className="text-cyan-300">$VT</span>
+              <span className="text-cyan-300">$VEXOR</span>
               <span className="text-white">Token launch coming soon</span>
             </div>
             <div className="mt-6 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-white/45 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.02]">
@@ -44,12 +44,12 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a
-                  href="#team"
+                <Link
+                  href="/agents"
                   className="text-white/70 hover:text-white transition-colors"
                 >
                   Sub-Agents
-                </a>
+                </Link>
               </li>
               <li>
                 <a
@@ -64,7 +64,7 @@ export function Footer() {
                   href="#token"
                   className="text-cyan-300 hover:text-white transition-colors"
                 >
-                  $VT Token
+                  $VEXOR Token
                 </a>
               </li>
               <li>
@@ -93,7 +93,7 @@ export function Footer() {
             <ul className="mt-4 space-y-2 text-sm">
               <li>
                 <span className="text-white/70 font-mono text-xs">
-                  $VT token — coming soon
+                  $VEXOR token — coming soon
                 </span>
               </li>
               <li>
@@ -191,7 +191,7 @@ export function Footer() {
             © {new Date().getFullYear()} Vexor Terminal. All rights reserved.
           </div>
           <div className="font-mono text-[10px] sm:text-[11px] text-white/40">
-            Designed in the terminal. $VT coming soon.
+            Designed in the terminal. $VEXOR coming soon.
           </div>
         </div>
       </div>

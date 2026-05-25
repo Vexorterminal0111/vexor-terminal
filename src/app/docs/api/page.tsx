@@ -6,7 +6,7 @@ import { Footer } from "@/components/Footer";
 export const metadata: Metadata = {
   title: "Public API — Vexor Terminal",
   description:
-    "The public $VT RevShare pool API will be enabled with the $VT token launch.",
+    "The public $VEXOR RevShare pool API will be enabled with the $VEXOR token launch.",
 };
 
 export default function ApiDocsPage() {
@@ -22,8 +22,8 @@ export default function ApiDocsPage() {
             Public API — coming soon.
           </h1>
           <p className="mt-4 text-sm sm:text-[15px] text-white/65 leading-relaxed">
-            The public JSON API for the $VT RevShare pool will be enabled
-            once the $VT token launches on Base. Endpoints will expose pool
+            The public JSON API for the $VEXOR RevShare pool will be enabled
+            once the $VEXOR token launches on Base. Endpoints will expose pool
             stats, APR, and price data once the contract is live.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
