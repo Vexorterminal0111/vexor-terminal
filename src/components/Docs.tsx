@@ -116,8 +116,8 @@ function Section({
         transition={{ duration: 0.5 }}
         className="flex flex-col gap-3"
       >
-        <div className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">
-          <span className="h-px w-8 bg-cyan-300/40" />
+        <div className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-violet-300/80">
+          <span className="h-px w-8 bg-violet-300/40" />
           {kicker}
         </div>
         <h2 className="font-mono text-xl sm:text-2xl md:text-3xl text-white tracking-tight break-words">
@@ -144,11 +144,11 @@ function Step({
 }) {
   return (
     <div className="relative rounded-xl border border-white/10 bg-white/[0.02] p-5 sm:p-6">
-      <div className="absolute -top-3 left-5 font-mono text-[10px] uppercase tracking-widest text-cyan-300 bg-background px-2 py-0.5 border border-cyan-300/30 rounded">
+      <div className="absolute -top-3 left-5 font-mono text-[10px] uppercase tracking-widest text-violet-300 bg-background px-2 py-0.5 border border-violet-300/30 rounded">
         Step {n}
       </div>
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-cyan-300">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-violet-300">
           <Icon className="h-4 w-4" />
         </div>
         <h3 className="font-mono text-base text-white">{title}</h3>
@@ -165,7 +165,7 @@ export function Docs() {
     <section className="relative pt-24 sm:pt-32 pb-16 sm:pb-24">
       <div
         aria-hidden
-        className="absolute left-1/2 top-32 -translate-x-1/2 w-[60vw] h-[40vh] bg-cyan-500/10 blur-[160px] rounded-full pointer-events-none"
+        className="absolute left-1/2 top-32 -translate-x-1/2 w-[60vw] h-[40vh] bg-violet-500/10 blur-[160px] rounded-full pointer-events-none"
       />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
@@ -177,11 +177,11 @@ export function Docs() {
           className="flex flex-col gap-4"
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/70 w-fit">
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-300 shadow-[0_0_10px_rgba(139,92,246,0.8)]" />
             Docs · v0.1.0 · $VEXOR coming soon
           </div>
           <h1 className="font-mono text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight text-white max-w-3xl break-words">
-            Drive the <span className="text-cyan-300">terminal</span>.
+            Drive the <span className="text-violet-300">terminal</span>.
           </h1>
           <p className="max-w-2xl text-[15px] sm:text-base md:text-lg text-white/65 leading-relaxed">
             Vexor Terminal is a personal AI orchestrator commanding 9
@@ -193,7 +193,7 @@ export function Docs() {
           <div className="mt-2 flex flex-wrap gap-2">
             <a
               href="/#console"
-              className="inline-flex items-center gap-2 rounded-full bg-cyan-300 text-black px-4 py-2 font-mono text-xs hover:bg-cyan-200 transition-colors"
+              className="inline-flex items-center gap-2 rounded-full bg-violet-300 text-black px-4 py-2 font-mono text-xs hover:bg-violet-200 transition-colors"
             >
               Open Console <ArrowRight className="h-3.5 w-3.5" />
             </a>
@@ -220,14 +220,14 @@ export function Docs() {
             <span className="font-mono text-[10px] uppercase tracking-widest text-white/60">
               On this page
             </span>
-            <span className="font-mono text-cyan-300 text-lg leading-none">+</span>
+            <span className="font-mono text-violet-300 text-lg leading-none">+</span>
           </summary>
           <nav className="flex flex-col px-2 pb-2">
             {TOC.map((t) => (
               <a
                 key={t.id}
                 href={`#${t.id}`}
-                className="font-mono text-xs text-white/65 hover:text-cyan-300 transition-colors px-3 py-2 border-t border-white/5"
+                className="font-mono text-xs text-white/65 hover:text-violet-300 transition-colors px-3 py-2 border-t border-white/5"
               >
                 {t.label}
               </a>
@@ -247,14 +247,14 @@ export function Docs() {
                   <a
                     key={t.id}
                     href={`#${t.id}`}
-                    className="font-mono text-xs text-white/55 hover:text-cyan-300 transition-colors py-1"
+                    className="font-mono text-xs text-white/55 hover:text-violet-300 transition-colors py-1"
                   >
                     {t.label}
                   </a>
                 ))}
               </nav>
-              <div className="mt-8 rounded-lg border border-cyan-400/30 bg-cyan-500/[0.06] p-4">
-                <div className="font-mono text-[10px] uppercase tracking-widest text-cyan-300">
+              <div className="mt-8 rounded-lg border border-violet-400/30 bg-violet-500/[0.06] p-4">
+                <div className="font-mono text-[10px] uppercase tracking-widest text-violet-300">
                   $VEXOR · coming soon
                 </div>
                 <p className="mt-2 text-[11px] text-white/70 leading-snug">
@@ -274,13 +274,13 @@ export function Docs() {
               <p>
                 Vexor is an autonomous AI orchestrator — not a chatbot. The
                 orchestrator routes every request to one or more of{" "}
-                <span className="text-cyan-300">9 specialized sub-agents</span>
+                <span className="text-violet-300">9 specialized sub-agents</span>
                 : Cipher, Atlas, Quill, Forge, Vector, Pulse, Halo, Prism, and
                 Nyx. Each runs on its own LLM and stays in lane.
               </p>
               <p>
                 The terminal is owned and governed by{" "}
-                <span className="text-cyan-300">$VEXOR</span>, an ERC-20Votes
+                <span className="text-violet-300">$VEXOR</span>, an ERC-20Votes
                 token on Base. Hold it to access elevated tiers, stake it to
                 earn a pro-rata share of agent revenue, vote with it to direct
                 protocol evolution.
@@ -347,7 +347,7 @@ export function Docs() {
                     href="https://x.com/vexorterminal"
                     target="_blank"
                     rel="noreferrer"
-                    className="text-cyan-300 hover:underline"
+                    className="text-violet-300 hover:underline"
                   >
                     @vexorterminal
                   </a>{" "}
@@ -364,10 +364,10 @@ export function Docs() {
                 list the verified mainnet addresses with direct links to
                 Basescan.
               </p>
-              <div className="mt-6 rounded-xl border border-cyan-400/20 bg-cyan-500/[0.04] p-4 flex gap-3">
-                <AlertTriangle className="h-5 w-5 text-cyan-300 shrink-0 mt-0.5" />
+              <div className="mt-6 rounded-xl border border-violet-400/20 bg-violet-500/[0.04] p-4 flex gap-3">
+                <AlertTriangle className="h-5 w-5 text-violet-300 shrink-0 mt-0.5" />
                 <div>
-                  <div className="font-mono text-xs text-cyan-200 uppercase tracking-widest">
+                  <div className="font-mono text-xs text-violet-200 uppercase tracking-widest">
                     Pre-launch
                   </div>
                   <p className="mt-1 text-sm text-white/70">
@@ -376,7 +376,7 @@ export function Docs() {
                       href="https://x.com/vexorterminal"
                       target="_blank"
                       rel="noreferrer"
-                      className="text-cyan-300 hover:underline"
+                      className="text-violet-300 hover:underline"
                     >
                       @vexorterminal
                     </a>{" "}
@@ -396,7 +396,7 @@ export function Docs() {
               <div className="space-y-6">
                 <div>
                   <h3 className="font-mono text-white text-lg flex items-center gap-2">
-                    <Wallet className="h-4 w-4 text-cyan-300" /> Wallet tab
+                    <Wallet className="h-4 w-4 text-violet-300" /> Wallet tab
                   </h3>
                   <p className="mt-2">
                     At launch, will show your address, current chain, $VEXOR
@@ -404,11 +404,11 @@ export function Docs() {
                   </p>
                   <ul className="mt-2 list-disc list-inside text-sm text-white/65 space-y-1 ml-2">
                     <li>
-                      <span className="text-cyan-300">Connect wallet</span> —
+                      <span className="text-violet-300">Connect wallet</span> —
                       pick MetaMask, Rainbow, or Coinbase Wallet on Base.
                     </li>
                     <li>
-                      <span className="text-cyan-300">Self-delegate</span> —
+                      <span className="text-violet-300">Self-delegate</span> —
                       one-time tx that activates voting power for ERC-20Votes.
                     </li>
                   </ul>
@@ -416,7 +416,7 @@ export function Docs() {
 
                 <div>
                   <h3 className="font-mono text-white text-lg flex items-center gap-2">
-                    <Lock className="h-4 w-4 text-cyan-300" /> Stake tab
+                    <Lock className="h-4 w-4 text-violet-300" /> Stake tab
                   </h3>
                   <p className="mt-2">
                     Will let you stake $VEXOR under one of four lock tiers.
@@ -441,7 +441,7 @@ export function Docs() {
                             <td className="py-2 pr-4 font-mono text-white">
                               {t.lock}
                             </td>
-                            <td className="py-2 font-mono text-cyan-300">
+                            <td className="py-2 font-mono text-violet-300">
                               {t.multiplier}
                             </td>
                           </tr>
@@ -458,14 +458,14 @@ export function Docs() {
 
                 <div>
                   <h3 className="font-mono text-white text-lg flex items-center gap-2">
-                    <Vote className="h-4 w-4 text-cyan-300" /> Govern tab
+                    <Vote className="h-4 w-4 text-violet-300" /> Govern tab
                   </h3>
                   <p className="mt-2">
                     Will use OpenZeppelin Governor v5. Proposals will require
                     ≥100 $VEXOR voting power. Each voter will choose{" "}
-                    <span className="text-cyan-300">For</span> /{" "}
-                    <span className="text-cyan-300">Against</span> /{" "}
-                    <span className="text-cyan-300">Abstain</span>.
+                    <span className="text-violet-300">For</span> /{" "}
+                    <span className="text-violet-300">Against</span> /{" "}
+                    <span className="text-violet-300">Abstain</span>.
                   </p>
                   <ul className="mt-2 list-disc list-inside text-sm text-white/65 space-y-1 ml-2">
                     <li>Voting delay: 1 block</li>
@@ -477,7 +477,7 @@ export function Docs() {
 
                 <div>
                   <h3 className="font-mono text-white text-lg flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-cyan-300" /> Tier tab
+                    <Sparkles className="h-4 w-4 text-violet-300" /> Tier tab
                   </h3>
                   <p className="mt-2">
                     Will show your current tier and progress to the next
@@ -489,7 +489,7 @@ export function Docs() {
 
             <Section id="tokenomics" kicker="05" title="$VEXOR tokenomics">
               <p>
-                <span className="text-cyan-300">$VEXOR</span> is an ERC-20Votes
+                <span className="text-violet-300">$VEXOR</span> is an ERC-20Votes
                 + EIP-2612 Permit token. Voting power requires self-delegation
                 (one-time, no fee beyond gas).
               </p>
@@ -534,18 +534,18 @@ export function Docs() {
             <Section id="subagents" kicker="06" title="Sub-agent reference">
               <p>
                 The orchestrator is a single agent. Behind it sit{" "}
-                <span className="text-cyan-300">9 specialists</span>, each
+                <span className="text-violet-300">9 specialists</span>, each
                 tuned to one domain and bound to one LLM tier.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
                 {SUB_AGENTS.map((a) => (
                   <div
                     key={a.name}
-                    className="rounded-xl border border-white/10 bg-white/[0.02] p-4 hover:border-cyan-400/30 transition-colors"
+                    className="rounded-xl border border-white/10 bg-white/[0.02] p-4 hover:border-violet-400/30 transition-colors"
                   >
                     <div className="font-mono text-white text-lg">{a.name}</div>
                     <div className="mt-1 text-sm text-white/70">{a.role}</div>
-                    <div className="mt-3 font-mono text-[10px] uppercase tracking-widest text-cyan-300/70">
+                    <div className="mt-3 font-mono text-[10px] uppercase tracking-widest text-violet-300/70">
                       {a.traits}
                     </div>
                   </div>
@@ -577,7 +577,7 @@ export function Docs() {
                         <td className="py-3 px-4 font-mono text-white">
                           {t.name}
                         </td>
-                        <td className="py-3 px-4 font-mono text-cyan-300">
+                        <td className="py-3 px-4 font-mono text-violet-300">
                           {t.min}
                         </td>
                         <td className="py-3 px-4 text-white/70">{t.note}</td>
@@ -627,13 +627,13 @@ export function Docs() {
                 {FAQ.map((f) => (
                   <details
                     key={f.q}
-                    className="group rounded-xl border border-white/10 bg-white/[0.02] open:border-cyan-400/20 open:bg-cyan-500/[0.03] transition-colors"
+                    className="group rounded-xl border border-white/10 bg-white/[0.02] open:border-violet-400/20 open:bg-violet-500/[0.03] transition-colors"
                   >
                     <summary className="cursor-pointer list-none p-5 flex items-start justify-between gap-4">
                       <span className="font-mono text-white text-sm sm:text-base">
                         {f.q}
                       </span>
-                      <span className="font-mono text-cyan-300 text-lg leading-none transition-transform group-open:rotate-45 shrink-0">
+                      <span className="font-mono text-violet-300 text-lg leading-none transition-transform group-open:rotate-45 shrink-0">
                         +
                       </span>
                     </summary>
@@ -645,9 +645,9 @@ export function Docs() {
               </div>
             </Section>
 
-            <div className="mt-16 rounded-2xl border border-cyan-400/30 bg-gradient-to-br from-cyan-500/[0.08] via-white/[0.02] to-transparent p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="mt-16 rounded-2xl border border-violet-400/30 bg-gradient-to-br from-violet-500/[0.08] via-white/[0.02] to-transparent p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">
+                <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-violet-300/80">
                   Ready?
                 </div>
                 <div className="mt-2 font-mono text-2xl text-white">
@@ -662,7 +662,7 @@ export function Docs() {
                 href="https://x.com/vexorterminal"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-cyan-300 text-black px-5 py-2.5 font-mono text-sm hover:bg-cyan-200 transition-colors whitespace-nowrap"
+                className="inline-flex items-center gap-2 rounded-full bg-violet-300 text-black px-5 py-2.5 font-mono text-sm hover:bg-violet-200 transition-colors whitespace-nowrap"
               >
                 Follow on X <ArrowRight className="h-4 w-4" />
               </a>

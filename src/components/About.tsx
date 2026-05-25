@@ -72,20 +72,20 @@ export function About() {
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.5, delay: i * 0.05 }}
                 className={`group relative bg-background/40 p-5 sm:p-7 lg:p-8 ${
-                  f.highlight ? "ring-1 ring-inset ring-cyan-400/20" : ""
+                  f.highlight ? "ring-1 ring-inset ring-violet-400/20" : ""
                 }`}
               >
                 {f.highlight && (
                   <div
                     aria-hidden
-                    className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.06] via-transparent to-transparent pointer-events-none"
+                    className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.06] via-transparent to-transparent pointer-events-none"
                   />
                 )}
                 <div className="relative flex items-start justify-between">
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-lg border ${
                       f.highlight
-                        ? "border-cyan-400/30 bg-cyan-500/10 text-cyan-300"
+                        ? "border-violet-400/30 bg-violet-500/10 text-violet-300"
                         : "border-white/10 bg-white/[0.03] text-white/80"
                     }`}
                   >
@@ -94,7 +94,7 @@ export function About() {
                   <span
                     className={`font-mono text-[10px] uppercase tracking-widest px-2 py-1 rounded-full border ${
                       f.highlight
-                        ? "border-cyan-400/30 text-cyan-300 bg-cyan-500/5"
+                        ? "border-violet-400/30 text-violet-300 bg-violet-500/5"
                         : "border-white/10 text-white/55 bg-white/[0.02]"
                     }`}
                   >

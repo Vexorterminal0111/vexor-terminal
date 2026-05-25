@@ -50,7 +50,7 @@ export function UseCases() {
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300/80 px-2 py-1 rounded-full border border-cyan-400/20 bg-cyan-400/5">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-violet-300/80 px-2 py-1 rounded-full border border-violet-400/20 bg-violet-400/5">
                     {p.status}
                   </span>
                 </div>

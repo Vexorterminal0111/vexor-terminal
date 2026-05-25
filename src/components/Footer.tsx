@@ -10,9 +10,9 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-x-6 gap-y-10">
           <div className="col-span-2 md:col-span-2">
             <Link href="/" className="inline-flex items-center gap-2.5 group">
-              <VexorMark size={22} className="text-cyan-300" />
+              <VexorMark size={22} className="text-violet-300" />
               <span className="font-mono text-sm tracking-tight text-white">
-                VEXOR<span className="text-cyan-300">.</span>TERMINAL
+                VEXOR<span className="text-violet-300">.</span>TERMINAL
               </span>
             </Link>
             <p className="mt-4 max-w-md text-sm text-white/55 leading-relaxed">
@@ -20,12 +20,12 @@ export function Footer() {
               economy — runtime payment, staking, and governance — is
               coming soon to Base.
             </p>
-            <div className="mt-5 inline-flex items-center gap-2 rounded-md border border-cyan-400/30 bg-cyan-500/[0.06] px-3 py-2 font-mono text-[10px] sm:text-[11px] uppercase tracking-widest text-cyan-200">
-              <span className="text-cyan-300">$VEXOR</span>
+            <div className="mt-5 inline-flex items-center gap-2 rounded-md border border-violet-400/30 bg-violet-500/[0.06] px-3 py-2 font-mono text-[10px] sm:text-[11px] uppercase tracking-widest text-violet-200">
+              <span className="text-violet-300">$VEXOR</span>
               <span className="text-white">Token launch coming soon</span>
             </div>
             <div className="mt-6 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-white/45 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.02]">
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />
+              <span className="h-1.5 w-1.5 rounded-full bg-violet-300" />
               Built for Base · v0.1.0
             </div>
           </div>
@@ -62,7 +62,7 @@ export function Footer() {
               <li>
                 <a
                   href="#token"
-                  className="text-cyan-300 hover:text-white transition-colors"
+                  className="text-violet-300 hover:text-white transition-colors"
                 >
                   $VEXOR Token
                 </a>
@@ -111,7 +111,7 @@ export function Footer() {
                   href="https://docs.base.org/chain/network-information"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-white/70 hover:text-cyan-300 transition-colors font-mono text-xs"
+                  className="text-white/70 hover:text-violet-300 transition-colors font-mono text-xs"
                 >
                   Base network ↗
                 </a>
@@ -129,7 +129,7 @@ export function Footer() {
                   href="https://t.me/VexorAeonWatchtowerbot?startgroup=true"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-cyan-300 hover:text-white transition-colors"
+                  className="text-violet-300 hover:text-white transition-colors"
                 >
                   Add Bot to Group ↗
                 </a>

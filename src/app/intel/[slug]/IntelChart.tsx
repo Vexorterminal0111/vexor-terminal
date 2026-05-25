@@ -94,9 +94,9 @@ export function IntelChart({
     // Cyan up / rose down to match the rest of the Vexor brand palette
     // (see /docs/staking widget for the same colorway).
     const candles = chart.addSeries(CandlestickSeries, {
-      upColor: "#67e8f9",
+      upColor: "#a78bfa",
       downColor: "#fb7185",
-      borderUpColor: "#67e8f9",
+      borderUpColor: "#a78bfa",
       borderDownColor: "#fb7185",
       wickUpColor: "rgba(103, 232, 249, 0.75)",
       wickDownColor: "rgba(251, 113, 133, 0.75)",
@@ -215,7 +215,7 @@ export function IntelChart({
                 className={
                   "rounded-md border px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest transition-colors " +
                   (active
-                    ? "border-cyan-300/50 bg-cyan-300/10 text-cyan-200"
+                    ? "border-violet-300/50 bg-violet-300/10 text-violet-200"
                     : "border-white/10 text-white/55 hover:border-white/25 hover:text-white/85")
                 }
               >

@@ -8,7 +8,7 @@ import type { SVGProps } from "react";
  * - Inner V = the brand mark
  *
  * Uses `currentColor` for both stroke and dots so it picks up the
- * surrounding text color. Pair with text-cyan-300 / text-white as needed.
+ * surrounding text color. Pair with text-violet-300 / text-white as needed.
  */
 export function VexorMark({
   size = 24,
@@ -67,10 +67,10 @@ export function VexorLogoLockup({
 }) {
   return (
     <span className={`inline-flex items-center gap-2.5 ${className ?? ""}`}>
-      <VexorMark size={size} className="text-cyan-300" />
+      <VexorMark size={size} className="text-violet-300" />
       {showWordmark && (
         <span className="font-mono text-sm tracking-tight text-white/90">
-          VEXOR<span className="text-cyan-300">.</span>TERMINAL
+          VEXOR<span className="text-violet-300">.</span>TERMINAL
         </span>
       )}
     </span>

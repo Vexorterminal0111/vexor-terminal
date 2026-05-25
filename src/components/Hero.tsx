@@ -12,7 +12,7 @@ export function Hero() {
       {/* Radial gradient glow */}
       <div
         aria-hidden
-        className="absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[60vh] bg-cyan-500/20 blur-[160px] rounded-full"
+        className="absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[60vh] bg-violet-500/20 blur-[160px] rounded-full"
       />
       {/* Bottom fade */}
       <div
@@ -27,7 +27,7 @@ export function Hero() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/70"
         >
-          <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-violet-300 shadow-[0_0_10px_rgba(139,92,246,0.8)]" />
           Vexor.Terminal · v0.1.0 · $VEXOR launching on Base
         </motion.div>
 
@@ -41,7 +41,7 @@ export function Hero() {
           <span className="bg-gradient-to-b from-white via-white to-white/60 bg-clip-text text-transparent">
             Vexor
           </span>
-          <span className="text-cyan-300 caret">_</span>
+          <span className="text-violet-300 caret">_</span>
         </motion.h1>
 
         <motion.p
@@ -54,8 +54,8 @@ export function Hero() {
           <span className="text-white font-medium">9 specialized sub-agents</span>{" "}
           across 9 large language models. Not a chatbot, not an assistant — a
           self-improving multi-agent system powered by{" "}
-          <span className="text-cyan-300">$VEXOR</span> on{" "}
-          <span className="text-cyan-300">Base</span>.
+          <span className="text-violet-300">$VEXOR</span> on{" "}
+          <span className="text-violet-300">Base</span>.
         </motion.p>
 
         <motion.div
@@ -66,14 +66,14 @@ export function Hero() {
         >
           <a
             href="#console"
-            className="group inline-flex items-center gap-2 rounded-full bg-white text-black px-4 sm:px-5 py-2.5 sm:py-3 font-mono text-xs sm:text-sm hover:bg-cyan-300 transition-colors"
+            className="group inline-flex items-center gap-2 rounded-full bg-white text-black px-4 sm:px-5 py-2.5 sm:py-3 font-mono text-xs sm:text-sm hover:bg-violet-300 transition-colors"
           >
             Launch Console
             <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-0.5" />
           </a>
           <a
             href="/docs.html"
-            className="group inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/[0.06] px-4 sm:px-5 py-2.5 sm:py-3 font-mono text-xs sm:text-sm text-cyan-200 hover:text-white hover:border-cyan-300/50 transition-colors"
+            className="group inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/[0.06] px-4 sm:px-5 py-2.5 sm:py-3 font-mono text-xs sm:text-sm text-violet-200 hover:text-white hover:border-violet-300/50 transition-colors"
           >
             Read Docs
             <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-0.5" />

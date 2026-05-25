@@ -31,7 +31,7 @@ export function WalletButton({ compact = false }: { compact?: boolean }) {
               <button
                 onClick={openConnectModal}
                 type="button"
-                className="inline-flex items-center gap-1.5 rounded-full bg-white text-black px-3.5 py-1.5 font-mono text-xs hover:bg-cyan-300 hover:text-black transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white text-black px-3.5 py-1.5 font-mono text-xs hover:bg-violet-300 hover:text-black transition-colors"
               >
                 Connect Wallet
                 <span aria-hidden>→</span>
@@ -66,7 +66,7 @@ export function WalletButton({ compact = false }: { compact?: boolean }) {
                 <button
                   onClick={openAccountModal}
                   type="button"
-                  className="inline-flex items-center gap-2 rounded-full bg-white text-black px-3.5 py-1.5 font-mono text-xs hover:bg-cyan-300 transition-colors"
+                  className="inline-flex items-center gap-2 rounded-full bg-white text-black px-3.5 py-1.5 font-mono text-xs hover:bg-violet-300 transition-colors"
                 >
                   <span className="relative inline-flex h-1.5 w-1.5">
                     <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-70 pulse-dot" />

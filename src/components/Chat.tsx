@@ -112,7 +112,7 @@ function renderContent(text: string) {
       if (AGENT_NAMES.has(tag.toLowerCase()) || bracket) {
         return (
           <div key={i} className="flex flex-wrap gap-x-2 gap-y-1">
-            <span className="font-mono text-[11px] uppercase tracking-widest text-cyan-300 shrink-0">
+            <span className="font-mono text-[11px] uppercase tracking-widest text-violet-300 shrink-0">
               {m[1]}
             </span>
             <span className="text-white/80">{m[2]}</span>
@@ -221,12 +221,12 @@ export function Chat() {
         >
           <div className="flex items-center justify-between gap-3 border-b border-white/5 bg-white/[0.02] px-4 sm:px-5 py-2.5 sm:py-3">
             <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">
-              <Terminal className="h-3.5 w-3.5 text-cyan-300" />
+              <Terminal className="h-3.5 w-3.5 text-violet-300" />
               vexor@base:~$
             </div>
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-white/45">
-                <Coins className="h-3 w-3 text-cyan-300" />
+                <Coins className="h-3 w-3 text-violet-300" />
                 {msgCount > 0
                   ? `${(msgCount * 0.1).toFixed(1)} $VEXOR used`
                   : "0.1 $VEXOR per msg"}
@@ -250,7 +250,7 @@ export function Chat() {
                 <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/35">
                   {m.role === "user" ? (
                     <span>
-                      <span className="text-cyan-300">$</span> you
+                      <span className="text-violet-300">$</span> you
                       {address && (
                         <span className="ml-2 text-white/30">
                           {address.slice(0, 6)}...{address.slice(-4)}
@@ -259,7 +259,7 @@ export function Chat() {
                     </span>
                   ) : (
                     <span>
-                      <span className="text-cyan-300">›</span> vexor
+                      <span className="text-violet-300">›</span> vexor
                     </span>
                   )}
                 </div>
@@ -275,9 +275,9 @@ export function Chat() {
             {loading && (
               <div className="space-y-1.5">
                 <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/35">
-                  <span className="text-cyan-300">›</span> vexor
+                  <span className="text-violet-300">›</span> vexor
                 </div>
-                <div className="flex items-center gap-2 text-cyan-300/80 text-[13.5px]">
+                <div className="flex items-center gap-2 text-violet-300/80 text-[13.5px]">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   dispatching to sub-agents...
                 </div>
@@ -325,12 +325,12 @@ export function Chat() {
                   placeholder="Ask Vexor anything..."
                   rows={1}
                   maxLength={4000}
-                  className="flex-1 resize-none rounded-xl border border-white/10 bg-background/60 px-4 py-3 font-mono text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-400/40 focus:bg-background/80 transition-colors"
+                  className="flex-1 resize-none rounded-xl border border-white/10 bg-background/60 px-4 py-3 font-mono text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-violet-400/40 focus:bg-background/80 transition-colors"
                 />
                 <button
                   onClick={() => void send()}
                   disabled={!input.trim() || loading}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-white text-black px-4 py-3 font-mono text-xs hover:bg-cyan-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-white text-black px-4 py-3 font-mono text-xs hover:bg-violet-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

@@ -19,9 +19,9 @@ export function SectionHeader({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300/80"
+          className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-violet-300/80"
         >
-          <span className="h-px w-8 bg-cyan-300/40" />
+          <span className="h-px w-8 bg-violet-300/40" />
           {kicker}
         </motion.div>
       )}

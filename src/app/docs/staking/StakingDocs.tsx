@@ -34,7 +34,7 @@ export function StakingDocs({ en, id }: Props) {
                 onClick={() => setLang("en")}
                 className={`px-3 py-1 rounded-full transition-colors ${
                   lang === "en"
-                    ? "bg-cyan-500/20 text-cyan-200"
+                    ? "bg-violet-500/20 text-violet-200"
                     : "text-white/55 hover:text-white"
                 }`}
               >
@@ -44,7 +44,7 @@ export function StakingDocs({ en, id }: Props) {
                 onClick={() => setLang("id")}
                 className={`px-3 py-1 rounded-full transition-colors ${
                   lang === "id"
-                    ? "bg-cyan-500/20 text-cyan-200"
+                    ? "bg-violet-500/20 text-violet-200"
                     : "text-white/55 hover:text-white"
                 }`}
               >

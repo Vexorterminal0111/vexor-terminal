@@ -141,7 +141,7 @@ export function TokenFeed({ token }: { token: IntelTokenMeta }) {
     <section className="relative scroll-mt-24 py-16 sm:py-24 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <div className="max-w-3xl">
-          <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-cyan-300/85">
+          <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-violet-300/85">
             Vexor Pulse Premium ·{" "}
             <Link
               href="/intel"
@@ -156,7 +156,7 @@ export function TokenFeed({ token }: { token: IntelTokenMeta }) {
               {token.name}
             </span>
             {token.host && (
-              <span className="ml-3 inline-block align-middle font-mono text-[10px] uppercase tracking-widest text-cyan-300/85 border border-cyan-300/30 rounded px-2 py-1">
+              <span className="ml-3 inline-block align-middle font-mono text-[10px] uppercase tracking-widest text-violet-300/85 border border-violet-300/30 rounded px-2 py-1">
                 host
               </span>
             )}
@@ -283,14 +283,14 @@ export function TokenFeed({ token }: { token: IntelTokenMeta }) {
             >
               <div
                 aria-hidden
-                className="absolute -top-24 -right-24 h-56 w-56 bg-gradient-to-br from-cyan-400/30 via-cyan-500/15 to-transparent rounded-full blur-3xl opacity-60"
+                className="absolute -top-24 -right-24 h-56 w-56 bg-gradient-to-br from-violet-400/30 via-violet-500/15 to-transparent rounded-full blur-3xl opacity-60"
               />
               <div className="relative">
                 <div className="flex items-center justify-between">
                   <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/45">
                     {String(i + 1).padStart(2, "0")} · {c.card}
                   </div>
-                  <div className="font-mono text-[10px] uppercase tracking-widest text-cyan-300/85">
+                  <div className="font-mono text-[10px] uppercase tracking-widest text-violet-300/85">
                     {formatRelative(c.produced_at) ?? "—"}
                   </div>
                 </div>
