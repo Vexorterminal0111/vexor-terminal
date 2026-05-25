@@ -62,8 +62,8 @@ const CARD_ORDER: ReadonlyArray<{ slug: string; label: string; kicker: string; a
     slug: "morning-brief",
     label: "Morning Brief",
     kicker: "Top 3 priority items",
-    accent: "#22d3ee",
-    gradient: "from-cyan-400/40 via-cyan-500/20 to-transparent",
+    accent: "#8b5cf6",
+    gradient: "from-violet-400/40 via-violet-500/20 to-transparent",
   },
   {
     slug: "token-report",
@@ -179,7 +179,7 @@ export function IntelFeed() {
     <section className="relative scroll-mt-24 py-16 sm:py-24 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <div className="max-w-3xl">
-          <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-cyan-300/85">
+          <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-violet-300/85">
             Vexor Intel
           </div>
           <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight">
@@ -421,7 +421,7 @@ export function IntelFeed() {
                           {meta.name}
                         </span>
                         {meta.host && (
-                          <span className="font-mono text-[9px] uppercase tracking-widest text-cyan-300/85 border border-cyan-300/30 rounded px-1.5 py-0.5">
+                          <span className="font-mono text-[9px] uppercase tracking-widest text-violet-300/85 border border-violet-300/30 rounded px-1.5 py-0.5">
                             host
                           </span>
                         )}

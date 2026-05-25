@@ -39,10 +39,10 @@ export function Console() {
           </div>
 
           <div className="p-6 sm:p-10 lg:p-14 min-h-[420px] flex flex-col items-center justify-center text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-500/[0.06] text-cyan-300">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full border border-violet-400/30 bg-violet-500/[0.06] text-violet-300">
               <Terminal className="h-6 w-6" />
             </div>
-            <div className="mt-5 font-mono text-xs uppercase tracking-[0.22em] text-cyan-300">
+            <div className="mt-5 font-mono text-xs uppercase tracking-[0.22em] text-violet-300">
               Pending token launch
             </div>
             <h3 className="mt-3 font-mono text-2xl sm:text-3xl text-white">
@@ -59,7 +59,7 @@ export function Console() {
                 href="https://x.com/vexorterminal"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-white text-black px-5 py-2.5 font-mono text-sm hover:bg-cyan-300 transition-colors"
+                className="inline-flex items-center gap-2 rounded-full bg-white text-black px-5 py-2.5 font-mono text-sm hover:bg-violet-300 transition-colors"
               >
                 Follow on X →
               </a>
@@ -67,7 +67,7 @@ export function Console() {
                 href="https://t.me/VexorAeonWatchtowerbot"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/[0.06] px-5 py-2.5 font-mono text-sm text-cyan-200 hover:text-white hover:border-cyan-300/50 transition-colors"
+                className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/[0.06] px-5 py-2.5 font-mono text-sm text-violet-200 hover:text-white hover:border-violet-300/50 transition-colors"
               >
                 Watchtower bot →
               </a>

@@ -60,10 +60,10 @@ export function Nav() {
         >
           <VexorMark
             size={20}
-            className="text-cyan-300 transition-colors group-hover:text-cyan-200 shrink-0"
+            className="text-violet-300 transition-colors group-hover:text-violet-200 shrink-0"
           />
           <span className="font-mono text-[13px] sm:text-sm tracking-tight text-white/90 group-hover:text-white transition-colors truncate">
-            VEXOR<span className="text-cyan-300">.</span>TERMINAL
+            VEXOR<span className="text-violet-300">.</span>TERMINAL
           </span>
         </Link>
 
@@ -120,7 +120,7 @@ export function Nav() {
                   key={l.href}
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className="font-mono text-sm text-white/75 hover:text-cyan-300 py-3 border-b border-white/5 last:border-0 transition-colors"
+                  className="font-mono text-sm text-white/75 hover:text-violet-300 py-3 border-b border-white/5 last:border-0 transition-colors"
                 >
                   {l.label}
                 </a>

@@ -13,8 +13,8 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { wagmiConfig } from "@/lib/wagmi";
 
 const vexorTheme: Theme = darkTheme({
-  accentColor: "#22d3ee",
-  accentColorForeground: "#050505",
+  accentColor: "#8b5cf6",
+  accentColorForeground: "#ffffff",
   borderRadius: "medium",
   fontStack: "system",
   overlayBlur: "small",

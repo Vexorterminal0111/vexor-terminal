@@ -56,8 +56,8 @@ export const AGENTS: readonly AgentPersona[] = [
     role: "Coder",
     title: "Senior Software Engineer",
     traits: ["detail-oriented", "efficient", "test-driven"],
-    color: "from-cyan-500/30 to-cyan-500/0",
-    accent: "#22d3ee",
+    color: "from-violet-500/30 to-violet-500/0",
+    accent: "#8b5cf6",
     pitch: "Production-grade code. TypeScript, Solidity, Rust. Test-first.",
     bio:
       "Cipher handles real engineering work — feature implementation, refactors, debugging, and reviews. Specializes in TypeScript, Solidity, and Rust. Always proposes a test plan before writing code, and surfaces edge cases the human reviewer should look at.",
@@ -116,7 +116,7 @@ export const AGENTS: readonly AgentPersona[] = [
     role: "DevOps",
     title: "Infrastructure & Deployment",
     traits: ["security-focused", "methodical", "proactive"],
-    color: "from-orange-500/30 to-orange-500/0",
+    color: "from-amber-500/30 to-amber-500/0",
     accent: "#fb923c",
     pitch: "CI/CD, Workers, Wrangler, security posture. Ships safely.",
     bio:

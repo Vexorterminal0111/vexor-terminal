@@ -49,16 +49,16 @@ export function Token() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.6 }}
-          className="mt-10 sm:mt-12 relative overflow-hidden rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-500/[0.06] via-white/[0.02] to-transparent p-6 sm:p-8 lg:p-10"
+          className="mt-10 sm:mt-12 relative overflow-hidden rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-500/[0.06] via-white/[0.02] to-transparent p-6 sm:p-8 lg:p-10"
         >
           <div
             aria-hidden
-            className="absolute -top-32 -right-32 h-72 w-72 rounded-full bg-cyan-500/15 blur-3xl"
+            className="absolute -top-32 -right-32 h-72 w-72 rounded-full bg-violet-500/15 blur-3xl"
           />
           <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex-1">
-              <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">
-                <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
+              <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-violet-300/80">
+                <span className="h-1.5 w-1.5 rounded-full bg-violet-300 shadow-[0_0_10px_rgba(139,92,246,0.8)]" />
                 Coming soon · Base
               </div>
               <div className="mt-4 sm:mt-5 font-mono text-4xl sm:text-5xl md:text-6xl text-white leading-none">
@@ -101,7 +101,7 @@ export function Token() {
                 href="https://x.com/vexorterminal"
                 target="_blank"
                 rel="noreferrer"
-                className="text-cyan-300 hover:text-white transition-colors"
+                className="text-violet-300 hover:text-white transition-colors"
               >
                 @vexorterminal
               </a>{" "}
@@ -110,7 +110,7 @@ export function Token() {
                 href="https://t.me/VexorAeonWatchtowerbot"
                 target="_blank"
                 rel="noreferrer"
-                className="text-cyan-300 hover:text-white transition-colors"
+                className="text-violet-300 hover:text-white transition-colors"
               >
                 Watchtower bot
               </a>{" "}
@@ -131,7 +131,7 @@ export function Token() {
                 transition={{ duration: 0.5, delay: i * 0.05 }}
                 className="group relative bg-background/40 p-5 sm:p-7"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-cyan-300">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-violet-300">
                   <Icon className="h-5 w-5" />
                 </div>
                 <h3 className="mt-4 sm:mt-5 font-mono text-base sm:text-lg text-white">{u.title}</h3>

@@ -52,7 +52,7 @@ export function Services() {
               transition={{ duration: 0.5, delay: i * 0.07 }}
               className={`group relative overflow-hidden rounded-2xl p-5 sm:p-7 border transition-colors ${
                 s.highlight
-                  ? "border-cyan-400/30 bg-gradient-to-br from-cyan-500/[0.07] via-white/[0.02] to-transparent hover:border-cyan-400/50"
+                  ? "border-violet-400/30 bg-gradient-to-br from-violet-500/[0.07] via-white/[0.02] to-transparent hover:border-violet-400/50"
                   : "border-white/10 bg-white/[0.02] hover:border-white/20"
               }`}
             >
@@ -60,7 +60,7 @@ export function Services() {
                 <span
                   className={`absolute top-4 right-4 sm:top-5 sm:right-5 font-mono text-[10px] uppercase tracking-widest px-2 py-1 rounded-full border ${
                     s.highlight
-                      ? "border-cyan-400/30 text-cyan-300 bg-cyan-500/10"
+                      ? "border-violet-400/30 text-violet-300 bg-violet-500/10"
                       : "border-white/10 text-white/55 bg-white/[0.02]"
                   }`}
                 >
@@ -73,7 +73,7 @@ export function Services() {
                 {s.body}
               </p>
 
-              <span className="mt-5 sm:mt-6 inline-flex items-center gap-1.5 font-mono text-sm text-cyan-300 group-hover:gap-2 transition-all">
+              <span className="mt-5 sm:mt-6 inline-flex items-center gap-1.5 font-mono text-sm text-violet-300 group-hover:gap-2 transition-all">
                 {s.cta}
                 <ArrowRight className="h-4 w-4" />
               </span>

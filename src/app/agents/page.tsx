@@ -27,7 +27,7 @@ export default function AgentsIndexPage() {
             </div>
 
             <div className="max-w-3xl">
-              <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-cyan-300/85">
+              <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-violet-300/85">
                 Dispatch Console
               </div>
               <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight">

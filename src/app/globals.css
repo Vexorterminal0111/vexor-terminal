@@ -1,14 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #050505;
+  --background: #0a1628;
+  --background-elevated: #0f1c2e;
   --foreground: #ededed;
-  --muted: #a1a1aa;
-  --accent: #22d3ee;
-  --accent-warm: #f97316;
+  --muted: #94a3b8;
+  --accent: #8b5cf6;
+  --accent-soft: #a78bfa;
+  --accent-warm: #f59e0b;
   --danger: #ef4444;
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
+  --border: rgba(148, 163, 184, 0.10);
+  --border-strong: rgba(148, 163, 184, 0.20);
 }
 
 @theme inline {
@@ -50,15 +52,15 @@ body {
 }
 
 ::selection {
-  background: rgba(34, 211, 238, 0.25);
+  background: rgba(139, 92, 246, 0.25);
   color: #fff;
 }
 
 /* Grid background */
 .bg-grid {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
   background-size: 48px 48px;
   background-position: center center;
 }
@@ -71,7 +73,7 @@ body {
 
 /* Soft glow */
 .glow-cyan {
-  box-shadow: 0 0 80px -20px rgba(34, 211, 238, 0.5);
+  box-shadow: 0 0 80px -20px rgba(139, 92, 246, 0.5);
 }
 
 /* Scanline subtle effect for terminal vibe */
@@ -83,7 +85,7 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 0%, rgba(34, 211, 238, 0.04) 50%, transparent 100%);
+  background: linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.04) 50%, transparent 100%);
   animation: scanline 8s linear infinite;
   pointer-events: none;
 }
@@ -158,14 +160,14 @@ body {
   margin: 0.85rem 0;
 }
 .prose-vexor a {
-  color: #67e8f9;
+  color: #a78bfa;
   text-decoration: underline;
   text-decoration-color: rgba(103, 232, 249, 0.35);
   text-underline-offset: 3px;
   transition: color 0.15s, text-decoration-color 0.15s;
 }
 .prose-vexor a:hover {
-  color: #a5f3fc;
+  color: #c4b5fd;
   text-decoration-color: rgba(165, 243, 252, 0.7);
 }
 .prose-vexor ul,
@@ -184,7 +186,7 @@ body {
   color: rgba(255, 255, 255, 0.92);
 }
 .prose-vexor blockquote {
-  border-left: 2px solid rgba(34, 211, 238, 0.5);
+  border-left: 2px solid rgba(139, 92, 246, 0.5);
   padding-left: 1rem;
   margin: 1.25rem 0;
   color: rgba(255, 255, 255, 0.7);
@@ -201,7 +203,7 @@ body {
   padding: 0.15rem 0.4rem;
   border-radius: 4px;
   font-size: 0.85em;
-  color: #67e8f9;
+  color: #a78bfa;
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 .prose-vexor pre {

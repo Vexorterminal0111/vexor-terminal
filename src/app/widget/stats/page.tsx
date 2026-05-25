@@ -38,7 +38,7 @@ export default function StatsWidgetPage() {
             fontSize: 10,
             letterSpacing: "0.22em",
             textTransform: "uppercase",
-            color: "#67e8f9",
+            color: "#a78bfa",
           }}
         >
           Pending token launch
