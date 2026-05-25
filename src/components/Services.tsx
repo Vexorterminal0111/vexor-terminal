@@ -6,23 +6,23 @@ import { SectionHeader } from "./SectionHeader";
 
 const services = [
   {
-    title: "Launch Console",
-    body: "Connect your wallet on Base Sepolia. Claim 1,000 $VEXOR from the faucet, stake with a lock multiplier, propose & vote — all live on-chain.",
-    cta: "Open console",
+    title: "Protocol Console",
+    body: "Wallet-connected dashboard for $VEXOR staking, governance, and tier status. Opens with the $VEXOR token launch on Base.",
+    cta: "View console",
     href: "#console",
-    badge: "Live",
+    badge: "Coming soon",
     highlight: true,
   },
   {
-    title: "Chat with Vexor",
-    body: "Talk to the orchestrator and watch it route to 9 specialized sub-agents. Wallet-gated, rate-limited, powered by hosted Llama 3.3 70B.",
+    title: "Orchestrator chat",
+    body: "Wallet-gated orchestrator chat. Each prompt is dispatched to one of nine sub-agents. Hosted Llama 3.3 70B during the pre-launch phase.",
     cta: "Open chat",
     href: "#chat",
     badge: "Beta",
   },
   {
-    title: "Read the Docs",
-    body: "Quickstart, contract addresses, sub-agent reference, tier table, and FAQ. Everything you need to drive the terminal.",
+    title: "Documentation",
+    body: "Architecture, planned token economy, sub-agent reference, and tier table. Detailed protocol design.",
     cta: "View docs",
     href: "/docs.html",
   },
@@ -37,8 +37,8 @@ export function Services() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
           kicker="Services"
-          title="Ways to deploy Vexor."
-          description="Whether you want a personal orchestrator, exposure to the $VEXOR token, or you&apos;re building agentic features into your own product — Vexor scales with you."
+          title="Deployment options."
+          description="Use Vexor as a personal orchestrator, integrate agentic workflows into existing stacks, or hold $VEXOR for protocol exposure."
         />
 
         <div className="mt-10 sm:mt-14 grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">

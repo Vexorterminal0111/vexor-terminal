@@ -8,22 +8,22 @@ const utility = [
   {
     icon: Coins,
     title: "Pay for Runtime",
-    body: "Every Vexor task will burn $VEXOR. Premium chat, priority dispatch, and dedicated sub-agent slots will all be priced in $VEXOR.",
+    body: "Every orchestrator task is settled in $VEXOR. Premium dispatch, priority routing, and dedicated sub-agent slots are priced per token.",
   },
   {
     icon: Lock,
     title: "Stake to Earn",
-    body: "Lock $VEXOR to receive a pro-rata share of all task revenue. Longer locks will earn higher multipliers.",
+    body: "Lock $VEXOR to receive a pro-rata share of protocol revenue. Longer lock terms carry higher reward multipliers.",
   },
   {
     icon: Vote,
     title: "Governance",
-    body: "$VEXOR holders will vote on new sub-agents, model whitelisting, treasury spend, and protocol upgrades.",
+    body: "$VEXOR holders vote on new sub-agents, model whitelisting, treasury spend, and protocol upgrades.",
   },
   {
     icon: Sparkles,
-    title: "Token-Gated Access",
-    body: "Holding above a threshold will unlock elevated tiers — private channels, beta sub-agents, and revenue dashboards.",
+    title: "Token-Gated Tiers",
+    body: "Balance thresholds unlock elevated access tiers — private channels, beta sub-agents, and revenue dashboards.",
   },
 ];
 
@@ -40,8 +40,8 @@ export function Token() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
           kicker="Tokenomics"
-          title="$VEXOR — the economy that will run the orchestrator."
-          description="The Vexor Terminal economy will be governed entirely by $VEXOR. Holders will pay for runtime, earn from revenue, and steer protocol direction."
+          title="$VEXOR — the protocol economy."
+          description="$VEXOR governs the Vexor Terminal protocol economy: runtime payment, revenue distribution, and on-chain governance."
         />
 
         <motion.div
@@ -65,10 +65,10 @@ export function Token() {
                 $VEXOR
               </div>
               <p className="mt-4 max-w-xl text-sm sm:text-[15px] text-white/65 leading-relaxed">
-                The native ERC-20 utility token planned for the Vexor
-                Terminal protocol on Base. $VEXOR will be the unit of
-                account for runtime, staking, and governance — 100B
-                planned supply, 18 decimals.
+                Native ERC-20 utility token of the Vexor Terminal protocol
+                on Base. $VEXOR is the unit of account for runtime,
+                staking, and governance — 100B planned supply, 18
+                decimals.
               </p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:max-w-md">
@@ -96,7 +96,8 @@ export function Token() {
               Coming soon
             </div>
             <p className="mt-2 max-w-2xl mx-auto text-xs sm:text-sm text-white/55 leading-relaxed">
-              The $VEXOR contract has not been published yet. Follow{" "}
+              The $VEXOR contract has not been deployed. Launch will be
+              announced on{" "}
               <a
                 href="https://x.com/vexorterminal"
                 target="_blank"
@@ -105,7 +106,7 @@ export function Token() {
               >
                 @vexorterminal
               </a>{" "}
-              or the{" "}
+              and the{" "}
               <a
                 href="https://t.me/VexorAeonWatchtowerbot"
                 target="_blank"
@@ -113,8 +114,8 @@ export function Token() {
                 className="text-violet-300 hover:text-white transition-colors"
               >
                 Watchtower bot
-              </a>{" "}
-              for the launch announcement.
+              </a>
+              .
             </p>
           </div>
         </motion.div>
@@ -151,9 +152,9 @@ export function Token() {
             <p className="mt-2 max-w-2xl text-sm text-white/55 leading-relaxed">
               $VEXOR is a utility token planned for the Vexor Terminal
               protocol. It is not a security, an investment, or a promise
-              of return. The token, staking, and on-chain governance are
-              not yet live — this page describes the design that will
-              ship at launch.
+              of return. The token, staking pool, and on-chain governance
+              are not yet live — this page documents the design that
+              ships at launch.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">

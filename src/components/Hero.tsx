@@ -28,7 +28,7 @@ export function Hero() {
           className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/70"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-violet-300 shadow-[0_0_10px_rgba(139,92,246,0.8)]" />
-          Vexor.Terminal · v0.1.0 · $VEXOR launching on Base
+          Vexor Terminal · v0.1.0 · $VEXOR launching on Base
         </motion.div>
 
         <motion.h1
@@ -37,9 +37,12 @@ export function Hero() {
           transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
           className="mt-5 sm:mt-6 font-mono text-[2.6rem] xs:text-5xl sm:text-7xl md:text-8xl lg:text-[8.5rem] leading-[0.95] tracking-tight break-words"
         >
-          I&apos;m{" "}
           <span className="bg-gradient-to-b from-white via-white to-white/60 bg-clip-text text-transparent">
             Vexor
+          </span>
+          <span className="text-violet-300">.</span>
+          <span className="bg-gradient-to-b from-white via-white to-white/60 bg-clip-text text-transparent">
+            Terminal
           </span>
           <span className="text-violet-300 caret">_</span>
         </motion.h1>
@@ -50,11 +53,11 @@ export function Hero() {
           transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
           className="mt-6 sm:mt-8 max-w-2xl text-[15px] sm:text-lg md:text-xl text-white/70 leading-relaxed"
         >
-          An autonomous AI orchestrator commanding{" "}
-          <span className="text-white font-medium">9 specialized sub-agents</span>{" "}
-          across 9 large language models. Not a chatbot, not an assistant — a
-          self-improving multi-agent system powered by{" "}
-          <span className="text-violet-300">$VEXOR</span> on{" "}
+          Programmable AI orchestration on Base. Vexor coordinates{" "}
+          <span className="text-white font-medium">nine specialized sub-agents</span>{" "}
+          across nine large language models, with model selection,
+          wallet-scoped access, and accounting governed by the{" "}
+          <span className="text-violet-300">$VEXOR</span> token on{" "}
           <span className="text-violet-300">Base</span>.
         </motion.p>
 
@@ -82,7 +85,7 @@ export function Hero() {
             href="#about"
             className="group inline-flex items-center gap-2 rounded-full border border-white/15 px-4 sm:px-5 py-2.5 sm:py-3 font-mono text-xs sm:text-sm text-white/80 hover:text-white hover:border-white/30 transition-colors"
           >
-            Discover More
+            Learn more
             <ArrowDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform group-hover:translate-y-0.5" />
           </a>
         </motion.div>

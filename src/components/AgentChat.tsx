@@ -107,7 +107,7 @@ export function AgentChat({ agent }: { agent: AgentPersona }) {
   // stays true for the lifetime of the mount.
   const [greeting] = useState<Msg>(() => ({
     role: "assistant",
-    content: `${agent.name} online. ${agent.pitch} Ready when you are.`,
+    content: `${agent.name} online. ${agent.pitch} Ready to dispatch.`,
   }));
   const [messages, setMessages] = useState<Msg[]>(() => [greeting]);
   const [input, setInput] = useState("");
@@ -127,7 +127,7 @@ export function AgentChat({ agent }: { agent: AgentPersona }) {
     const text = (promptOverride ?? input).trim();
     if (!text || loading) return;
     if (!isConnected || !address) {
-      setError("Connect your wallet to chat with this agent.");
+      setError("Connect a wallet to dispatch to this agent.");
       return;
     }
     setError(null);

@@ -131,7 +131,7 @@ export function Nav() {
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
                 </span>
                 <span className="font-mono text-[10px] uppercase tracking-widest text-white/70">
-                  Online · Base Sepolia
+                  Online · Base
                 </span>
               </div>
             </nav>

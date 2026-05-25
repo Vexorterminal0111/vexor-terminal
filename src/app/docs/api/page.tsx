@@ -22,9 +22,9 @@ export default function ApiDocsPage() {
             Public API — coming soon.
           </h1>
           <p className="mt-4 text-sm sm:text-[15px] text-white/65 leading-relaxed">
-            The public JSON API for the $VEXOR RevShare pool will be enabled
-            once the $VEXOR token launches on Base. Endpoints will expose pool
-            stats, APR, and price data once the contract is live.
+            The public JSON API for the $VEXOR RevShare pool is enabled with
+            the $VEXOR token launch on Base. Endpoints will expose pool
+            statistics, APR, and price data once the contract is live.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
             <Link

@@ -13,8 +13,8 @@ export function Console() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
           kicker="Coming soon"
-          title="The Console — wallet, stake, governance."
-          description="Connect, claim, stake, and vote. A single on-chain dashboard for the $VEXOR economy on Base. The interactive console will open alongside the $VEXOR token launch."
+          title="Protocol Console."
+          description="Unified on-chain dashboard for wallet, staking, and governance on Base. Opens with the $VEXOR token launch."
         />
 
         <motion.div
@@ -46,13 +46,12 @@ export function Console() {
               Pending token launch
             </div>
             <h3 className="mt-3 font-mono text-2xl sm:text-3xl text-white">
-              The Console opens with $VEXOR launch.
+              Console opens with the $VEXOR launch.
             </h3>
             <p className="mt-3 max-w-xl text-sm sm:text-[15px] text-white/60 leading-relaxed">
-              The interactive on-chain console — wallet, faucet, stake,
-              govern — will be enabled once $VEXOR is deployed and verified on
-              Base. Until then, follow the channels below for launch
-              updates.
+              The on-chain Console — wallet, staking, and governance —
+              will be enabled once $VEXOR is deployed and verified on
+              Base. Subscribe to launch updates through the channels below.
             </p>
             <div className="mt-7 flex flex-wrap items-center justify-center gap-2">
               <a

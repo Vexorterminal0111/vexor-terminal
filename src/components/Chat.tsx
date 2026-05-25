@@ -15,16 +15,16 @@ const CHAT_API =
 const CHAT_API_BASIC_AUTH = process.env.NEXT_PUBLIC_CHAT_API_BASIC_AUTH || "";
 
 const SAMPLE_PROMPTS = [
-  "Audit a Solidity ERC-20 for me",
-  "Summarize Base mainnet stats today",
-  "Draft a launch tweet for $VEXOR",
+  "Audit a Solidity ERC-20 contract",
+  "Summarize today's Base mainnet activity",
+  "Draft a protocol launch announcement",
   "Generate a memory recall query",
 ];
 
 const SUGGESTED_GREETING: Msg = {
   role: "assistant",
   content:
-    "Vexor.online · 9 sub-agents on standby. Ask anything — coding, research, content, on-chain ops. I route to the right agent.",
+    "Orchestrator online · nine sub-agents available. Submit any prompt — engineering, research, content, or on-chain operations. The orchestrator routes to the appropriate sub-agent.",
 };
 
 const AGENT_NAMES = new Set([
@@ -145,7 +145,7 @@ export function Chat() {
     const text = (promptOverride ?? input).trim();
     if (!text || loading) return;
     if (!isConnected || !address) {
-      setError("Connect your wallet to chat with Vexor.");
+      setError("Connect a wallet to use the orchestrator.");
       return;
     }
     setError(null);
@@ -207,9 +207,9 @@ export function Chat() {
     <section id="chat" className="relative scroll-mt-24 py-16 sm:py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
-          kicker="Live Terminal"
-          title="Chat with Vexor."
-          description="Connect your wallet on Base and talk to the orchestrator. Vexor dispatches your prompt to the right sub-agent and streams a response."
+          kicker="Orchestrator"
+          title="Live orchestrator chat."
+          description="Connect a wallet on Base and submit a prompt. The orchestrator dispatches to the appropriate sub-agent and streams the response."
         />
 
         <motion.div
@@ -279,7 +279,7 @@ export function Chat() {
                 </div>
                 <div className="flex items-center gap-2 text-violet-300/80 text-[13.5px]">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  dispatching to sub-agents...
+                  routing to sub-agent...
                 </div>
               </div>
             )}
@@ -311,7 +311,7 @@ export function Chat() {
             {!isConnected ? (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-2">
                 <div className="font-mono text-xs text-white/55 text-center sm:text-left">
-                  Connect your wallet on Base to chat with Vexor.
+                  Connect a wallet on Base to use the orchestrator.
                 </div>
                 <WalletButton compact />
               </div>
@@ -322,7 +322,7 @@ export function Chat() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={onKeyDown}
-                  placeholder="Ask Vexor anything..."
+                  placeholder="Submit a prompt..."
                   rows={1}
                   maxLength={4000}
                   className="flex-1 resize-none rounded-xl border border-white/10 bg-background/60 px-4 py-3 font-mono text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-violet-400/40 focus:bg-background/80 transition-colors"

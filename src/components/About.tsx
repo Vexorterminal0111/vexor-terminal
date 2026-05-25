@@ -14,38 +14,38 @@ import { SectionHeader } from "./SectionHeader";
 const features = [
   {
     icon: Zap,
-    title: "Runtime",
-    body: "Powered by the Vexor orchestration gateway on Apple Silicon hardware. Always-on, always learning, low-latency dispatch across sub-agents.",
+    title: "Orchestration Runtime",
+    body: "Persistent orchestration gateway on dedicated Apple Silicon hardware. Low-latency dispatch across all nine sub-agents.",
     badge: "Always-on",
   },
   {
     icon: Brain,
-    title: "Multi-Model",
-    body: "Routes across 9 frontier LLMs — GPT-5.2, Claude Opus 4.5, Gemini 2.5 Pro, Grok 4, Kimi K2.5, Llama 3.1 405B, and more — choosing the right brain for each task.",
+    title: "Multi-Model Routing",
+    body: "Routes across nine frontier LLMs — GPT-5.2, Claude Opus 4.5, Gemini 2.5 Pro, Grok 4, Kimi K2.5, Llama 3.1 405B, and more. Model selection is governed per task.",
     badge: "9 Models",
   },
   {
     icon: Radio,
     title: "Channels",
-    body: "Reach Vexor via Telegram, iMessage, Discord, Email, and Farcaster Frames. Allowlist-only elevated access, signed by your wallet.",
+    body: "Telegram, iMessage, Discord, email, and Farcaster Frames. Elevated access is wallet-scoped and allowlist-controlled.",
     badge: "5 Surfaces",
   },
   {
     icon: Database,
     title: "Memory System",
-    body: "Brain-inspired 4-tier memory architecture. Nightly consolidation via the MCE pipeline, salience scoring, and active forgetting to stay sharp.",
+    body: "Four-tier memory architecture with nightly consolidation, salience scoring, and active forgetting.",
     badge: "4-Tier",
   },
   {
     icon: RefreshCw,
-    title: "Self-Improvement (ASIA)",
-    body: "6 ASIA loops: error recognition, context efficiency, self-diagnosis, tool profiling, knowledge consolidation, and sub-agent performance tracking.",
+    title: "Closed-Loop Improvement",
+    body: "Six subsystems track error recognition, context efficiency, self-diagnosis, tool profiling, knowledge consolidation, and sub-agent performance.",
     badge: "6 Loops",
   },
   {
     icon: Hexagon,
     title: "$VEXOR Token",
-    body: "Native ERC-20 utility token planned for Base. Holding $VEXOR will unlock elevated agent access; staking will earn a pro-rata share of revenue from every task the orchestrator runs. Token launch coming soon.",
+    body: "Native ERC-20 utility token planned for Base. Holding $VEXOR unlocks elevated tiers; staking returns a pro-rata share of protocol revenue.",
     badge: "Coming soon",
     highlight: true,
   },
@@ -56,9 +56,9 @@ export function About() {
     <section id="about" className="relative scroll-mt-24 py-16 sm:py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
-          kicker="About Vexor"
-          title="An autonomous AI orchestrator — not a chatbot."
-          description="Vexor is a self-improving multi-agent system that dispatches work across 9 specialized sub-agents, learns from every task, and runs on the $VEXOR token economy on Base."
+          kicker="Platform"
+          title="An orchestration platform for on-chain workflows."
+          description="Vexor coordinates nine specialized sub-agents across nine large language models. Every task is routed to the appropriate model, executed under wallet-scoped access, and accounted in the $VEXOR token economy on Base."
         />
 
         <div className="mt-10 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">

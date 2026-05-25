@@ -16,11 +16,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://vexorterminal.com"),
   title: {
-    default: "Vexor Terminal — Autonomous AI Orchestrator on Base",
+    default: "Vexor Terminal — AI Orchestration Platform on Base",
     template: "%s · Vexor Terminal",
   },
   description:
-    "Vexor Terminal is an autonomous AI orchestrator with 9 specialized sub-agents, powered by the $VEXOR token on Base. Stake $VEXOR for governance and earn from agent revenue.",
+    "Vexor Terminal is a programmable AI orchestration platform coordinating nine specialized sub-agents on Base. The $VEXOR token governs runtime, staking, and protocol governance — launching soon.",
   keywords: [
     "AI agent",
     "on-chain agent",
@@ -31,9 +31,9 @@ export const metadata: Metadata = {
     "web3 AI",
   ],
   openGraph: {
-    title: "Vexor Terminal — Autonomous AI Orchestrator on Base",
+    title: "Vexor Terminal — AI Orchestration Platform on Base",
     description:
-      "9 specialized sub-agents. One terminal. Powered by $VEXOR on Base.",
+      "Programmable AI orchestration on Base. Nine specialized sub-agents governed by the $VEXOR token — launching soon.",
     url: "https://vexorterminal.com",
     siteName: "Vexor Terminal",
     type: "website",
@@ -42,15 +42,15 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1280,
         height: 320,
-        alt: "Vexor Terminal — autonomous AI orchestrator on Base",
+        alt: "Vexor Terminal — AI orchestration platform on Base",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vexor Terminal — Autonomous AI Orchestrator on Base",
+    title: "Vexor Terminal — AI Orchestration Platform on Base",
     description:
-      "9 specialized sub-agents. One terminal. Powered by $VEXOR on Base.",
+      "Programmable AI orchestration on Base. Nine sub-agents governed by the $VEXOR token — launching soon.",
     site: "@vexorterminal",
     creator: "@vexorterminal",
     images: ["/og-image.png"],

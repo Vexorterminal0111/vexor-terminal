@@ -18,9 +18,9 @@ export default function ConsolePage() {
           RevShare Console — coming soon.
         </h1>
         <p className="mt-4 text-sm sm:text-[15px] text-white/65 leading-relaxed">
-          The on-chain $VEXOR staking console will open alongside the $VEXOR token
-          launch on Base. Until then, the contract has not been deployed and
-          there is no pool to interact with.
+          The on-chain $VEXOR staking console opens with the $VEXOR token
+          launch on Base. The contract has not been deployed; no pool is
+          currently available for interaction.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
           <Link
