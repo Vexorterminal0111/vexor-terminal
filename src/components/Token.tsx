@@ -1,8 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { Coins, Lock, Vote, Sparkles, Copy, Check, ExternalLink } from "lucide-react";
+import { Coins, Lock, Vote, Sparkles, ExternalLink } from "lucide-react";
 import { SectionHeader } from "./SectionHeader";
 
 const VT_ADDRESS = "0x2c684D666998436634EcEde1527EdA7975427Ba3";
@@ -44,18 +43,6 @@ const stats = [
 ];
 
 export function Token() {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(VT_ADDRESS);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // clipboard API unavailable (older browser / insecure context)
-    }
-  };
-
   return (
     <section id="token" className="relative scroll-mt-24 py-16 sm:py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
@@ -108,44 +95,19 @@ export function Token() {
             </div>
           </div>
 
-          <div className="relative mt-6 sm:mt-8 rounded-xl border border-cyan-400/30 bg-cyan-500/[0.06] p-4 sm:p-5">
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300">
-                Contract address · Base mainnet
-              </div>
-              <a
-                href={VT_BASESCAN}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest text-cyan-300 hover:text-white transition-colors"
-              >
-                Basescan
-                <ExternalLink className="h-3 w-3" />
-              </a>
+          <div className="relative mt-6 sm:mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-cyan-400/30 bg-cyan-500/[0.06] p-4 sm:p-5">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300">
+              Verified ERC-20 · Base mainnet
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-              <code className="flex-1 font-mono text-xs sm:text-sm md:text-base text-white break-all bg-black/40 rounded-md border border-white/10 px-3 py-2.5 select-all">
-                {VT_ADDRESS}
-              </code>
-              <button
-                type="button"
-                onClick={handleCopy}
-                aria-label="Copy $VT contract address"
-                className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-cyan-400/40 bg-cyan-500/10 px-3 py-2.5 font-mono text-[11px] uppercase tracking-widest text-cyan-200 hover:bg-cyan-500/20 hover:text-white transition-colors"
-              >
-                {copied ? (
-                  <>
-                    <Check className="h-3.5 w-3.5" />
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-3.5 w-3.5" />
-                    Copy
-                  </>
-                )}
-              </button>
-            </div>
+            <a
+              href={VT_BASESCAN}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 font-mono text-[11px] uppercase tracking-widest text-cyan-200 hover:bg-cyan-500/20 hover:text-white transition-colors"
+            >
+              View on Basescan
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
           </div>
         </motion.div>
 

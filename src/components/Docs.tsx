@@ -74,7 +74,7 @@ const LOCK_TIERS = [
 const FAQ = [
   {
     q: "Is $VT live on Base mainnet?",
-    a: "Yes — $VT is deployed on Base mainnet at 0x2c684D666998436634EcEde1527EdA7975427Ba3. Total supply 100B, 18 decimals. The mainnet revenue-share staking pool (VexorRevShare) is also live at 0xE25f6243f848523c4577639e975B9F3E0fA57186 — flat staking with no lock and manual pro-rata reward distribution. The 4-tier governance demo still runs on Base Sepolia testnet so anyone can interact with the console without spending real gas.",
+    a: "Yes — $VT is deployed on Base mainnet as a verified ERC-20. Total supply 100B, 18 decimals. The mainnet revenue-share staking pool (VexorRevShare) is also live — flat staking with no lock and manual pro-rata reward distribution. See the Contracts section above for direct Basescan links. The 4-tier governance demo still runs on Base Sepolia testnet so anyone can interact with the console without spending real gas.",
   },
   {
     q: "Is the token I claim from the faucet worth anything?",
@@ -152,29 +152,24 @@ function Section({
 
 function CodeRow({
   label,
-  value,
   href,
 }: {
   label: string;
-  value: string;
   href?: string;
 }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 rounded-lg border border-white/10 bg-white/[0.02] px-4 py-3">
-      <div className="font-mono text-[10px] uppercase tracking-widest text-white/45 sm:w-32 shrink-0">
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.02] px-4 py-3">
+      <div className="font-mono text-[11px] sm:text-xs uppercase tracking-widest text-cyan-200">
         {label}
       </div>
-      <code className="font-mono text-xs sm:text-[13px] text-cyan-200 break-all">
-        {value}
-      </code>
       {href && (
         <a
           href={href}
           target="_blank"
           rel="noreferrer"
-          className="ml-auto inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-widest text-white/60 hover:text-cyan-300 transition-colors shrink-0"
+          className="inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-widest text-white/60 hover:text-cyan-300 transition-colors shrink-0"
         >
-          Basescan
+          View on Basescan
           <ExternalLink className="h-3 w-3" />
         </a>
       )}
@@ -307,14 +302,14 @@ export function Docs() {
                 <div className="font-mono text-[10px] uppercase tracking-widest text-cyan-300">
                   $VT · Base mainnet
                 </div>
-                <p className="mt-2 text-[11px] text-white leading-snug font-mono break-all select-all">
-                  {VT_ADDRESS}
+                <p className="mt-2 text-[11px] text-white/70 leading-snug">
+                  Verified ERC-20 on Base. 100B supply, 18 decimals.
                 </p>
                 <a
                   href={`${BASESCAN}/${VT_ADDRESS}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-2 inline-block font-mono text-[10px] uppercase tracking-widest text-cyan-300 hover:text-white transition-colors"
+                  className="mt-3 inline-block font-mono text-[10px] uppercase tracking-widest text-cyan-300 hover:text-white transition-colors"
                 >
                   View on Basescan ↗
                 </a>
@@ -427,13 +422,11 @@ export function Docs() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <CodeRow
-                    label="$VT"
-                    value={VT_ADDRESS}
+                    label="$VT token"
                     href={`${BASESCAN}/${VT_ADDRESS}`}
                   />
                   <CodeRow
-                    label="RevShare"
-                    value={REVSHARE_ADDRESS}
+                    label="VexorRevShare"
                     href={`${BASESCAN}/${REVSHARE_ADDRESS}`}
                   />
                 </div>
@@ -444,13 +437,11 @@ export function Docs() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <CodeRow
-                    label="Staking"
-                    value={STAKING_ADDRESS_TESTNET}
+                    label="Staking (sepolia)"
                     href={`${BASESCAN_TESTNET}/${STAKING_ADDRESS_TESTNET}`}
                   />
                   <CodeRow
-                    label="Governor"
-                    value={GOVERNOR_ADDRESS_TESTNET}
+                    label="Governor (sepolia)"
                     href={`${BASESCAN_TESTNET}/${GOVERNOR_ADDRESS_TESTNET}`}
                   />
                 </div>
@@ -599,11 +590,12 @@ export function Docs() {
                 </li>
               </ul>
               <p className="mt-2 text-sm text-white/55">
-                Mainnet $VT (<span className="font-mono text-white/75 break-all">{VT_ADDRESS}</span>)
-                is deployed with 100B total supply at 18 decimals.
-                Distribution and launch venue will be announced before any
-                liquidity is seeded. Testnet console supply is provisional
-                and exists solely for protocol testing.
+                Mainnet $VT is deployed as a verified ERC-20 on Base with
+                100B total supply at 18 decimals — see the Contracts
+                section for the Basescan link. Distribution and launch
+                venue will be announced before any liquidity is seeded.
+                Testnet console supply is provisional and exists solely
+                for protocol testing.
               </p>
             </Section>
 

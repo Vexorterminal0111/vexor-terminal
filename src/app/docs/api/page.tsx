@@ -13,9 +13,9 @@ const EXAMPLE_RESPONSE = `{
   "fetched_at": "2026-05-20T11:53:55.123Z",
   "block_number": 46244445,
   "contract": {
-    "revshare": "0xE25f6243f848523c4577639e975B9F3E0fA57186",
-    "token": "0x2c684D666998436634EcEde1527EdA7975427Ba3",
-    "owner": "0x0259abb884050E19e787cF7E271b6984E13BD79B",
+    "revshare": "0x...",
+    "token": "0x...",
+    "owner": "0x...",
     "network": "base-mainnet",
     "chain_id": 8453
   },
@@ -44,8 +44,8 @@ const EXAMPLE_RESPONSE = `{
   "links": {
     "site": "https://vexorterminal.com",
     "docs": "https://vexorterminal.com/docs/api",
-    "basescan_revshare": "https://basescan.org/address/0xE25f6243f848523c4577639e975B9F3E0fA57186",
-    "basescan_token": "https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3",
+    "basescan_revshare": "https://basescan.org/address/<revshare>",
+    "basescan_token": "https://basescan.org/address/<token>",
     "github": "https://github.com/Vexorterminal0111/vexor-terminal"
   }
 }`;
