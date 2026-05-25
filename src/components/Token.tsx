@@ -114,8 +114,7 @@ export function Token() {
                 className="text-violet-300 hover:text-white transition-colors"
               >
                 Watchtower bot
-              </a>
-              .
+              </a>.
             </p>
           </div>
         </motion.div>
