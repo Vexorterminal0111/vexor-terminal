@@ -6,23 +6,23 @@ import { SectionHeader } from "./SectionHeader";
 
 const projects = [
   {
-    name: "Onchain Co-Pilot",
-    role: "Smart Contract Assistant",
-    body: "Vexor reviews PRs, audits Solidity, and proposes gas optimizations across your repos. Cipher and Forge collaborate on every diff.",
+    name: "On-Chain Engineering",
+    role: "Smart Contract Workflows",
+    body: "Cipher and Forge review pull requests, audit Solidity, and surface gas optimizations across the repository.",
     stack: ["Foundry", "Solidity", "Base", "GitHub Actions"],
     status: "Pilot",
   },
   {
-    name: "Agentic DAO Ops",
+    name: "DAO Operations",
     role: "Treasury & Governance",
-    body: "Halo dispatches proposal drafting, Atlas researches comparables, Prism models impact. Multi-sig execution stays human-controlled.",
+    body: "Halo drafts proposals, Atlas researches comparables, Prism models impact. Multi-sig execution remains human-controlled.",
     stack: ["Safe", "Tally", "Snapshot", "Base"],
     status: "Concept",
   },
   {
-    name: "Always-On Content Engine",
-    role: "Multi-Channel Distribution",
-    body: "Quill writes, Vector designs, Pulse distributes across Farcaster, X, and Discord. Nyx coordinates audio drops. Always-on, always learning.",
+    name: "Content Distribution",
+    role: "Multi-Channel Publishing",
+    body: "Quill drafts, Pulse distributes across Farcaster, X, and Discord, Nyx coordinates audio assets. Continuous operation.",
     stack: ["Farcaster", "X API", "Discord", "Suno"],
     status: "Live",
   },
@@ -34,8 +34,8 @@ export function UseCases() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
           kicker="Use Cases"
-          title="What Vexor builds for you."
-          description="Vexor is built to operate real production workflows — not demos. Below are the systems we&apos;re putting Vexor on next."
+          title="Production workflows."
+          description="Vexor is built to operate real production workflows — not demos. The systems below run on the orchestrator today or are scheduled next."
         />
 
         <div className="mt-10 sm:mt-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">

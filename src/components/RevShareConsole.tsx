@@ -13,8 +13,8 @@ export function RevShareConsole() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
           kicker="Coming soon"
-          title="$VEXOR Revenue Share — stake to earn protocol revenue."
-          description="Flat single-sided $VEXOR staking on Base. No lock, no tier — withdraw anytime. Pool rewards will be funded from protocol revenue and distributed pro-rata to stakers."
+          title="Revenue Share."
+          description="Single-sided $VEXOR staking on Base. No lock, no tier — withdraw any time. Pool rewards are funded from protocol revenue and distributed pro-rata to stakers."
         />
 
         <motion.div
@@ -46,12 +46,13 @@ export function RevShareConsole() {
               Pending token launch
             </div>
             <h3 className="mt-3 font-mono text-2xl sm:text-3xl text-white">
-              RevShare staking opens with $VEXOR launch.
+              RevShare staking opens with the $VEXOR launch.
             </h3>
             <p className="mt-3 max-w-xl text-sm sm:text-[15px] text-white/60 leading-relaxed">
-              The single-sided $VEXOR staking pool will go live alongside
-              the $VEXOR token. Stakers will receive a pro-rata share of every Vexor
-              task fee — flat staking, no lock, withdraw anytime.
+              The single-sided $VEXOR staking pool will deploy alongside
+              the $VEXOR token. Stakers will receive a pro-rata share of
+              every orchestrator task fee — flat staking, no lock,
+              withdraw any time.
             </p>
             <div className="mt-7 flex flex-wrap items-center justify-center gap-2">
               <a
