@@ -12,7 +12,6 @@ const links = [
   { href: "/#team", label: "Team" },
   { href: "/#token", label: "$VT" },
   { href: "/#console", label: "Console" },
-  { href: "/#revshare", label: "RevShare" },
   { href: "/agents", label: "Agents" },
   { href: "/intel", label: "Intel" },
   { href: "/#chat", label: "Chat" },

@@ -45,8 +45,8 @@ const features = [
   {
     icon: Hexagon,
     title: "$VT Token",
-    body: "Native ERC-20 token on Base. Hold $VT for elevated agent access. Stake $VT and earn a pro-rata share of revenue from every task the orchestrator runs.",
-    badge: "Base · Soon",
+    body: "Native ERC-20 utility token planned for Base. Holding $VT will unlock elevated agent access; staking will earn a pro-rata share of revenue from every task the orchestrator runs. Token launch coming soon.",
+    badge: "Coming soon",
     highlight: true,
   },
 ];
