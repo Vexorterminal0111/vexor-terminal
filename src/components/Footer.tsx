@@ -16,19 +16,14 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-4 max-w-md text-sm text-white/55 leading-relaxed">
-              An autonomous AI orchestrator with 9 sub-agents. Powered by the
-              $VT token on Base — pay for runtime, stake for governance,
-              earn from agent revenue.
+              An autonomous AI orchestrator with 9 sub-agents. The $VT token
+              economy — runtime payment, staking, and governance — is
+              coming soon to Base.
             </p>
-            <a
-              href="https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-5 inline-flex items-center gap-2 rounded-md border border-cyan-400/30 bg-cyan-500/[0.06] px-3 py-2 font-mono text-[10px] sm:text-[11px] uppercase tracking-widest text-cyan-200 hover:text-white hover:border-cyan-400/60 transition-colors"
-            >
+            <div className="mt-5 inline-flex items-center gap-2 rounded-md border border-cyan-400/30 bg-cyan-500/[0.06] px-3 py-2 font-mono text-[10px] sm:text-[11px] uppercase tracking-widest text-cyan-200">
               <span className="text-cyan-300">$VT</span>
-              <span className="text-white">Verified on Basescan ↗</span>
-            </a>
+              <span className="text-white">Token launch coming soon</span>
+            </div>
             <div className="mt-6 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-white/45 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.02]">
               <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />
               Built for Base · v0.1.0
@@ -93,48 +88,23 @@ export function Footer() {
 
           <div>
             <div className="font-mono text-[10px] uppercase tracking-widest text-white/45">
-              On-Chain
+              Network
             </div>
             <ul className="mt-4 space-y-2 text-sm">
               <li>
-                <a
-                  href="https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-cyan-300 hover:text-white transition-colors font-mono text-xs"
-                >
-                  $VT on Base ↗
-                </a>
+                <span className="text-white/70 font-mono text-xs">
+                  $VT token — coming soon
+                </span>
               </li>
               <li>
-                <a
-                  href="https://basescan.org/address/0xE25f6243f848523c4577639e975B9F3E0fA57186"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-cyan-300 hover:text-white transition-colors font-mono text-xs"
-                >
-                  RevShare on Base ↗
-                </a>
+                <span className="text-white/70 font-mono text-xs">
+                  Staking — coming soon
+                </span>
               </li>
               <li>
-                <a
-                  href="https://sepolia.basescan.org/address/0x6a345b8390a67681764521d146853211dd089062"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-white/70 hover:text-cyan-300 transition-colors font-mono text-xs"
-                >
-                  Staking (testnet) ↗
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://sepolia.basescan.org/address/0xd1850b4c2e663b45a49330d00637db78197be31c"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-white/70 hover:text-cyan-300 transition-colors font-mono text-xs"
-                >
-                  Governor (testnet) ↗
-                </a>
+                <span className="text-white/70 font-mono text-xs">
+                  Governance — coming soon
+                </span>
               </li>
               <li>
                 <a
@@ -221,7 +191,7 @@ export function Footer() {
             © {new Date().getFullYear()} Vexor Terminal. All rights reserved.
           </div>
           <div className="font-mono text-[10px] sm:text-[11px] text-white/40">
-            Designed in the terminal. $VT live on Base.
+            Designed in the terminal. $VT coming soon.
           </div>
         </div>
       </div>

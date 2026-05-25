@@ -14,13 +14,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-const VT_ADDRESS = "0x2c684D666998436634EcEde1527EdA7975427Ba3";
-const REVSHARE_ADDRESS = "0xE25f6243f848523c4577639e975B9F3E0fA57186";
-const BASESCAN = "https://basescan.org/address";
-const BASESCAN_TESTNET = "https://sepolia.basescan.org/address";
-const STAKING_ADDRESS_TESTNET = "0x6a345b8390a67681764521d146853211dd089062";
-const GOVERNOR_ADDRESS_TESTNET = "0xd1850b4c2e663b45a49330d00637db78197be31c";
-
 type SectionId =
   | "overview"
   | "quickstart"
@@ -74,39 +67,27 @@ const LOCK_TIERS = [
 const FAQ = [
   {
     q: "Is $VT live on Base mainnet?",
-    a: "Yes — $VT is deployed on Base mainnet as a verified ERC-20. Total supply 100B, 18 decimals. The mainnet revenue-share staking pool (VexorRevShare) is also live — flat staking with no lock and manual pro-rata reward distribution. See the Contracts section above for direct Basescan links. The 4-tier governance demo still runs on Base Sepolia testnet so anyone can interact with the console without spending real gas.",
+    a: "Not yet — $VT is coming soon. The token contract has not been deployed and the on-chain staking pool is not active. Once the contract is verified on Basescan, the address and Console will go live on this site.",
   },
   {
-    q: "Is the token I claim from the faucet worth anything?",
-    a: "No. The faucet on Base Sepolia hands out free testnet $VT for trying the Console. The testnet $VT is not the same token as the mainnet $VT — it has no monetary value and cannot be bridged or traded.",
+    q: "When will the Console open?",
+    a: "The interactive Console (wallet, faucet, stake, govern) will open once $VT is deployed to Base. We will announce the exact launch date on @vexorterminal on X and via the Watchtower Telegram bot.",
   },
   {
-    q: "Do I need real ETH to use the Console?",
-    a: "You need Base Sepolia ETH (free, available from public faucets) to pay gas. No mainnet ETH or $VT purchase required.",
+    q: "Can I buy $VT anywhere right now?",
+    a: "No. There is no live $VT contract yet — anything marketed as $VT today is not associated with Vexor Terminal. Wait for the official launch announcement before interacting with any contract claiming to be $VT.",
   },
   {
-    q: "Can I propose anything via the Governor?",
-    a: "You need ≥100 $VT voting power (self-delegated balance at the proposal's block) to submit a proposal. Any holder with voting power can vote. Quorum is 4% of total supply.",
-  },
-  {
-    q: "Why does my balance not give me voting power?",
-    a: "ERC-20Votes requires a one-time self-delegation. Open the Wallet tab in the Console and click 'Self-delegate' — after the transaction confirms, your balance counts toward voting power.",
-  },
-  {
-    q: "How does staking yield work?",
-    a: "Rewards stream from a 1M $VT pool over 30 days. Your position's share = (your weighted stake) / (total weighted stake). Weighted stake = amount × lock multiplier (1.0x → 3.0x).",
-  },
-  {
-    q: "Can I withdraw my stake early?",
-    a: "No — lock periods are hard locks enforced on-chain. The earliest withdraw is at the unlock timestamp shown on each position. Pending rewards can be claimed at any time.",
+    q: "How will staking yield work at launch?",
+    a: "Stakers will receive a pro-rata share of protocol revenue, denominated in $VT. The current design is flat single-sided staking (no lock, withdraw anytime) with rewards pushed by the protocol periodically. Exact economics will be finalized before launch.",
   },
   {
     q: "Is the chat free?",
-    a: "Yes during beta — hosted Llama 3.3 70B via Groq, wallet-gated and rate-limited. Production billing in mainnet $VT will be activated once staking and governance migrate to mainnet.",
+    a: "Yes during this pre-launch phase — hosted Llama 3.3 70B via Groq, wallet-gated and rate-limited. Production billing in $VT will be activated once the token launches.",
   },
   {
-    q: "Where can I see all contract source code?",
-    a: "Source is in the contracts/ directory of the repo (VexorToken.sol, VexorStaking.sol, VexorGovernor.sol, VexorRevShare.sol). Built with Foundry + OpenZeppelin v5. VexorRevShare is verified on Basescan mainnet.",
+    q: "Where can I see the contract source code?",
+    a: "Solidity source lives in the contracts/ directory of the repo (VexorToken.sol, VexorStaking.sol, VexorGovernor.sol, VexorRevShare.sol). Built with Foundry + OpenZeppelin v5. The verified mainnet contracts will be linked here once $VT is deployed.",
   },
 ];
 
@@ -147,33 +128,6 @@ function Section({
         {children}
       </div>
     </section>
-  );
-}
-
-function CodeRow({
-  label,
-  href,
-}: {
-  label: string;
-  href?: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.02] px-4 py-3">
-      <div className="font-mono text-[11px] sm:text-xs uppercase tracking-widest text-cyan-200">
-        {label}
-      </div>
-      {href && (
-        <a
-          href={href}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-widest text-white/60 hover:text-cyan-300 transition-colors shrink-0"
-        >
-          View on Basescan
-          <ExternalLink className="h-3 w-3" />
-        </a>
-      )}
-    </div>
   );
 }
 
@@ -224,16 +178,17 @@ export function Docs() {
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/70 w-fit">
             <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
-            Docs · v0.1.0 · $VT live on Base
+            Docs · v0.1.0 · $VT coming soon
           </div>
           <h1 className="font-mono text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight text-white max-w-3xl break-words">
             Drive the <span className="text-cyan-300">terminal</span>.
           </h1>
           <p className="max-w-2xl text-[15px] sm:text-base md:text-lg text-white/65 leading-relaxed">
             Vexor Terminal is a personal AI orchestrator commanding 9
-            specialized sub-agents, owned and governed by $VT on Base. This
-            page is everything you need to use the Console, talk to the
-            orchestrator, and understand the token economics.
+            specialized sub-agents. The terminal will be owned and governed
+            by $VT on Base — the token launch is coming soon. This page
+            covers the orchestrator design, sub-agents, and the planned
+            token economy.
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <a
@@ -300,22 +255,14 @@ export function Docs() {
               </nav>
               <div className="mt-8 rounded-lg border border-cyan-400/30 bg-cyan-500/[0.06] p-4">
                 <div className="font-mono text-[10px] uppercase tracking-widest text-cyan-300">
-                  $VT · Base mainnet
+                  $VT · coming soon
                 </div>
                 <p className="mt-2 text-[11px] text-white/70 leading-snug">
-                  Verified ERC-20 on Base. 100B supply, 18 decimals.
+                  Planned ERC-20 on Base. 100B supply, 18 decimals.
                 </p>
-                <a
-                  href={`${BASESCAN}/${VT_ADDRESS}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 inline-block font-mono text-[10px] uppercase tracking-widest text-cyan-300 hover:text-white transition-colors"
-                >
-                  View on Basescan ↗
-                </a>
                 <p className="mt-3 text-[10px] text-white/45 leading-relaxed">
-                  Console demo (claim / stake / govern) still runs on Base
-                  Sepolia testnet during beta.
+                  The token contract has not been deployed yet. The Console
+                  and on-chain governance will open with the $VT launch.
                 </p>
               </div>
             </div>
@@ -343,20 +290,20 @@ export function Docs() {
                   <div className="font-mono text-[10px] uppercase tracking-widest text-white/45">
                     Chain
                   </div>
-                  <div className="mt-1 font-mono text-white">Base Sepolia</div>
+                  <div className="mt-1 font-mono text-white">Base</div>
                 </div>
                 <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
                   <div className="font-mono text-[10px] uppercase tracking-widest text-white/45">
-                    Chain ID
+                    Token
                   </div>
-                  <div className="mt-1 font-mono text-white">84532</div>
+                  <div className="mt-1 font-mono text-white">$VT — soon</div>
                 </div>
                 <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
                   <div className="font-mono text-[10px] uppercase tracking-widest text-white/45">
-                    RPC
+                    Status
                   </div>
                   <div className="mt-1 font-mono text-white text-xs">
-                    sepolia.base.org
+                    Pre-launch
                   </div>
                 </div>
               </div>
@@ -364,121 +311,105 @@ export function Docs() {
 
             <Section id="quickstart" kicker="02" title="Quickstart">
               <p>
-                Five steps from zero to a real on-chain transaction on Base
-                Sepolia.
+                The interactive Console (claim / stake / govern) is not live
+                yet — it will open once the $VT contract is deployed and
+                verified on Base. At launch, the flow below will be live
+                end-to-end.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-                <Step n={1} icon={Wallet} title="Get testnet ETH">
-                  Visit a Base Sepolia faucet (e.g.{" "}
+                <Step n={1} icon={Wallet} title="Connect wallet on Base">
+                  At launch, the Console will prompt a wallet connect and
+                  auto-switch your chain to Base. MetaMask, Rainbow, and
+                  Coinbase Wallet will all be supported.
+                </Step>
+                <Step n={2} icon={Coins} title="Acquire $VT">
+                  Once $VT is live on Base, the contract address will be
+                  posted on this site and on @vexorterminal. You can then
+                  acquire $VT via the listed liquidity venues.
+                </Step>
+                <Step n={3} icon={Vote} title="Self-delegate for voting power">
+                  $VT will be ERC-20Votes. A one-time self-delegate tx will
+                  activate your voting power for governance proposals.
+                </Step>
+                <Step n={4} icon={Lock} title="Stake $VT, earn revenue">
+                  The RevShare pool will accept $VT deposits. Stakers will
+                  receive a pro-rata share of protocol revenue — flat
+                  staking, withdraw any time.
+                </Step>
+                <Step n={5} icon={MessageSquare} title="Talk to Vexor">
+                  The orchestrator chat is already open today. Connect a
+                  wallet on the home page and start talking — the
+                  orchestrator routes your request to the right sub-agent.
+                </Step>
+                <Step n={6} icon={Terminal} title="Watch for launch">
+                  Follow{" "}
                   <a
-                    href="https://www.alchemy.com/faucets/base-sepolia"
+                    href="https://x.com/vexorterminal"
                     target="_blank"
                     rel="noreferrer"
                     className="text-cyan-300 hover:underline"
                   >
-                    Alchemy
-                  </a>
-                  ) and claim ~0.01 ETH. You'll need it to pay gas.
-                </Step>
-                <Step n={2} icon={Terminal} title="Connect your wallet">
-                  Click <span className="text-cyan-300">Connect Wallet</span>{" "}
-                  in the nav. Pick MetaMask, Rainbow, or Coinbase Wallet. The
-                  Console auto-prompts you to switch to Base Sepolia.
-                </Step>
-                <Step n={3} icon={Coins} title="Claim $VT from the faucet">
-                  Open the <span className="text-cyan-300">Wallet</span> tab
-                  → click <span className="text-cyan-300">Claim 1,000 $VT</span>
-                  . Confirm in your wallet. (1 claim per address, ever.)
-                </Step>
-                <Step n={4} icon={Vote} title="Self-delegate for voting power">
-                  Click <span className="text-cyan-300">Self-delegate</span>{" "}
-                  in the Wallet tab. This is a one-time ERC-20Votes
-                  requirement before you can propose or vote.
-                </Step>
-                <Step n={5} icon={Lock} title="Stake, vote, repeat">
-                  Open <span className="text-cyan-300">Stake</span> → pick an
-                  amount + lock tier → approve + stake. Open{" "}
-                  <span className="text-cyan-300">Govern</span> to propose or
-                  vote. Every action is a real on-chain tx.
-                </Step>
-                <Step n={6} icon={MessageSquare} title="Talk to Vexor">
-                  Scroll back to <span className="text-cyan-300">Chat</span>{" "}
-                  on the home page. Connect wallet, then ask anything — the
-                  orchestrator routes to the right sub-agent.
+                    @vexorterminal
+                  </a>{" "}
+                  on X or the Watchtower Telegram bot for the launch
+                  announcement.
                 </Step>
               </div>
             </Section>
 
             <Section id="contracts" kicker="03" title="Smart contract addresses">
               <p>
-                $VT and the revenue-share staking pool (VexorRevShare) are both
-                live on Base mainnet. The 4-tier governance demo still runs on
-                Base Sepolia testnet so anyone can interact with the console
-                without spending real gas.
+                The $VT token and the revenue-share staking pool are not yet
+                deployed on Base. Once the contracts ship, this section will
+                list the verified mainnet addresses with direct links to
+                Basescan.
               </p>
-              <div className="mt-4">
-                <div className="font-mono text-[10px] uppercase tracking-widest text-cyan-300/80 mb-2">
-                  Base mainnet · live
-                </div>
-                <div className="flex flex-col gap-2">
-                  <CodeRow
-                    label="$VT token"
-                    href={`${BASESCAN}/${VT_ADDRESS}`}
-                  />
-                  <CodeRow
-                    label="VexorRevShare"
-                    href={`${BASESCAN}/${REVSHARE_ADDRESS}`}
-                  />
-                </div>
-              </div>
-              <div className="mt-6">
-                <div className="font-mono text-[10px] uppercase tracking-widest text-white/45 mb-2">
-                  Base sepolia · testnet demo
-                </div>
-                <div className="flex flex-col gap-2">
-                  <CodeRow
-                    label="Staking (sepolia)"
-                    href={`${BASESCAN_TESTNET}/${STAKING_ADDRESS_TESTNET}`}
-                  />
-                  <CodeRow
-                    label="Governor (sepolia)"
-                    href={`${BASESCAN_TESTNET}/${GOVERNOR_ADDRESS_TESTNET}`}
-                  />
-                </div>
-              </div>
-              <div className="mt-6 rounded-xl border border-amber-400/20 bg-amber-500/[0.04] p-4 flex gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-300 shrink-0 mt-0.5" />
+              <div className="mt-6 rounded-xl border border-cyan-400/20 bg-cyan-500/[0.04] p-4 flex gap-3">
+                <AlertTriangle className="h-5 w-5 text-cyan-300 shrink-0 mt-0.5" />
                 <div>
-                  <div className="font-mono text-xs text-amber-200 uppercase tracking-widest">
-                    Testnet disclaimer
+                  <div className="font-mono text-xs text-cyan-200 uppercase tracking-widest">
+                    Pre-launch
                   </div>
                   <p className="mt-1 text-sm text-white/70">
-                    The console (claim / stake / govern) runs against Base
-                    Sepolia testnet contracts. The testnet $VT has no monetary
-                    value and cannot be bridged to mainnet $VT.
+                    The $VT contract address has not been published. Follow{" "}
+                    <a
+                      href="https://x.com/vexorterminal"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-cyan-300 hover:underline"
+                    >
+                      @vexorterminal
+                    </a>{" "}
+                    for the launch announcement — the address will be posted
+                    there and added to this page once verified on Basescan.
                   </p>
                 </div>
               </div>
             </Section>
 
             <Section id="console" kicker="04" title="Console walkthrough">
+              <p className="text-white/65">
+                The following describes the on-chain Console flow that will
+                open at $VT launch. None of these actions are live yet — the
+                token contract has not been deployed.
+              </p>
               <div className="space-y-6">
                 <div>
                   <h3 className="font-mono text-white text-lg flex items-center gap-2">
                     <Wallet className="h-4 w-4 text-cyan-300" /> Wallet tab
                   </h3>
                   <p className="mt-2">
-                    Shows your address, current chain, $VT balance, voting
-                    power, and faucet status. Two actions:
+                    At launch, will show your address, current chain, $VT
+                    balance, and voting power. Two actions will be exposed:
                   </p>
                   <ul className="mt-2 list-disc list-inside text-sm text-white/65 space-y-1 ml-2">
                     <li>
-                      <span className="text-cyan-300">Claim 1,000 $VT</span>{" "}
-                      — pulls from the public faucet (1x per address).
+                      <span className="text-cyan-300">Connect wallet</span> —
+                      pick MetaMask, Rainbow, or Coinbase Wallet on Base.
                     </li>
                     <li>
                       <span className="text-cyan-300">Self-delegate</span> —
-                      activates voting power for ERC-20Votes (required once).
+                      one-time tx that activates voting power for ERC-20Votes.
                     </li>
                   </ul>
                 </div>
@@ -488,9 +419,10 @@ export function Docs() {
                     <Lock className="h-4 w-4 text-cyan-300" /> Stake tab
                   </h3>
                   <p className="mt-2">
-                    Stake $VT under one of four lock tiers. Longer lock =
-                    higher reward weight. Your share of the 30-day reward
-                    stream = your weighted stake ÷ total weighted stake.
+                    Will let you stake $VT under one of four lock tiers.
+                    Longer lock = higher reward weight. Your share of the
+                    reward stream will equal your weighted stake ÷ total
+                    weighted stake.
                   </p>
                   <div className="mt-3 overflow-x-auto">
                     <table className="w-full text-sm">
@@ -518,9 +450,9 @@ export function Docs() {
                     </table>
                   </div>
                   <p className="mt-3 text-sm text-white/65">
-                    Pending rewards stream in real time and can be claimed any
-                    time. Principal unlocks at the timestamp shown on each
-                    position.
+                    Pending rewards will stream in real time and can be
+                    claimed any time. Principal will unlock at the timestamp
+                    shown on each position.
                   </p>
                 </div>
 
@@ -529,8 +461,8 @@ export function Docs() {
                     <Vote className="h-4 w-4 text-cyan-300" /> Govern tab
                   </h3>
                   <p className="mt-2">
-                    OpenZeppelin Governor v5. Submit proposals with ≥100
-                    $VT voting power. Vote with{" "}
+                    Will use OpenZeppelin Governor v5. Proposals will require
+                    ≥100 $VT voting power. Each voter will choose{" "}
                     <span className="text-cyan-300">For</span> /{" "}
                     <span className="text-cyan-300">Against</span> /{" "}
                     <span className="text-cyan-300">Abstain</span>.
@@ -548,8 +480,8 @@ export function Docs() {
                     <Sparkles className="h-4 w-4 text-cyan-300" /> Tier tab
                   </h3>
                   <p className="mt-2">
-                    Shows your current tier and progress to the next based on
-                    $VT balance. See the full table below.
+                    Will show your current tier and progress to the next
+                    based on $VT balance. See the full table below.
                   </p>
                 </div>
               </div>
@@ -564,16 +496,16 @@ export function Docs() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
                 <Stat label="Standard" value="ERC-20Votes" />
                 <Stat label="Permit" value="EIP-2612" />
-                <Stat label="Testnet supply" value="10,000,000" />
+                <Stat label="Total supply" value="100,000,000,000" />
                 <Stat label="Decimals" value="18" />
               </div>
               <p className="mt-2">
-                Utility on the protocol:
+                Utility on the protocol (at launch):
               </p>
               <ul className="list-disc list-inside text-sm text-white/70 space-y-1 ml-2">
                 <li>
                   <span className="text-white">Pay for Runtime</span> — burn
-                  $VT per chat / task. Premium dispatch costs more.
+                  $VT per chat / task. Premium dispatch will cost more.
                 </li>
                 <li>
                   <span className="text-white">Stake to Earn</span> — receive
@@ -586,16 +518,16 @@ export function Docs() {
                 </li>
                 <li>
                   <span className="text-white">Token-Gated Tiers</span> —
-                  Bronze / Silver / Gold / Black unlocks elevated experience.
+                  Bronze / Silver / Gold / Black will unlock an elevated
+                  experience.
                 </li>
               </ul>
               <p className="mt-2 text-sm text-white/55">
-                Mainnet $VT is deployed as a verified ERC-20 on Base with
-                100B total supply at 18 decimals — see the Contracts
-                section for the Basescan link. Distribution and launch
-                venue will be announced before any liquidity is seeded.
-                Testnet console supply is provisional and exists solely
-                for protocol testing.
+                $VT will be deployed on Base with 100B total supply at 18
+                decimals. The token has not launched yet — the verified
+                contract address will be linked in the Contracts section
+                once it ships. Distribution and launch venue will be
+                announced before any liquidity is seeded.
               </p>
             </Section>
 
@@ -659,7 +591,8 @@ export function Docs() {
             <Section id="architecture" kicker="08" title="Architecture">
               <p>
                 Vexor Terminal is a static frontend + a thin LLM proxy +
-                3 contracts. No indexer required for testnet.
+                a Solidity protocol layer that will deploy alongside the
+                $VT launch on Base.
               </p>
               <div className="mt-2 rounded-xl border border-white/10 bg-white/[0.02] p-5 font-mono text-xs text-white/70 leading-relaxed overflow-x-auto">
                 <pre className="whitespace-pre">{`┌──────────────────────────────────────────────┐
@@ -683,9 +616,9 @@ export function Docs() {
   └─────────────────────────────────┘`}</pre>
               </div>
               <p className="mt-2 text-sm text-white/65">
-                Live RPC reads happen through public Base endpoints. The chat
-                backend is rate-limited and stateless. The protocol layer is
-                ~600 lines of audited-pattern Solidity.
+                The frontend and chat backend are live today. The protocol
+                layer (~600 lines of audited-pattern Solidity) will deploy
+                to Base alongside the $VT launch.
               </p>
             </Section>
 
@@ -718,18 +651,20 @@ export function Docs() {
                   Ready?
                 </div>
                 <div className="mt-2 font-mono text-2xl text-white">
-                  Open the Console.
+                  Watch for the launch.
                 </div>
                 <div className="mt-1 text-sm text-white/65">
-                  Real on-chain transactions on Base Sepolia. Free testnet
-                  ETH required.
+                  The Console will open with the $VT launch on Base. Until
+                  then, follow @vexorterminal for the announcement.
                 </div>
               </div>
               <a
-                href="/#console"
+                href="https://x.com/vexorterminal"
+                target="_blank"
+                rel="noreferrer"
                 className="inline-flex items-center gap-2 rounded-full bg-cyan-300 text-black px-5 py-2.5 font-mono text-sm hover:bg-cyan-200 transition-colors whitespace-nowrap"
               >
-                Launch Console <ArrowRight className="h-4 w-4" />
+                Follow on X <ArrowRight className="h-4 w-4" />
               </a>
             </div>
           </div>

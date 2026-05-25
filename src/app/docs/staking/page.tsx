@@ -1,17 +1,44 @@
 import type { Metadata } from "next";
-import fs from "node:fs";
-import path from "node:path";
-import { StakingDocs } from "./StakingDocs";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Staking Guide — Vexor Terminal",
   description:
-    "Complete guide to $VT RevShare staking on Base mainnet: how it works, math, worked examples, contract addresses, risks, and FAQ.",
+    "The $VT RevShare staking guide will be published with the $VT token launch.",
 };
 
 export default function StakingDocsPage() {
-  const root = process.cwd();
-  const en = fs.readFileSync(path.join(root, "src/content/staking-en.md"), "utf-8");
-  const id = fs.readFileSync(path.join(root, "src/content/staking-id.md"), "utf-8");
-  return <StakingDocs en={en} id={id} />;
+  return (
+    <main className="min-h-screen bg-background text-white flex items-center justify-center px-4 py-24">
+      <div className="max-w-xl w-full text-center">
+        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300">
+          Pending token launch
+        </div>
+        <h1 className="mt-4 font-mono text-3xl sm:text-4xl text-white">
+          Staking guide — coming soon.
+        </h1>
+        <p className="mt-4 text-sm sm:text-[15px] text-white/65 leading-relaxed">
+          The full $VT RevShare staking guide — how it works, the math,
+          worked examples, contract addresses, and risks — will be published
+          alongside the $VT token launch on Base.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+          <Link
+            href="/docs.html"
+            className="inline-flex items-center gap-2 rounded-full bg-white text-black px-5 py-2.5 font-mono text-sm hover:bg-cyan-300 transition-colors"
+          >
+            ← Back to docs
+          </Link>
+          <a
+            href="https://x.com/vexorterminal"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/[0.06] px-5 py-2.5 font-mono text-sm text-cyan-200 hover:text-white hover:border-cyan-300/50 transition-colors"
+          >
+            Follow on X →
+          </a>
+        </div>
+      </div>
+    </main>
+  );
 }
