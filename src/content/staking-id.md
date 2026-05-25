@@ -28,8 +28,8 @@
 | | |
 |---|---|
 | **Network** | Base mainnet (chainId 8453) |
-| **Token** | [`$VT`](https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3) — ERC-20, supply 100B, 18 decimals |
-| **Kontrak staking** | [`VexorRevShare`](https://basescan.org/address/0xE25f6243f848523c4577639e975B9F3E0fA57186) — verified, bukan proxy |
+| **Token** | [$VT di Basescan ↗](https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3) — verified ERC-20, supply 100B, 18 decimals |
+| **Kontrak staking** | [VexorRevShare di Basescan ↗](https://basescan.org/address/0xE25f6243f848523c4577639e975B9F3E0fA57186) — verified, bukan proxy |
 | **Lock period** | Tidak ada |
 | **Reward source** | $VT dari pendapatan protokol (bukan emisi baru) |
 | **Reward distribusi** | Pro-rata per share di pool, auto-update saat owner push |
@@ -152,19 +152,15 @@ Reward 52.4 $VT itu langsung nambah ke balance claimable lo di blok yang sama de
 
 Buat power user yang gak mau pake UI:
 
-**Step 1 — Approve di $VT token contract**
-
-URL: https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3#writeContract
+**Step 1 — Approve di $VT token contract** ([buka di Basescan ↗](https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3#writeContract))
 
 | Field | Value |
 |---|---|
 | Function | `approve(spender, amount)` |
-| `spender` | `0xE25f6243f848523c4577639e975B9F3E0fA57186` |
+| `spender` | Kontrak RevShare — copy dari [Basescan ↗](https://basescan.org/address/0xE25f6243f848523c4577639e975B9F3E0fA57186) |
 | `amount` | Jumlah dalam wei (1 $VT = `1000000000000000000`) |
 
-**Step 2 — Stake di RevShare contract**
-
-URL: https://basescan.org/address/0xE25f6243f848523c4577639e975B9F3E0fA57186#writeContract
+**Step 2 — Stake di RevShare contract** ([buka di Basescan ↗](https://basescan.org/address/0xE25f6243f848523c4577639e975B9F3E0fA57186#writeContract))
 
 | Field | Value |
 |---|---|
@@ -177,8 +173,10 @@ URL: https://basescan.org/address/0xE25f6243f848523c4577639e975B9F3E0fA57186#wri
 import { writeContract } from 'wagmi/actions';
 import { parseEther } from 'viem';
 
-const REVSHARE = '0xE25f6243f848523c4577639e975B9F3E0fA57186';
-const VT = '0x2c684D666998436634EcEde1527EdA7975427Ba3';
+// Copy address terbaru dari Basescan link di "Kontrak & verification" bawah,
+// atau ambil otomatis via https://vexorterminal.com/api/pool (return JSON).
+const REVSHARE = '<address VexorRevShare>';
+const VT = '<address token $VT>';
 const amount = parseEther('1000'); // 1000 $VT
 
 // Step 1: approve
@@ -206,10 +204,10 @@ ABI tersedia di [github.com/Vexorterminal0111/vexor-terminal](https://github.com
 
 ### Addresses
 
-| Contract | Address | Status |
+| Contract | Basescan | Status |
 |---|---|---|
-| `$VT` (ERC-20) | [`0x2c684D666998436634EcEde1527EdA7975427Ba3`](https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3) | ✓ Verified |
-| `VexorRevShare` | [`0xE25f6243f848523c4577639e975B9F3E0fA57186`](https://basescan.org/address/0xE25f6243f848523c4577639e975B9F3E0fA57186) | ✓ Verified |
+| `$VT` (ERC-20) | [View on Basescan ↗](https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3) | ✓ Verified |
+| `VexorRevShare` | [View on Basescan ↗](https://basescan.org/address/0xE25f6243f848523c4577639e975B9F3E0fA57186) | ✓ Verified |
 
 Compiled dengan Solidity 0.8.26. **Bukan proxy**, tidak ada upgradeability. Open source di [GitHub](https://github.com/Vexorterminal0111/vexor-terminal).
 
@@ -356,9 +354,9 @@ A: Tidak. Variable itu cuma di-update di `stake()`, `withdraw()`, dan `pushRewar
 | App | https://vexorterminal.com |
 | RevShare Console | https://vexorterminal.com/#revshare |
 | Docs | https://vexorterminal.com/docs |
-| $VT Basescan | https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3 |
-| RevShare Basescan | https://basescan.org/address/0xE25f6243f848523c4577639e975B9F3E0fA57186 |
-| $VT chart | https://dexscreener.com/base/0x2c684D666998436634EcEde1527EdA7975427Ba3 |
+| $VT Basescan | [View ↗](https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3) |
+| RevShare Basescan | [View ↗](https://basescan.org/address/0xE25f6243f848523c4577639e975B9F3E0fA57186) |
+| $VT chart | [DexScreener ↗](https://dexscreener.com/base/0x2c684D666998436634EcEde1527EdA7975427Ba3) |
 | GitHub | https://github.com/Vexorterminal0111/vexor-terminal |
 | Twitter | https://x.com/vexorterminal |
 

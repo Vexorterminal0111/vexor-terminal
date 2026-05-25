@@ -795,9 +795,8 @@ function ContractLink({ label, addr }: { label: string; addr: Address }) {
       <span className="font-mono text-[10px] uppercase tracking-widest text-white/45">
         {label}
       </span>
-      <span className="font-mono text-xs text-white/70 group-hover:text-cyan-300">
-        {addr.slice(0, 6)}…{addr.slice(-4)}{" "}
-        <ExternalLink className="inline h-3 w-3" />
+      <span className="font-mono text-[10px] uppercase tracking-widest text-white/70 group-hover:text-cyan-300">
+        Basescan <ExternalLink className="inline h-3 w-3" />
       </span>
     </a>
   );

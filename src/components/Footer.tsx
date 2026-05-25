@@ -24,10 +24,10 @@ export function Footer() {
               href="https://basescan.org/address/0x2c684D666998436634EcEde1527EdA7975427Ba3"
               target="_blank"
               rel="noreferrer"
-              className="mt-5 inline-flex max-w-md flex-wrap items-center gap-2 rounded-md border border-cyan-400/30 bg-cyan-500/[0.06] px-3 py-2 font-mono text-[10px] sm:text-[11px] text-cyan-200 hover:text-white hover:border-cyan-400/60 transition-colors"
+              className="mt-5 inline-flex items-center gap-2 rounded-md border border-cyan-400/30 bg-cyan-500/[0.06] px-3 py-2 font-mono text-[10px] sm:text-[11px] uppercase tracking-widest text-cyan-200 hover:text-white hover:border-cyan-400/60 transition-colors"
             >
-              <span className="uppercase tracking-widest text-cyan-300">$VT CA</span>
-              <span className="break-all text-white">0x2c684D666998436634EcEde1527EdA7975427Ba3</span>
+              <span className="text-cyan-300">$VT</span>
+              <span className="text-white">Verified on Basescan ↗</span>
             </a>
             <div className="mt-6 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-white/45 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.02]">
               <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />
