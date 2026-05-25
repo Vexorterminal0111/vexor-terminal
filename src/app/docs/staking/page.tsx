@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Staking Guide — Vexor Terminal",
   description:
-    "The $VT RevShare staking guide will be published with the $VT token launch.",
+    "The $VEXOR RevShare staking guide will be published with the $VEXOR token launch.",
 };
 
 export default function StakingDocsPage() {
@@ -18,9 +18,9 @@ export default function StakingDocsPage() {
           Staking guide — coming soon.
         </h1>
         <p className="mt-4 text-sm sm:text-[15px] text-white/65 leading-relaxed">
-          The full $VT RevShare staking guide — how it works, the math,
+          The full $VEXOR RevShare staking guide — how it works, the math,
           worked examples, contract addresses, and risks — will be published
-          alongside the $VT token launch on Base.
+          alongside the $VEXOR token launch on Base.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
           <Link

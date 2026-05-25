@@ -19,7 +19,7 @@ export default function AgentsIndexPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
             <div className="mb-8">
               <Link
-                href="/#team"
+                href="/"
                 className="font-mono text-xs text-white/55 hover:text-white transition-colors"
               >
                 ← Back to landing

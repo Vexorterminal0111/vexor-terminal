@@ -1,4 +1,4 @@
-// Shared on-chain data helpers for the $VT RevShare pool on Base mainnet.
+// Shared on-chain data helpers for the $VEXOR RevShare pool on Base mainnet.
 // Used by the landing Hero APR widget and the /widget/stats embed page.
 
 export const RPC_URL = "https://mainnet.base.org";
@@ -118,7 +118,7 @@ export async function fetchPoolSummary(): Promise<PoolSummary> {
       // Using the current head instead of the newest log timestamp keeps the
       // window meaningful when only one log exists or when several logs land
       // in the same block — otherwise newestTs − oldestTs collapses to 0 and
-      // the annualization explodes (e.g. a single 1k VT push → ~1.6M% APR).
+      // the annualization explodes (e.g. a single 1k VEXOR push → ~1.6M% APR).
       const oldest = logs.reduce<RawLog>(
         (acc, l) => (Number(BigInt(l.blockNumber)) < Number(BigInt(acc.blockNumber)) ? l : acc),
         logs[0]

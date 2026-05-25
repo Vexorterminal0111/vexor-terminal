@@ -303,7 +303,7 @@ export const LOCK_TIERS = [
   { value: 3, label: "365 days", multiplier: "3.0x", days: 365 },
 ] as const;
 
-// VexorRevShare — flat $VT mainnet staking pool with manual pro-rata reward push.
+// VexorRevShare — flat $VEXOR mainnet staking pool with manual pro-rata reward push.
 // See contracts/src/VexorRevShare.sol.
 export const VEXOR_REV_SHARE_ABI = [
   { type: "function", name: "stakingToken", stateMutability: "view", inputs: [], outputs: [{ type: "address" }] },

@@ -20,7 +20,7 @@
 export interface IntelTokenMeta {
   /** Lowercase URL slug. Never rename after launch. */
   slug: string;
-  /** Display ticker, e.g. "VT", "AERO". */
+  /** Display ticker, e.g. "VEXOR", "AERO". */
   symbol: string;
   /** Full token name, e.g. "Vexor Terminal". */
   name: string;
@@ -36,8 +36,12 @@ export interface IntelTokenMeta {
 
 export const INTEL_TOKENS: ReadonlyArray<IntelTokenMeta> = [
   {
+    // Slug stays `vt` because the vexor-aeon `data` branch keys all
+    // CDN snapshots / sentiment JSONs by `vt` (`ds-vt.json`,
+    // `sentiments/vt.json`, etc.). Only the display `symbol` was
+    // renamed VT → VEXOR — slug is an internal/URL key.
     slug: "vt",
-    symbol: "VT",
+    symbol: "VEXOR",
     name: "Vexor Terminal",
     ca: "0x2c684D666998436634EcEde1527EdA7975427Ba3",
     network: "base",

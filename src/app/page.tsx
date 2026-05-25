@@ -2,7 +2,6 @@ import { Nav } from "@/components/Nav";
 import { Hero } from "@/components/Hero";
 import { Marquee } from "@/components/Marquee";
 import { About } from "@/components/About";
-import { Team } from "@/components/Team";
 import { UseCases } from "@/components/UseCases";
 import { Token } from "@/components/Token";
 import { Console } from "@/components/Console";
@@ -19,7 +18,6 @@ export default function Home() {
         <Hero />
         <Marquee />
         <About />
-        <Team />
         <UseCases />
         <Token />
         <Console />

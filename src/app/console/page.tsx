@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "RevShare Console — Vexor Terminal",
   description:
-    "The $VT RevShare staking console will open with the $VT token launch.",
+    "The $VEXOR RevShare staking console will open with the $VEXOR token launch.",
 };
 
 export default function ConsolePage() {
@@ -18,7 +18,7 @@ export default function ConsolePage() {
           RevShare Console — coming soon.
         </h1>
         <p className="mt-4 text-sm sm:text-[15px] text-white/65 leading-relaxed">
-          The on-chain $VT staking console will open alongside the $VT token
+          The on-chain $VEXOR staking console will open alongside the $VEXOR token
           launch on Base. Until then, the contract has not been deployed and
           there is no pool to interact with.
         </p>

@@ -93,7 +93,7 @@ interface ChatRecord {
   whale_thresholds?: Record<string, number>;
   /**
    * Group-mode opt-in for passive cashtag detection. When true the bot
-   * scans every group message for `$VT` / `$AERO` / etc. and replies
+   * scans every group message for `$VEXOR` / `$AERO` / etc. and replies
    * with the matching chart card (deduplicated per slug, 10 min TTL).
    * Default false: groups must run `/enable_cashtags` explicitly. Always
    * false / ignored for DMs.
@@ -496,7 +496,7 @@ async function onBotJoinedGroup(
   const lines = [
     `Vexor Watchtower is live in *${escapeMarkdown(title)}*.`,
     "",
-    "This bot tracks 7 Base-mainnet tokens (VT, AERO, BRETT, DEGEN, TOSHI, AEON, BNKR) and pushes alerts on price moves, whale transfers, and volatility spikes.",
+    "This bot tracks 7 Base-mainnet tokens (VEXOR, AERO, BRETT, DEGEN, TOSHI, AEON, BNKR) and pushes alerts on price moves, whale transfers, and volatility spikes.",
     "",
     "Try:",
     "• `/chart vt` — latest snapshot + chart",
@@ -538,16 +538,16 @@ async function checkGroupRateLimit(
 // PR-2: passive cashtag listener (opt-in per group)
 // -----------------------------------------------------------------------------
 
-// Match `$AERO` / `$VT` / `$BNKR` etc. — uppercase ticker after a `$`,
+// Match `$AERO` / `$VEXOR` / `$BNKR` etc. — uppercase ticker after a `$`,
 // 2-10 chars. We require a non-word boundary before the `$` so cashtags
-// embedded mid-word (e.g. `prefix$VT`) don't match — Telegram convention
+// embedded mid-word (e.g. `prefix$VEXOR`) don't match — Telegram convention
 // is whitespace/start-of-message before the dollar sign. The cross-ref
 // against INTEL_TOKENS happens after the regex pass so a `$DOGE` in a
 // group does not trigger the bot.
 const CASHTAG_REGEX = /(?:^|[^A-Za-z0-9_])\$([A-Z]{2,10})\b/g;
 
 // Per-(group, slug) dedupe TTL. Picks the 10-minute wall-clock bucket so
-// the same cashtag mention bursts (e.g. 5 people typing `$VT` in a row)
+// the same cashtag mention bursts (e.g. 5 people typing `$VEXOR` in a row)
 // only produce one reply per 10 min.
 const CASHTAG_DEDUPE_WINDOW_SEC = 600;
 
@@ -658,7 +658,7 @@ async function maybeHandleCashtag(
   // Apply the same rate-limit budget here so a single spammy message
   // mentioning many cashtags can't burn through Telegram's quota.
   // The dedupe check comes BEFORE the rate-limit decrement so a busy
-  // group where everyone keeps typing `$VT` (the exact target use case)
+  // group where everyone keeps typing `$VEXOR` (the exact target use case)
   // doesn't burn the 30/min slot on a no-op while real commands like
   // `/watch` get silently dropped for the rest of the minute.
   for (const slug of matches) {
@@ -958,7 +958,7 @@ async function cmdStart(env: Env, msg: TelegramMessage): Promise<void> {
     "/tokens \u2014 list every supported slug",
     `/research <slug|CA> \u2014 on-demand AI deep dive (${RESEARCH_DAILY_LIMIT}/day)`,
     "/chart <slug> \u2014 latest Pulse Premium snapshot (price, vol, liq)",
-    "/staking \u2014 live $VT RevShare pool stats (TVL, APR, distributed)",
+    "/staking \u2014 live $VEXOR RevShare pool stats (TVL, APR, distributed)",
     "/compare <slug> <slug> \u2014 side-by-side stats for two tokens",
     `/explain <slug> \u2014 AI commentary (${EXPLAIN_DAILY_LIMIT}/day)`,
     "/leaderboard \u2014 top 24h gainers/losers (auto-broadcast daily)",
@@ -992,12 +992,12 @@ async function cmdHelp(env: Env, chatId: number): Promise<void> {
     "/research <slug|CA> \u2014 on-demand AI deep dive",
     "/chart <slug> \u2014 latest snapshot (price, vol, liq, FDV)",
     "/portfolio <0xWallet> \u2014 track your holdings + RevShare position",
-    "/staking \u2014 live $VT RevShare pool stats (TVL, APR, distributed)",
+    "/staking \u2014 live $VEXOR RevShare pool stats (TVL, APR, distributed)",
     "/compare <slug> <slug> \u2014 side-by-side stats for two tokens",
     "/explain <slug> \u2014 AI commentary on recent price + on-chain context",
     "/leaderboard \u2014 top 24h gainers + losers across the roster (also auto-broadcast daily at 12 UTC)",
     "/trending \u2014 hottest tokens by vol/liq activity score + AI sentiment",
-    "/enable_cashtags \u2014 (groups, admin) auto-reply on `$VT`/`$AERO`/\u2026 mentions",
+    "/enable_cashtags \u2014 (groups, admin) auto-reply on `$VEXOR`/`$AERO`/\u2026 mentions",
     "/disable_cashtags \u2014 (groups, admin) turn cashtag auto-reply off",
     "/stop \u2014 unsubscribe everything",
     "",
@@ -1309,7 +1309,7 @@ function parsePctArg(raw: string): number | null {
 
 // Normalize a user-typed slug arg: strip an optional `$` cashtag prefix,
 // trim whitespace, and lowercase. Crypto-Telegram users naturally type
-// `$VT` from cashtag convention, so every command that takes a slug
+// `$VEXOR` from cashtag convention, so every command that takes a slug
 // arg accepts both `vt` and `$VT`. Mirrors the inline parsing in
 // cmdChart / cmdCompare / cmdExplain so all 14 slug-taking commands
 // behave identically.
@@ -1583,7 +1583,7 @@ async function cmdChart(env: Env, chatId: number, args: string[]): Promise<void>
 // Bot trio v2: /staking, /compare, /explain
 // -----------------------------------------------------------------------------
 
-// `/staking` — live $VT RevShare pool stats. We hit the worker's own
+// `/staking` — live $VEXOR RevShare pool stats. We hit the worker's own
 // public `/api/pool` endpoint (edge-cached 60s) so we get a single
 // normalized JSON payload covering on-chain + market data, and don't
 // duplicate the multi-RPC + log-window aggregation logic here.
@@ -1667,14 +1667,14 @@ async function cmdStaking(env: Env, chatId: number): Promise<void> {
   const body = [
     "*VexorRevShare pool* \u2014 Base mainnet",
     "",
-    `TVL: ${fmtUsdMaybe(tvlUsd)}  (${totalStakedVt.toFixed(2)} VT staked)`,
+    `TVL: ${fmtUsdMaybe(tvlUsd)}  (${totalStakedVt.toFixed(2)} VEXOR staked)`,
     `Estimated APR: *${aprStr}*  \u00B7  ${intervalStr}`,
-    `Pool balance: ${poolBalanceVt.toFixed(2)} VT pending push`,
-    `Lifetime distributed: ${distributed.toFixed(2)} VT`,
+    `Pool balance: ${poolBalanceVt.toFixed(2)} VEXOR pending push`,
+    `Lifetime distributed: ${distributed.toFixed(2)} VEXOR`,
     "",
-    `VT price: ${fmtPriceMaybe(vtPrice)}  \u00B7  FDV: ${fmtUsdMaybe(fdv)}`,
+    `VEXOR price: ${fmtPriceMaybe(vtPrice)}  \u00B7  FDV: ${fmtUsdMaybe(fdv)}`,
     "",
-    `Stake $VT \u2192 https://vexorterminal.com/console`,
+    `Stake $VEXOR \u2192 https://vexorterminal.com/console`,
     `Docs \u2192 https://vexorterminal.com/docs/staking`,
   ].join("\n");
   await sendMessage(env, chatId, body, "Markdown", true);
@@ -2234,7 +2234,7 @@ async function cmdTrending(env: Env, chatId: number): Promise<void> {
 }
 
 // `/portfolio` — read on-chain ERC-20 balances for the roster tokens
-// plus the user's $VT stake / pending rewards in VexorRevShare, multiply
+// plus the user's $VEXOR stake / pending rewards in VexorRevShare, multiply
 // by the latest Pulse Premium price, reply with a sorted USD breakdown.
 //
 // Sub-commands:
@@ -2296,7 +2296,7 @@ async function cmdPortfolio(
         [
           "Usage: `/portfolio 0xYourWalletAddress`",
           "",
-          "I will track your holdings of every $VT-roster token + your $VT",
+          "I will track your holdings of every $VEXOR-roster token + your $VEXOR",
           "stake and pending rewards in the VexorRevShare pool. Your wallet",
           "address stays linked to this chat until you run `/portfolio unbind`.",
           "",
@@ -2383,13 +2383,13 @@ async function cmdPortfolio(
     const pendingUsd = vtPrice != null ? pendingNum * vtPrice : null;
 
     lines.push("");
-    lines.push("*RevShare ($VT pool)*");
+    lines.push("*RevShare ($VEXOR pool)*");
     lines.push(
-      `Staked: ${formatTokenAmount(staked, 18)} VT` +
+      `Staked: ${formatTokenAmount(staked, 18)} VEXOR` +
         (stakedUsd != null ? `  \u00B7  $${fmtUsd(stakedUsd)}` : ""),
     );
     lines.push(
-      `Pending rewards: ${formatTokenAmount(pendingReward, 18)} VT` +
+      `Pending rewards: ${formatTokenAmount(pendingReward, 18)} VEXOR` +
         (pendingUsd != null ? `  \u00B7  $${fmtUsd(pendingUsd)}` : ""),
     );
     if (stakedUsd != null) totalUsd += stakedUsd;

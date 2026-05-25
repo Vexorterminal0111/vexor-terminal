@@ -17,7 +17,7 @@ const CHAT_API_BASIC_AUTH = process.env.NEXT_PUBLIC_CHAT_API_BASIC_AUTH || "";
 const SAMPLE_PROMPTS = [
   "Audit a Solidity ERC-20 for me",
   "Summarize Base mainnet stats today",
-  "Draft a launch tweet for $VT",
+  "Draft a launch tweet for $VEXOR",
   "Generate a memory recall query",
 ];
 
@@ -228,8 +228,8 @@ export function Chat() {
               <div className="hidden sm:flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-white/45">
                 <Coins className="h-3 w-3 text-cyan-300" />
                 {msgCount > 0
-                  ? `${(msgCount * 0.1).toFixed(1)} $VT used`
-                  : "0.1 $VT per msg"}
+                  ? `${(msgCount * 0.1).toFixed(1)} $VEXOR used`
+                  : "0.1 $VEXOR per msg"}
               </div>
               <span className="relative inline-flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 pulse-dot" />

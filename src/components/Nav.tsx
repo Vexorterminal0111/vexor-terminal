@@ -9,8 +9,7 @@ import { VexorMark } from "./Logo";
 
 const links = [
   { href: "/#about", label: "About" },
-  { href: "/#team", label: "Team" },
-  { href: "/#token", label: "$VT" },
+  { href: "/#token", label: "$VEXOR" },
   { href: "/#console", label: "Console" },
   { href: "/agents", label: "Agents" },
   { href: "/intel", label: "Intel" },

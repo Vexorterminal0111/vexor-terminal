@@ -2,7 +2,6 @@
  * Sub-agent registry — single source of truth for the 9 specialized agents.
  *
  * Used by:
- * - src/components/Team.tsx (cards on landing)
  * - src/app/agents/* (per-agent chat pages)
  * - worker/chat.ts (system prompt override when ?agent=slug is supplied)
  *
@@ -103,7 +102,7 @@ export const AGENTS: readonly AgentPersona[] = [
     bio:
       "Quill writes — docs, blog posts, X threads, README content, launch announcements. Adjusts tone to the platform (long-form vs threads vs marketing). Always offers an alternate version on request.",
     samples: [
-      "Draft a launch tweet thread for $VT RevShare",
+      "Draft a launch tweet thread for $VEXOR RevShare",
       "Write a 600-word blog post: \"Why we built Vexor on Base\"",
       "Tighten this paragraph — make it 50% shorter",
       "Give me 3 variants of this CTA",
@@ -203,7 +202,7 @@ export const AGENTS: readonly AgentPersona[] = [
     bio:
       "Prism handles data — SQL, on-chain analytics (Dune/Flipside style), growth experiments, funnel analysis. Always starts with the hypothesis and the metric, then proposes the query.",
     samples: [
-      "Write a Dune query for $VT daily volume on Base",
+      "Write a Dune query for $VEXOR daily volume on Base",
       "What metrics matter for a staking dashboard?",
       "Set up a funnel for /console wallet connects → stakes",
       "Compare my pool's APR to similar protocols",

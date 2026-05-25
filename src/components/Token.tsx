@@ -8,17 +8,17 @@ const utility = [
   {
     icon: Coins,
     title: "Pay for Runtime",
-    body: "Every Vexor task will burn $VT. Premium chat, priority dispatch, and dedicated sub-agent slots will all be priced in $VT.",
+    body: "Every Vexor task will burn $VEXOR. Premium chat, priority dispatch, and dedicated sub-agent slots will all be priced in $VEXOR.",
   },
   {
     icon: Lock,
     title: "Stake to Earn",
-    body: "Lock $VT to receive a pro-rata share of all task revenue. Longer locks will earn higher multipliers.",
+    body: "Lock $VEXOR to receive a pro-rata share of all task revenue. Longer locks will earn higher multipliers.",
   },
   {
     icon: Vote,
     title: "Governance",
-    body: "$VT holders will vote on new sub-agents, model whitelisting, treasury spend, and protocol upgrades.",
+    body: "$VEXOR holders will vote on new sub-agents, model whitelisting, treasury spend, and protocol upgrades.",
   },
   {
     icon: Sparkles,
@@ -28,7 +28,7 @@ const utility = [
 ];
 
 const stats = [
-  { label: "Token", value: "$VT" },
+  { label: "Token", value: "$VEXOR" },
   { label: "Standard", value: "ERC-20" },
   { label: "Network", value: "Base" },
   { label: "Supply", value: "100B" },
@@ -40,8 +40,8 @@ export function Token() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <SectionHeader
           kicker="Tokenomics"
-          title="$VT — the economy that will run the orchestrator."
-          description="The Vexor Terminal economy will be governed entirely by $VT. Holders will pay for runtime, earn from revenue, and steer protocol direction."
+          title="$VEXOR — the economy that will run the orchestrator."
+          description="The Vexor Terminal economy will be governed entirely by $VEXOR. Holders will pay for runtime, earn from revenue, and steer protocol direction."
         />
 
         <motion.div
@@ -62,13 +62,13 @@ export function Token() {
                 Coming soon · Base
               </div>
               <div className="mt-4 sm:mt-5 font-mono text-4xl sm:text-5xl md:text-6xl text-white leading-none">
-                $VT
+                $VEXOR
               </div>
               <p className="mt-4 max-w-xl text-sm sm:text-[15px] text-white/65 leading-relaxed">
                 The native ERC-20 utility token planned for the Vexor
-                Terminal protocol on Base. $VT will be the unit of account
-                for runtime, staking, and governance — 100B planned supply,
-                18 decimals.
+                Terminal protocol on Base. $VEXOR will be the unit of
+                account for runtime, staking, and governance — 100B
+                planned supply, 18 decimals.
               </p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:max-w-md">
@@ -90,13 +90,13 @@ export function Token() {
 
           <div className="relative mt-6 sm:mt-8 rounded-xl border border-white/10 bg-white/[0.02] p-4 sm:p-5 text-center">
             <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">
-              $VT token launch
+              $VEXOR token launch
             </div>
             <div className="mt-2 font-mono text-sm sm:text-base text-white">
               Coming soon
             </div>
             <p className="mt-2 max-w-2xl mx-auto text-xs sm:text-sm text-white/55 leading-relaxed">
-              The $VT contract has not been published yet. Follow{" "}
+              The $VEXOR contract has not been published yet. Follow{" "}
               <a
                 href="https://x.com/vexorterminal"
                 target="_blank"
@@ -149,11 +149,11 @@ export function Token() {
               Disclaimer
             </div>
             <p className="mt-2 max-w-2xl text-sm text-white/55 leading-relaxed">
-              $VT is a utility token planned for the Vexor Terminal
-              protocol. It is not a security, an investment, or a promise of
-              return. The token, staking, and on-chain governance are not
-              yet live — this page describes the design that will ship at
-              launch.
+              $VEXOR is a utility token planned for the Vexor Terminal
+              protocol. It is not a security, an investment, or a promise
+              of return. The token, staking, and on-chain governance are
+              not yet live — this page describes the design that will
+              ship at launch.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">

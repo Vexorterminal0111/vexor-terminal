@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "$VT Stats — Vexor Terminal",
+  title: "$VEXOR Stats — Vexor Terminal",
   description:
-    "The $VT stats widget will be enabled with the $VT token launch.",
+    "The $VEXOR stats widget will be enabled with the $VEXOR token launch.",
   robots: { index: false, follow: false },
 };
 
@@ -44,7 +44,7 @@ export default function StatsWidgetPage() {
           Pending token launch
         </div>
         <div style={{ marginTop: 12, fontSize: 22, color: "#ffffff" }}>
-          $VT stats widget — coming soon.
+          $VEXOR stats widget — coming soon.
         </div>
         <div
           style={{
@@ -54,8 +54,8 @@ export default function StatsWidgetPage() {
             lineHeight: 1.6,
           }}
         >
-          This embed will display live RevShare APR, pool TVL, $VT price, and
-          market cap once $VT launches on Base.
+          This embed will display live RevShare APR, pool TVL, $VEXOR price, and
+          market cap once $VEXOR launches on Base.
         </div>
       </div>
     </main>

@@ -1,12 +1,12 @@
 /**
  * Vexor Pool API — GET /api/pool
  *
- * Pre-launch stub. The $VT token and RevShare pool are not yet deployed on
+ * Pre-launch stub. The $VEXOR token and RevShare pool are not yet deployed on
  * Base, so this endpoint returns a 503 with a `pending-launch` payload.
  * External consumers can poll this endpoint and switch on `status` to know
  * when the live pool data goes online.
  *
- * Once $VT is live, this stub will be replaced with the live RPC-aggregated
+ * Once $VEXOR is live, this stub will be replaced with the live RPC-aggregated
  * pool snapshot (APR, TVL, price, recent rewards pushes).
  */
 
@@ -21,7 +21,7 @@ interface PoolPendingResponse {
 
 const SCHEMA_VERSION = "1";
 const PENDING_MESSAGE =
-  "The $VT token has not launched yet — the RevShare pool will be enabled on Base alongside the $VT token launch.";
+  "The $VEXOR token has not launched yet — the RevShare pool will be enabled on Base alongside the $VEXOR token launch.";
 
 export async function handlePool(
   request: Request,

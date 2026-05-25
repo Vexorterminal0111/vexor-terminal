@@ -43,7 +43,7 @@ export interface ResearchInput {
   slug?: string;
   /** Always set — for slug inputs, the slug's CA. */
   ca: string;
-  /** Human-readable label for the brief header (e.g. `$VT` or `0x22aF…6F3b`). */
+  /** Human-readable label for the brief header (e.g. `$VEXOR` or `0x22aF…6F3b`). */
   label: string;
 }
 
@@ -57,7 +57,7 @@ export function parseResearchInput(raw: string): ResearchInput | null {
   }
   // Strip an optional `$` cashtag prefix so `/research $vt` works the
   // same as `/research vt`. Crypto-Telegram users naturally type
-  // `$VT` from cashtag convention.
+  // `$VEXOR` from cashtag convention.
   const slugCandidate = s.replace(/^\$/, "").toLowerCase();
   const meta = getIntelToken(slugCandidate);
   if (meta) {

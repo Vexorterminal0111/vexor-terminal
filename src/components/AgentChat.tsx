@@ -200,8 +200,8 @@ export function AgentChat({ agent }: { agent: AgentPersona }) {
           <div className="hidden sm:flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-white/45">
             <Coins className="h-3 w-3" style={{ color: agent.accent }} />
             {msgCount > 0
-              ? `${(msgCount * 0.1).toFixed(1)} $VT used`
-              : "0.1 $VT per msg"}
+              ? `${(msgCount * 0.1).toFixed(1)} $VEXOR used`
+              : "0.1 $VEXOR per msg"}
           </div>
           <span className="relative inline-flex h-1.5 w-1.5">
             <span
