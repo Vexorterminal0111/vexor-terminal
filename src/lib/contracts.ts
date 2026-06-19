@@ -1,4 +1,6 @@
-import type { Address } from "viem";
+// Solana uses base58 public keys, not EVM hex addresses.
+// Keeping `Address` as a branded string alias for migration compatibility.
+type Address = string & { readonly __brand: "address" };
 
 export type ContractAddresses = {
   token: Address | null;
@@ -8,7 +10,7 @@ export type ContractAddresses = {
   revShare: Address | null;
 };
 
-const ZERO = "0x0000000000000000000000000000000000000000" as const;
+const ZERO = "11111111111111111111111111111111" as const; // Solana system program (placeholder)
 
 // Direct process.env access (not dynamic) so Next.js can statically inline at build time.
 function asAddr(v: string | undefined): Address | null {
@@ -18,7 +20,7 @@ function asAddr(v: string | undefined): Address | null {
 
 // Hardcoded mainnet revenue-share pool. Public, verified on Solscan.
 // Placeholder — will be replaced with Solana program address at launch.
-const VEXOR_REV_SHARE_MAINNET: Address = "0x0000000000000000000000000000000000000000";
+const VEXOR_REV_SHARE_MAINNET: Address = ZERO as Address;
 
 // Solana chain IDs are not numeric like EVM — using a placeholder key.
 // This mapping will be replaced by @solana/web3.js PublicKey lookups.

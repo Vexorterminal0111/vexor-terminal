@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useAccount } from "wagmi";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { Send, Loader2, Terminal, Coins } from "lucide-react";
 import { WalletButton } from "./WalletButton";
 import type { AgentPersona } from "@/lib/agents";
@@ -97,7 +97,9 @@ function renderContent(text: string, accent: string) {
 }
 
 export function AgentChat({ agent }: { agent: AgentPersona }) {
-  const { address, isConnected } = useAccount();
+  const { publicKey, connected } = useWallet();
+  const address = publicKey?.toBase58();
+  const isConnected = connected;
   // Stable greeting reference — captured in state on first render so it
   // keeps the same object identity across re-renders. Building the greeting
   // inline in the component body would produce a new reference per render,
