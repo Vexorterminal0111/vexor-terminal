@@ -1,0 +1,21 @@
+[package]
+name = "vexor-rev-share"
+version = "0.1.0"
+description = "VexorRevShare — flat single-sided $VEXOR staking with manual pro-rata reward push"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "vexor_rev_share"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+
+[dependencies]
+anchor-lang = { workspace = true, features = ["init-if-needed"] }
+anchor-spl = { workspace = true }

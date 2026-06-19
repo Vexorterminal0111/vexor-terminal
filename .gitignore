@@ -56,3 +56,8 @@ apps/chat-api/**/__pycache__/
 # Setuptools egg-info
 apps/chat-api/*.egg-info/
 apps/chat-api/**/*.egg-info/
+
+# Anchor / Rust build artifacts
+programs/target/
+target/
+test-ledger/
