@@ -45,10 +45,9 @@ export interface Env {
   // does not match.
   TELEGRAM_WEBHOOK_SECRET?: string;
   // Vexor Researcher (Telegram `/research` command). When set, the
-  // researcher pulls contract-verification status from Solscan via the
-  // Etherscan V2 API. Without it the brief still ships but the
-  // contract-security signal is dropped. Free key from
-  // https://etherscan.io/myapikey works.
+  // researcher pulls account info from Solscan Pro API. Without it the
+  // brief still ships but the contract-security signal is dropped.
+  // Get a key from https://pro.solscan.io/.
   ETHERSCAN_API_KEY?: string;
 }
 

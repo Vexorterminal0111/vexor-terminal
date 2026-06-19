@@ -64,23 +64,9 @@ export async function rpcCall(
 }
 
 // -----------------------------------------------------------------------------
-// ABI / hex helpers (kept for migration — will be replaced by Solana equivalents)
+// Helpers
 // -----------------------------------------------------------------------------
-
-export function padAddress(addr: string): string {
-  return "000000000000000000000000" + addr.slice(2).toLowerCase();
-}
 
 export function hexToBigInt(hex: string): bigint {
   return BigInt(hex.startsWith("0x") ? hex : "0x" + hex);
 }
-
-// SPL token / Solana program selectors placeholder.
-// These EVM selectors are kept as reference during migration.
-export const SEL = {
-  balanceOf: "0x70a08231",
-  pending: "0x5eebea20",
-  isStaker: "0x6f1e8533",
-  totalStaked: "0x817b1cd2",
-  accRewardPerToken: "0xcbce44b4",
-} as const;
