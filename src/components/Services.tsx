@@ -7,7 +7,7 @@ import { SectionHeader } from "./SectionHeader";
 const services = [
   {
     title: "Protocol Console",
-    body: "Wallet-connected dashboard for $VEXOR staking, governance, and tier status. Opens with the $VEXOR token launch on Base.",
+    body: "Wallet-connected dashboard for $VEXOR staking, governance, and tier status. Opens with the $VEXOR token launch on Solana.",
     cta: "View console",
     href: "#console",
     badge: "Coming soon",

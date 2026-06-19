@@ -19,7 +19,7 @@ export default function ConsolePage() {
         </h1>
         <p className="mt-4 text-sm sm:text-[15px] text-white/65 leading-relaxed">
           The on-chain $VEXOR staking console opens with the $VEXOR token
-          launch on Base. The contract has not been deployed; no pool is
+          launch on Solana. The program has not been deployed; no pool is
           currently available for interaction.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-2">

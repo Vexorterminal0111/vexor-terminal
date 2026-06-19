@@ -23,7 +23,7 @@ export async function generateMetadata({
   }
   return {
     title: `${agent.name} — ${agent.title}`,
-    description: `${agent.pitch} Chat directly with ${agent.name} on Vexor Terminal — wallet-gated on Base.`,
+    description: `${agent.pitch} Chat directly with ${agent.name} on Vexor Terminal — wallet-gated on Solana.`,
   };
 }
 

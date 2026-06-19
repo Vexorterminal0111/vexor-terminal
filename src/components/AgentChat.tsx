@@ -194,7 +194,7 @@ export function AgentChat({ agent }: { agent: AgentPersona }) {
       <div className="flex items-center justify-between gap-3 border-b border-white/5 bg-white/[0.02] px-4 sm:px-5 py-2.5 sm:py-3">
         <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">
           <Terminal className="h-3.5 w-3.5" style={{ color: agent.accent }} />
-          {agent.slug}@base:~$
+          {agent.slug}@solana:~$
         </div>
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-white/45">
@@ -284,7 +284,7 @@ export function AgentChat({ agent }: { agent: AgentPersona }) {
         </div>
         {!isConnected && (
           <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-400/30 bg-amber-400/[0.04] px-3 py-2 text-[12px] text-amber-200/90">
-            <span>Connect your wallet on Base to chat with {agent.name}.</span>
+            <span>Connect your wallet on Solana to chat with {agent.name}.</span>
             <WalletButton />
           </div>
         )}

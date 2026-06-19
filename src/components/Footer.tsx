@@ -16,7 +16,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-4 max-w-md text-sm text-white/55 leading-relaxed">
-              Programmable AI orchestration on Base. Nine specialized
+              Programmable AI orchestration on Solana. Nine specialized
               sub-agents, multi-model routing, and the $VEXOR token
               economy — runtime payment, staking, and governance —
               launching soon.
@@ -27,7 +27,7 @@ export function Footer() {
             </div>
             <div className="mt-6 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-white/45 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.02]">
               <span className="h-1.5 w-1.5 rounded-full bg-violet-300" />
-              Built for Base · v0.1.0
+              Built for Solana · v0.1.0
             </div>
           </div>
 
@@ -109,12 +109,12 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://docs.base.org/chain/network-information"
+                  href="https://solana.com/docs"
                   target="_blank"
                   rel="noreferrer"
                   className="text-white/70 hover:text-violet-300 transition-colors font-mono text-xs"
                 >
-                  Base network ↗
+                  Solana network ↗
                 </a>
               </li>
             </ul>
@@ -192,7 +192,7 @@ export function Footer() {
             © {new Date().getFullYear()} Vexor Terminal. All rights reserved.
           </div>
           <div className="font-mono text-[10px] sm:text-[11px] text-white/40">
-            Vexor Terminal · $VEXOR launching on Base soon.
+            Vexor Terminal · $VEXOR launching on Solana soon.
           </div>
         </div>
       </div>

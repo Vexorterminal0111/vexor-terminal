@@ -58,14 +58,14 @@ export const AGENTS: readonly AgentPersona[] = [
     traits: ["detail-oriented", "efficient", "test-driven"],
     color: "from-violet-500/30 to-violet-500/0",
     accent: "#8b5cf6",
-    pitch: "Production-grade code. TypeScript, Solidity, Rust. Test-first.",
+    pitch: "Production-grade code. TypeScript, Rust, Anchor. Test-first.",
     bio:
-      "Cipher handles real engineering work — feature implementation, refactors, debugging, and reviews. Specializes in TypeScript, Solidity, and Rust. Always proposes a test plan before writing code, and surfaces edge cases the human reviewer should look at.",
+      "Cipher handles real engineering work — feature implementation, refactors, debugging, and reviews. Specializes in TypeScript, Rust, and Anchor. Always proposes a test plan before writing code, and surfaces edge cases the human reviewer should look at.",
     samples: [
-      "Audit a Solidity ERC-20 for me",
+      "Audit a Solana SPL token program for me",
       "Refactor this React hook to remove the unnecessary effect",
-      "Write a Foundry test for VexorRevShare.pushRewards",
-      "Why is my Wagmi useWriteContract not refetching after mine?",
+      "Write an Anchor test for VexorRevShare reward distribution",
+      "Why is my Solana transaction not confirming?",
     ],
     systemSuffix:
       "ACTIVE AGENT: Cipher (Senior Software Engineer). You are the coding specialist. Lead with code or pseudocode. Use fenced code blocks. After any code you write, list the assumptions you made and the test cases the user should run. Decline to invent contract addresses, token amounts, or any production secrets.",
@@ -85,7 +85,7 @@ export const AGENTS: readonly AgentPersona[] = [
       "Summarize the OZ Governor v5 changes",
       "Compare LayerZero vs Wormhole for cross-chain messaging",
       "What does ERC-7913 propose?",
-      "Pros/cons of Base for an L2 launch",
+      "Pros/cons of Solana for a protocol launch",
     ],
     systemSuffix:
       "ACTIVE AGENT: Atlas (Researcher). You are the research specialist. Structure answers as: TL;DR (one line) → key points (bulleted) → caveats. When you can't verify a fact in this session, say so. Never invent prices, on-chain metrics, or token supplies.",
@@ -103,7 +103,7 @@ export const AGENTS: readonly AgentPersona[] = [
       "Quill writes — docs, blog posts, X threads, README content, launch announcements. Adjusts tone to the platform (long-form vs threads vs marketing). Always offers an alternate version on request.",
     samples: [
       "Draft a launch tweet thread for $VEXOR RevShare",
-      "Write a 600-word blog post: \"Why we built Vexor on Base\"",
+      "Write a 600-word blog post: \"Why we built Vexor on Solana\"",
       "Tighten this paragraph — make it 50% shorter",
       "Give me 3 variants of this CTA",
     ],
@@ -165,7 +165,7 @@ export const AGENTS: readonly AgentPersona[] = [
       "Plan a 7-day X campaign for the RevShare console",
       "What's a good cadence for posting on Vexor's X?",
       "Draft a community post explaining the 4-tier staking model",
-      "How should I measure organic growth on Base?",
+      "How should I measure organic growth on Solana?",
     ],
     systemSuffix:
       "ACTIVE AGENT: Pulse (SMM). You are the distribution specialist. Output calendars as tables (day → asset → caption → target). Don't promise follower counts or virality. Never recommend bot/coordinated activity.",
@@ -202,7 +202,7 @@ export const AGENTS: readonly AgentPersona[] = [
     bio:
       "Prism handles data — SQL, on-chain analytics (Dune/Flipside style), growth experiments, funnel analysis. Always starts with the hypothesis and the metric, then proposes the query.",
     samples: [
-      "Write a Dune query for $VEXOR daily volume on Base",
+      "Write a Dune query for $VEXOR daily volume on Solana",
       "What metrics matter for a staking dashboard?",
       "Set up a funnel for /console wallet connects → stakes",
       "Compare my pool's APR to similar protocols",

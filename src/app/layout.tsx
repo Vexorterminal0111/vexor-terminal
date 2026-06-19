@@ -16,24 +16,24 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://vexorterminal.com"),
   title: {
-    default: "Vexor Terminal — AI Orchestration Platform on Base",
+    default: "Vexor Terminal — AI Orchestration Platform on Solana",
     template: "%s · Vexor Terminal",
   },
   description:
-    "Vexor Terminal is a programmable AI orchestration platform coordinating nine specialized sub-agents on Base. The $VEXOR token governs runtime, staking, and protocol governance — launching soon.",
+    "Vexor Terminal is a programmable AI orchestration platform coordinating nine specialized sub-agents on Solana. The $VEXOR token governs runtime, staking, and protocol governance — launching soon.",
   keywords: [
     "AI agent",
     "on-chain agent",
-    "Base",
+    "Solana",
     "Vexor",
     "orchestrator",
     "multi-agent",
     "web3 AI",
   ],
   openGraph: {
-    title: "Vexor Terminal — AI Orchestration Platform on Base",
+    title: "Vexor Terminal — AI Orchestration Platform on Solana",
     description:
-      "Programmable AI orchestration on Base. Nine specialized sub-agents governed by the $VEXOR token — launching soon.",
+      "Programmable AI orchestration on Solana. Nine specialized sub-agents governed by the $VEXOR token — launching soon.",
     url: "https://vexorterminal.com",
     siteName: "Vexor Terminal",
     type: "website",
@@ -42,15 +42,15 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1280,
         height: 320,
-        alt: "Vexor Terminal — AI orchestration platform on Base",
+        alt: "Vexor Terminal — AI orchestration platform on Solana",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vexor Terminal — AI Orchestration Platform on Base",
+    title: "Vexor Terminal — AI Orchestration Platform on Solana",
     description:
-      "Programmable AI orchestration on Base. Nine sub-agents governed by the $VEXOR token — launching soon.",
+      "Programmable AI orchestration on Solana. Nine sub-agents governed by the $VEXOR token — launching soon.",
     site: "@vexorterminal",
     creator: "@vexorterminal",
     images: ["/og-image.png"],

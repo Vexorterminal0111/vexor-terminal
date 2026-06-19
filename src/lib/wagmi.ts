@@ -1,3 +1,5 @@
+// Phase 1 (copy migration): wagmi config kept functional for build.
+// Phase 2 will replace this entire file with @solana/wallet-adapter.
 import { http } from "wagmi";
 import { base, baseSepolia } from "wagmi/chains";
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";

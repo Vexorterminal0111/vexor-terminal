@@ -39,7 +39,7 @@ type TokenMetaPayload = {
   network?: string;
   host?: boolean;
   blurb?: string | null;
-  basescan_url?: string;
+  solscan_url?: string;
   dex_url?: string;
 };
 
@@ -168,7 +168,7 @@ export function TokenFeed({ token }: { token: IntelTokenMeta }) {
           <div className="mt-4 font-mono text-[11px] text-white/55 flex flex-wrap items-center gap-2">
             <span>contract:</span>
             <a
-              href={`https://basescan.org/token/${token.ca}`}
+              href={`https://solscan.io/token/${token.ca}`}
               target="_blank"
               rel="noreferrer"
               className="text-white/85 underline decoration-white/30 underline-offset-4 hover:decoration-white"

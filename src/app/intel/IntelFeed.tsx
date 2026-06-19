@@ -82,7 +82,7 @@ const CARD_ORDER: ReadonlyArray<{ slug: string; label: string; kicker: string; a
   {
     slug: "defi-overview",
     label: "DeFi Overview",
-    kicker: "Base ecosystem TVL snapshot",
+    kicker: "Solana ecosystem TVL snapshot",
     accent: "#f59e0b",
     gradient: "from-amber-400/40 via-amber-500/20 to-transparent",
   },

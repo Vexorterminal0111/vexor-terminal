@@ -41,7 +41,7 @@ const SUB_AGENTS = [
   { name: "Cipher", role: "Cryptography & on-chain analysis", traits: "viem · forge · cast" },
   { name: "Atlas", role: "Routing & orchestration", traits: "dispatch · plan · supervise" },
   { name: "Quill", role: "Writing & docs", traits: "long-form · TLDR · summarize" },
-  { name: "Forge", role: "Solidity & contracts", traits: "OZ · Foundry · audits" },
+  { name: "Forge", role: "Solana programs & contracts", traits: "Anchor · Rust · audits" },
   { name: "Vector", role: "Retrieval & memory", traits: "embed · search · cite" },
   { name: "Pulse", role: "Markets & telemetry", traits: "ticks · alerts · feeds" },
   { name: "Halo", role: "Brand & visual", traits: "logos · banners · UI polish" },
@@ -66,12 +66,12 @@ const LOCK_TIERS = [
 
 const FAQ = [
   {
-    q: "Is $VEXOR live on Base mainnet?",
-    a: "Not yet. The $VEXOR contract has not been deployed and the on-chain staking pool is not active. Once the contract is verified on Basescan, the address and Console will be enabled on this site.",
+    q: "Is $VEXOR live on Solana mainnet?",
+    a: "Not yet. The $VEXOR program has not been deployed and the on-chain staking pool is not active. Once the program is verified on Solscan, the address and Console will be enabled on this site.",
   },
   {
     q: "When does the Console open?",
-    a: "The on-chain Console (wallet, staking, governance) opens once $VEXOR is deployed to Base. Launch timing will be announced on @vexorterminal and via the Watchtower Telegram bot.",
+    a: "The on-chain Console (wallet, staking, governance) opens once $VEXOR is deployed to Solana. Launch timing will be announced on @vexorterminal and via the Watchtower Telegram bot.",
   },
   {
     q: "Is $VEXOR available to purchase?",
@@ -87,7 +87,7 @@ const FAQ = [
   },
   {
     q: "Where is the contract source code?",
-    a: "Solidity source is in the contracts/ directory of the repository (VexorToken.sol, VexorStaking.sol, VexorGovernor.sol, VexorRevShare.sol). The codebase uses Foundry and OpenZeppelin v5. Verified mainnet addresses will be linked here once $VEXOR is deployed.",
+    a: "Program source is in the programs/ directory of the repository. The codebase uses Anchor and Rust. Verified mainnet addresses will be linked here once $VEXOR is deployed.",
   },
 ];
 
@@ -186,7 +186,7 @@ export function Docs() {
           <p className="max-w-2xl text-[15px] sm:text-base md:text-lg text-white/65 leading-relaxed">
             Vexor Terminal coordinates nine specialized sub-agents across
             nine large language models. The protocol layer — token,
-            staking, governance — deploys to Base alongside the $VEXOR
+            staking, governance — deploys to Solana alongside the $VEXOR
             launch. This page documents the orchestrator design, the
             sub-agent roster, and the planned token economy.
           </p>
@@ -258,7 +258,7 @@ export function Docs() {
                   $VEXOR · coming soon
                 </div>
                 <p className="mt-2 text-[11px] text-white/70 leading-snug">
-                  Planned ERC-20 on Base. 100B supply, 18 decimals.
+                  Planned SPL token on Solana. 100B supply.
                 </p>
                 <p className="mt-3 text-[10px] text-white/45 leading-relaxed">
                   The token contract has not been deployed yet. The Console
@@ -281,8 +281,8 @@ export function Docs() {
               </p>
               <p>
                 The protocol is governed by{" "}
-                <span className="text-violet-300">$VEXOR</span>, an ERC-20Votes
-                token on Base. Hold $VEXOR to access elevated tiers, stake to
+                <span className="text-violet-300">$VEXOR</span>, an SPL
+                token on Solana. Hold $VEXOR to access elevated tiers, stake to
                 receive a pro-rata share of protocol revenue, and vote on
                 protocol direction.
               </p>
@@ -291,7 +291,7 @@ export function Docs() {
                   <div className="font-mono text-[10px] uppercase tracking-widest text-white/45">
                     Chain
                   </div>
-                  <div className="mt-1 font-mono text-white">Base</div>
+                  <div className="mt-1 font-mono text-white">Solana</div>
                 </div>
                 <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
                   <div className="font-mono text-[10px] uppercase tracking-widest text-white/45">
@@ -314,22 +314,22 @@ export function Docs() {
               <p>
                 The on-chain Console (stake / govern) is not yet live — it
                 opens once the $VEXOR contract is deployed and verified on
-                Base. The flow below describes the launch-ready user path.
+                Solana. The flow below describes the launch-ready user path.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-                <Step n={1} icon={Wallet} title="Connect wallet on Base">
+                <Step n={1} icon={Wallet} title="Connect wallet on Solana">
                   At launch, the Console will prompt a wallet connect and
-                  auto-switch the active chain to Base. MetaMask, Rainbow,
-                  and Coinbase Wallet will be supported.
+                  auto-switch the active network to Solana. Phantom, Solflare,
+                  and Backpack will be supported.
                 </Step>
                 <Step n={2} icon={Coins} title="Acquire $VEXOR">
-                  Once $VEXOR deploys on Base, the verified contract address
+                  Once $VEXOR deploys on Solana, the verified program address
                   will be posted on this site and on @vexorterminal. $VEXOR
                   will be obtainable from the listed liquidity venues.
                 </Step>
                 <Step n={3} icon={Vote} title="Self-delegate for voting power">
-                  $VEXOR is ERC-20Votes. A one-time self-delegate transaction
-                  activates voting power for governance proposals.
+                  $VEXOR governance is token-weighted. Delegation activates
+                  voting power for governance proposals.
                 </Step>
                 <Step n={4} icon={Lock} title="Stake $VEXOR, earn revenue">
                   The RevShare pool accepts $VEXOR deposits. Stakers receive
@@ -359,9 +359,9 @@ export function Docs() {
             <Section id="contracts" kicker="03" title="Smart contract addresses">
               <p>
                 The $VEXOR token and the revenue-share staking pool are not yet
-                deployed on Base. Once the contracts ship, this section will
+                deployed on Solana. Once the programs ship, this section will
                 list the verified mainnet addresses with direct links to
-                Basescan.
+                Solscan.
               </p>
               <div className="mt-6 rounded-xl border border-violet-400/20 bg-violet-500/[0.04] p-4 flex gap-3">
                 <AlertTriangle className="h-5 w-5 text-violet-300 shrink-0 mt-0.5" />
@@ -380,7 +380,7 @@ export function Docs() {
                       @vexorterminal
                     </a>{" "}
                     for the launch announcement — the address will be posted
-                    there and added to this page once verified on Basescan.
+                    there and added to this page once verified on Solscan.
                   </p>
                 </div>
               </div>
@@ -404,11 +404,11 @@ export function Docs() {
                   <ul className="mt-2 list-disc list-inside text-sm text-white/65 space-y-1 ml-2">
                     <li>
                       <span className="text-violet-300">Connect wallet</span> —
-                      pick MetaMask, Rainbow, or Coinbase Wallet on Base.
+                      pick Phantom, Solflare, or Backpack on Solana.
                     </li>
                     <li>
                       <span className="text-violet-300">Self-delegate</span> —
-                      one-time tx that activates voting power for ERC-20Votes.
+                      one-time tx that activates voting power for governance.
                     </li>
                   </ul>
                 </div>
@@ -460,7 +460,7 @@ export function Docs() {
                     <Vote className="h-4 w-4 text-violet-300" /> Govern tab
                   </h3>
                   <p className="mt-2">
-                    Uses OpenZeppelin Governor v5. Proposals require ≥100
+                    Uses on-chain governance. Proposals require ≥100
                     $VEXOR voting power. Voters select{" "}
                     <span className="text-violet-300">For</span> /{" "}
                     <span className="text-violet-300">Against</span> /{" "}
@@ -488,13 +488,13 @@ export function Docs() {
 
             <Section id="tokenomics" kicker="05" title="$VEXOR tokenomics">
               <p>
-                <span className="text-violet-300">$VEXOR</span> is an ERC-20Votes
-                + EIP-2612 Permit token. Voting power requires self-delegation
-                (one-time, no fee beyond gas).
+                <span className="text-violet-300">$VEXOR</span> is an SPL
+                governance token on Solana. Voting power requires delegation
+                (one-time, minimal transaction fee).
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
-                <Stat label="Standard" value="ERC-20Votes" />
-                <Stat label="Permit" value="EIP-2612" />
+                <Stat label="Standard" value="SPL Token" />
+                <Stat label="Program" value="Anchor" />
                 <Stat label="Total supply" value="100,000,000,000" />
                 <Stat label="Decimals" value="18" />
               </div>
@@ -522,8 +522,7 @@ export function Docs() {
                 </li>
               </ul>
               <p className="mt-2 text-sm text-white/55">
-                $VEXOR will be deployed on Base with 100B total supply at 18
-                decimals. The token has not launched yet — the verified
+                $VEXOR will be deployed on Solana with 100B total supply. The token has not launched yet — the verified
                 contract address will be linked in the Contracts section
                 once it ships. Distribution and launch venue will be
                 announced before any liquidity is seeded.
@@ -593,34 +592,34 @@ export function Docs() {
             <Section id="architecture" kicker="08" title="Architecture">
               <p>
                 Vexor Terminal consists of a static frontend, a thin LLM
-                proxy, and a Solidity protocol layer that deploys to Base
+                proxy, and a Solana program layer that deploys to Solana
                 alongside the $VEXOR launch.
               </p>
               <div className="mt-2 rounded-xl border border-white/10 bg-white/[0.02] p-5 font-mono text-xs text-white/70 leading-relaxed overflow-x-auto">
                 <pre className="whitespace-pre">{`┌──────────────────────────────────────────────┐
 │  Next.js 16 (static export, App Router)       │
-│  · wagmi v2 + viem + RainbowKit               │
+│  · @solana/wallet-adapter + web3.js             │
 │  · Tailwind v4 + Framer Motion + Geist Mono   │
 └─────────────┬──────────────────┬──────────────┘
               │                  │
-              │ JSON-RPC         │ HTTPS
+              │ Solana RPC       │ HTTPS
               ▼                  ▼
   ┌─────────────────────┐   ┌──────────────────┐
-  │ Base mainnet RPC    │   │ Chat API         │
-  │ mainnet.base.org    │   │ FastAPI + Groq   │
+  │ Solana mainnet RPC  │   │ Chat API         │
+  │ api.mainnet-beta    │   │ FastAPI + Groq   │
   └──────────┬──────────┘   │ Llama 3.3 70B    │
              │              └──────────────────┘
              ▼
   ┌─────────────────────────────────┐
-  │ VexorToken     ERC-20Votes      │
-  │ VexorStaking   4-tier lock      │
-  │ VexorGovernor  OZ Governor v5   │
+  │ VexorToken     SPL Token        │
+  │ VexorStaking   Anchor program   │
+  │ VexorGovernor  SPL Governance   │
   └─────────────────────────────────┘`}</pre>
               </div>
               <p className="mt-2 text-sm text-white/65">
                 The frontend and chat backend are live during the pre-launch
                 phase. The protocol layer (~600 lines of audited-pattern
-                Solidity) deploys to Base alongside the $VEXOR launch.
+                Anchor/Rust) deploys to Solana alongside the $VEXOR launch.
               </p>
             </Section>
 
@@ -656,7 +655,7 @@ export function Docs() {
                   Subscribe for launch announcements.
                 </div>
                 <div className="mt-1 text-sm text-white/65">
-                  The Console activates with the $VEXOR launch on Base.
+                  The Console activates with the $VEXOR launch on Solana.
                   Updates are posted to @vexorterminal.
                 </div>
               </div>

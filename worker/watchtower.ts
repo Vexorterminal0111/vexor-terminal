@@ -24,10 +24,10 @@
  *                         fetched_at, last_alert_at, last_alert_dir }
  * - `cd:<chat_id>:<slug>:<dir>` → per-chat price-alert cooldown timestamp
  *   (TTL = ALERT_COOLDOWN_MS)
- * - `whale-block:<slug>` → last Base block scanned for whale transfers
+ * - `whale-block:<slug>` → last Solana slot scanned for whale transfers
  * - `whale-dedupe:<slug>:<tx>:<idx>` → seen-whale-log de-dupe (TTL 2h)
  * - `vol-alert:<slug>` → volatility-spike cooldown timestamp (TTL 24h)
- * - `dec:<ca>` → cached ERC-20 decimals() return (one-time on-chain read)
+ * - `dec:<ca>` → cached SPL token decimals (one-time on-chain read)
  *
  * Routes (registered in worker/index.ts):
  * - `POST /api/watchtower/webhook` — Telegram webhook target. Always
@@ -44,7 +44,7 @@
  *    - Per-user override: /alert <slug> <pct> (range 1–50%)
  *    - Cooldown: one alert per (chat, slug, direction) per hour
  * 2. Whale transfer scan (per-chat opt-in via /whale)
- *    - Scans ERC-20 Transfer logs since last seen block
+ *    - Scans SPL Transfer events since last seen slot
  *    - Alerts when transfer USD value ≥ user's /whale threshold
  * 3. Volatility spike (broadcast, no per-user config)
  *    - 24h DexScreener volume ≥ 3× median of 30d daily volume
@@ -73,7 +73,7 @@ const RESEARCH_KEY_TTL_SECONDS = 60 * 60 * 36; // 36h so the counter is around l
 const DEFAULT_WHALE_USD = 50_000;
 const MIN_WHALE_USD = 1_000;
 const MAX_WHALE_USD = 10_000_000;
-const WHALE_MAX_BLOCK_RANGE = 1500; // per cron tick; Base ~2s blocks ⇒ ~50min window
+const WHALE_MAX_BLOCK_RANGE = 1500; // per cron tick; Solana ~0.4s slots ⇒ ~50min window
 const WHALE_RECENT_FALLBACK_BLOCKS = 1800; // first-time scan: last ~1h
 const WHALE_COOLDOWN_TTL_SECONDS = 60 * 60 * 2; // de-dupe key TTL
 const TRANSFER_TOPIC =
@@ -496,7 +496,7 @@ async function onBotJoinedGroup(
   const lines = [
     `Vexor Watchtower is live in *${escapeMarkdown(title)}*.`,
     "",
-    "This bot tracks 7 Base-mainnet tokens (VEXOR, AERO, BRETT, DEGEN, TOSHI, AEON, BNKR) and pushes alerts on price moves, whale transfers, and volatility spikes.",
+    "This bot tracks 7 Solana-mainnet tokens (VEXOR, AERO, BRETT, DEGEN, TOSHI, AEON, BNKR) and pushes alerts on price moves, whale transfers, and volatility spikes.",
     "",
     "Try:",
     "• `/chart vt` — latest snapshot + chart",
@@ -1377,7 +1377,7 @@ async function cmdResearch(env: Env, chatId: number, args: string[]): Promise<vo
     await sendMessage(
       env,
       chatId,
-      `Unrecognized input \`${sanitizeSlugForEcho(args[0])}\`. Pass one of the supported slugs (see /tokens) or a 0x-prefixed Base mainnet address.`,
+      `Unrecognized input \`${sanitizeSlugForEcho(args[0])}\`. Pass one of the supported slugs (see /tokens) or a Solana mainnet address.`,
       "Markdown",
     );
     return;
@@ -1422,7 +1422,7 @@ async function cmdResearch(env: Env, chatId: number, args: string[]): Promise<vo
     await sendMessage(env, chatId, brief, "Markdown");
   } catch (err) {
     if (err instanceof ResearchError) {
-      // User-facing soft errors (bad CA, no pair on Base, etc.) — do
+      // User-facing soft errors (bad CA, no pair on Solana, etc.) — do
       // not charge quota since no real work happened.
       await sendMessage(env, chatId, err.message, "Markdown");
     } else {
@@ -1607,7 +1607,7 @@ interface PoolApiPayload {
   links?: {
     site?: string;
     docs?: string;
-    basescan_revshare?: string;
+    solscan_revshare?: string;
   };
 }
 
@@ -1665,7 +1665,7 @@ async function cmdStaking(env: Env, chatId: number): Promise<void> {
       : "no recent reward pushes in the 30d window";
 
   const body = [
-    "*VexorRevShare pool* \u2014 Base mainnet",
+    "*VexorRevShare pool* \u2014 Solana mainnet",
     "",
     `TVL: ${fmtUsdMaybe(tvlUsd)}  (${totalStakedVt.toFixed(2)} VEXOR staked)`,
     `Estimated APR: *${aprStr}*  \u00B7  ${intervalStr}`,
@@ -1916,7 +1916,7 @@ async function cmdExplain(
 
   const facts = [
     `Token: $${meta.symbol} (${meta.name})`,
-    `Chain: Base mainnet`,
+    `Chain: Solana mainnet`,
     `Price (USD): ${snap.price_usd ?? "n/a"}`,
     `24h change: ${snap.price_change_24h_pct ?? "n/a"}%`,
     `24h volume: $${snap.volume_24h_usd ?? "n/a"}`,
@@ -1924,7 +1924,7 @@ async function cmdExplain(
     `FDV: $${snap.fdv_usd ?? "n/a"}`,
   ].join("\n");
 
-  const systemPrompt = `You are Vexor Watchtower's market commentary mode. Given a single Base-mainnet token's latest market snapshot, write a concise commentary in 2-3 short paragraphs covering: (1) what the 24h price action implies about momentum, (2) how the liquidity / volume ratio compares to a healthy mid-cap DEX pair (call out thin liquidity if liq < 100k), (3) one neutral risk callout and one neutral bullish callout. Avoid price predictions and "wen moon" language. Do not invent on-chain numbers beyond what is provided. End with a one-line disclaimer that this is not financial advice. Keep total length under 1500 chars.`;
+  const systemPrompt = `You are Vexor Watchtower's market commentary mode. Given a single Solana-mainnet token's latest market snapshot, write a concise commentary in 2-3 short paragraphs covering: (1) what the 24h price action implies about momentum, (2) how the liquidity / volume ratio compares to a healthy mid-cap DEX pair (call out thin liquidity if liq < 100k), (3) one neutral risk callout and one neutral bullish callout. Avoid price predictions and "wen moon" language. Do not invent on-chain numbers beyond what is provided. End with a one-line disclaimer that this is not financial advice. Keep total length under 1500 chars.`;
   const userPrompt = `Latest snapshot:\n${facts}\n\nWrite the commentary now.`;
 
   let reply = "";
@@ -2073,7 +2073,7 @@ async function buildLeaderboardBody(env: Env): Promise<string | null> {
     lines.push("");
   }
   if (gainers.length === 0 && losers.length === 0) {
-    lines.push("All 7 tokens flat on 24h. Quiet day on Base.");
+    lines.push("All 7 tokens flat on 24h. Quiet day on Solana.");
     lines.push("");
   }
   lines.push("Open chart \u2192 `/chart <ticker>`  \u00B7  Full intel \u2192 https://vexorterminal.com/intel");
@@ -2209,7 +2209,7 @@ async function cmdTrending(env: Env, chatId: number): Promise<void> {
   const top = rows.slice(0, 3);
 
   const lines: string[] = [
-    "\uD83D\uDD25 *Trending on Base* (by vol/liq ratio)",
+    "\uD83D\uDD25 *Trending on Solana* (by vol/liq ratio)",
     "",
   ];
   for (let i = 0; i < top.length; i++) {
@@ -2233,7 +2233,7 @@ async function cmdTrending(env: Env, chatId: number): Promise<void> {
   await sendMessage(env, chatId, lines.join("\n"), "Markdown");
 }
 
-// `/portfolio` — read on-chain ERC-20 balances for the roster tokens
+// `/portfolio` — read on-chain SPL token balances for the roster tokens
 // plus the user's $VEXOR stake / pending rewards in VexorRevShare, multiply
 // by the latest Pulse Premium price, reply with a sorted USD breakdown.
 //
@@ -2348,7 +2348,7 @@ async function cmdPortfolio(
     await sendMessage(
       env,
       chatId,
-      "On-chain read failed (Base RPC is having a moment). Try again in a minute.",
+      "On-chain read failed (Solana RPC is having a moment). Try again in a minute.",
     );
     return;
   }
@@ -2816,7 +2816,7 @@ async function fetchTransferLogs(
 }
 
 function parseTransferValue(dataHex: string): bigint {
-  // ERC-20 Transfer: data = value (single 32-byte word).
+  // SPL Transfer: data = value (single 32-byte word).
   if (!dataHex || !dataHex.startsWith("0x")) return 0n;
   // Take the first 64 hex chars after `0x` to defend against malformed logs.
   const valHex = dataHex.slice(0, 66);
@@ -2854,7 +2854,7 @@ async function getTokenDecimals(env: Env, ca: string): Promise<number> {
   } catch (e) {
     console.warn(`watchtower whale: decimals query failed for ${ca}: ${e}`);
   }
-  // ERC-20 default. All 7 Pulse Premium tokens are 18 decimals.
+  // SPL token default. All 7 Pulse Premium tokens are 18 decimals.
   return 18;
 }
 
@@ -2879,7 +2879,7 @@ async function sendWhaleAlert(
     "",
     `Tokens: ${fmtUsd(whale.tokens)} ${symbol}`,
     `From: \`${fromShort}\`  \u2192  \`${toShort}\``,
-    `Tx: https://basescan.org/tx/${whale.tx_hash}`,
+    `Tx: https://solscan.io/tx/${whale.tx_hash}`,
   ];
   await sendMessage(env, chatId, lines.join("\n"), "Markdown").catch((e) => {
     console.warn(`watchtower whale: sendMessage failed for ${chatId}: ${e}`);
@@ -3074,9 +3074,9 @@ async function fetchDexScreenerSnapshot(ca: string): Promise<LiveSnap | null> {
     const json = (await res.json()) as DexScreenerResponse;
     const pairs = Array.isArray(json.pairs) ? json.pairs.filter((p): p is DexScreenerPair => !!p) : [];
     if (pairs.length === 0) return null;
-    // Pick the deepest-liquidity pair on Base.
+    // Pick the deepest-liquidity pair on Solana.
     const sorted = [...pairs]
-      .filter((p) => p.chainId === "base")
+      .filter((p) => p.chainId === "solana")
       .sort((a, b) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0));
     const best = sorted[0] ?? pairs[0];
     const priceUsd = best.priceUsd ? Number(best.priceUsd) : null;

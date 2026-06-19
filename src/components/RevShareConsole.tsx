@@ -14,7 +14,7 @@ export function RevShareConsole() {
         <SectionHeader
           kicker="Coming soon"
           title="Revenue Share."
-          description="Single-sided $VEXOR staking on Base. No lock, no tier — withdraw any time. Pool rewards are funded from protocol revenue and distributed pro-rata to stakers."
+          description="Single-sided $VEXOR staking on Solana. No lock, no tier — withdraw any time. Pool rewards are funded from protocol revenue and distributed pro-rata to stakers."
         />
 
         <motion.div

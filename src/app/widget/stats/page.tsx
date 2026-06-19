@@ -55,7 +55,7 @@ export default function StatsWidgetPage() {
           }}
         >
           This embed will display live RevShare APR, pool TVL, $VEXOR price, and
-          market cap once $VEXOR launches on Base.
+          market cap once $VEXOR launches on Solana.
         </div>
       </div>
     </main>

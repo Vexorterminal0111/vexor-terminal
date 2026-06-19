@@ -1,5 +1,5 @@
 /**
- * Shared Base mainnet RPC client for Worker routes.
+ * Shared Solana mainnet RPC client for Worker routes.
  *
  * Extracted from `worker/pool.ts` so other handlers (Watchtower `/portfolio`,
  * future on-chain reads) can reuse the same multi-RPC fallback strategy
@@ -7,19 +7,15 @@
  * conventions.
  *
  * Strategy: try each RPC in `RPC_URLS` order; on any failure (4xx, 5xx,
- * timeout, network error) move on to the next. From the Cloudflare edge,
- * `mainnet.base.org` aggressively 429s due to shared outbound IP space,
- * so it sits last as the final fallback.
+ * timeout, network error) move on to the next.
  *
  * Keep this module **stateless** — no caching, no env access. Caching is
  * the caller's responsibility (see pool.ts edge-cache wrapper).
  */
 
 const RPC_URLS: ReadonlyArray<string> = [
-  "https://base-rpc.publicnode.com",
-  "https://base.meowrpc.com",
-  "https://1rpc.io/base",
-  "https://mainnet.base.org",
+  "https://api.mainnet-beta.solana.com",
+  "https://solana-rpc.publicnode.com",
 ] as const;
 const RPC_TIMEOUT_MS = 5000;
 
@@ -68,11 +64,10 @@ export async function rpcCall(
 }
 
 // -----------------------------------------------------------------------------
-// ABI / hex helpers
+// ABI / hex helpers (kept for migration — will be replaced by Solana equivalents)
 // -----------------------------------------------------------------------------
 
 export function padAddress(addr: string): string {
-  // 12-byte left-pad to fit a 32-byte ABI word.
   return "000000000000000000000000" + addr.slice(2).toLowerCase();
 }
 
@@ -80,15 +75,12 @@ export function hexToBigInt(hex: string): bigint {
   return BigInt(hex.startsWith("0x") ? hex : "0x" + hex);
 }
 
-// Common ERC-20 / RevShare selectors. Keeping them centralized prevents
-// the routes from each computing keccak256 hashes by hand and helps grep
-// across the worker codebase when adding a new on-chain read.
+// SPL token / Solana program selectors placeholder.
+// These EVM selectors are kept as reference during migration.
 export const SEL = {
-  // ERC-20
-  balanceOf: "0x70a08231", // balanceOf(address)
-  // VexorRevShare
-  pending: "0x5eebea20", // pending(address)
-  isStaker: "0x6f1e8533", // isStaker(address)
-  totalStaked: "0x817b1cd2", // totalStaked()
-  accRewardPerToken: "0xcbce44b4", // accRewardPerToken()
+  balanceOf: "0x70a08231",
+  pending: "0x5eebea20",
+  isStaker: "0x6f1e8533",
+  totalStaked: "0x817b1cd2",
+  accRewardPerToken: "0xcbce44b4",
 } as const;

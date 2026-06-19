@@ -1,9 +1,9 @@
 /**
- * Vexor Researcher — on-demand deep-dive briefs for Base mainnet tokens.
+ * Vexor Researcher — on-demand deep-dive briefs for Solana mainnet tokens.
  *
  * Triggered from the Telegram bot via `/research <slug-or-CA>` (handled in
  * worker/watchtower.ts). Pulls live DexScreener data, optionally pairs it
- * with Basescan contract-verification status (when `ETHERSCAN_API_KEY` is
+ * with Solscan contract-verification status (when `ETHERSCAN_API_KEY` is
  * configured), and asks Groq llama-3.3-70b to synthesize a verdict +
  * three pulse bullets + risk flags + outlook.
  *
@@ -13,8 +13,8 @@
  * - LLM output is constrained to a strict Markdown structure; we never
  *   let the model invent numbers — all figures come from the raw data
  *   payload we feed in, and the system prompt forbids unsourced claims.
- * - All external calls (DexScreener, Basescan, Groq) run in parallel and
- *   tolerate individual failures: a missing Basescan key just drops the
+ * - All external calls (DexScreener, Solscan, Groq) run in parallel and
+ *   tolerate individual failures: a missing Solscan key just drops the
  *   contract-security bullet; the brief still ships.
  */
 
@@ -33,7 +33,7 @@ const ETHERSCAN_TIMEOUT_MS = 6_000;
 /**
  * Parsed `/research <input>` arg. `kind === "slug"` means the input matched
  * one of the curated `INTEL_TOKENS` entries; `kind === "ca"` means the user
- * pasted a raw 40-hex Base address.
+ * pasted a raw Solana address.
  */
 export interface ResearchInput {
   kind: "slug" | "ca";
@@ -105,7 +105,7 @@ async function fetchDexPairs(ca: string): Promise<DexPair[]> {
     if (!res.ok) return [];
     const j = (await res.json()) as DexResp;
     const all = Array.isArray(j.pairs) ? j.pairs : [];
-    return all.filter((p): p is DexPair => !!p && p.chainId === "base");
+    return all.filter((p): p is DexPair => !!p && p.chainId === "solana");
   } catch {
     return [];
   } finally {
@@ -220,7 +220,7 @@ function buildFacts(input: ResearchInput, pair: DexPair, contract: ContractInfo 
 
 const SYNTHESIS_SYSTEM = `You are Vexor Researcher, a focused crypto analyst writing for a Telegram bot.
 
-You receive a JSON payload of raw token data fetched from DexScreener (and optionally Basescan).
+You receive a JSON payload of raw token data fetched from DexScreener (and optionally Solscan).
 You MUST produce a tight Telegram Markdown brief in EXACTLY this structure, with no preamble and no postscript:
 
 *Verdict:* <one word, choose from: BULLISH, BEARISH, MIXED, QUIET>
@@ -250,7 +250,7 @@ async function callGroqSynthesis(env: Env, facts: ResearchFacts): Promise<string
     throw new Error("GROQ_API_KEY missing");
   }
   const userMsg = [
-    `Token: ${facts.label} on Base (CA: ${facts.address})`,
+    `Token: ${facts.label} on Solana (CA: ${facts.address})`,
     "",
     "Raw data:",
     "```json",
@@ -304,7 +304,7 @@ export async function produceResearchBrief(env: Env, input: ResearchInput): Prom
   const pair = pickCanonicalPair(pairs);
   if (!pair) {
     throw new ResearchError(
-      `No DexScreener pair found on Base for ${input.kind === "ca" ? `\`${shortAddr(input.ca)}\`` : input.label}. ` +
+      `No DexScreener pair found on Solana for ${input.kind === "ca" ? `\`${shortAddr(input.ca)}\`` : input.label}. ` +
         "Either the token has no liquidity pool yet, or the CA is wrong.",
     );
   }
@@ -312,7 +312,7 @@ export async function produceResearchBrief(env: Env, input: ResearchInput): Prom
   const facts = buildFacts(input, pair, contract);
   const llmBody = await callGroqSynthesis(env, facts);
   const header = composeHeader(input, pair);
-  const footer = `_DexScreener${contract ? " + Basescan" : ""} + Groq ${GROQ_MODEL}. Fetched ${new Date().toUTCString()}._`;
+  const footer = `_DexScreener${contract ? " + Solscan" : ""} + Groq ${GROQ_MODEL}. Fetched ${new Date().toUTCString()}._`;
 
   return `${header}\n\n${llmBody}\n\n${footer}`;
 }
@@ -330,7 +330,7 @@ function composeHeader(input: ResearchInput, pair: DexPair): string {
 
   return [
     `\uD83D\uDD2C *Research: ${escapeMd(symbol)}* \u2014 ${escapeMd(name)}`,
-    `Base \u00B7 ${escapeMd(dex)} \u00B7 vs ${escapeMd(quote)}`,
+    `Solana \u00B7 ${escapeMd(dex)} \u00B7 vs ${escapeMd(quote)}`,
     `Price ${priceStr} (${ch24} 24h) \u00B7 Liq ${liqStr} \u00B7 Vol24 ${volStr}`,
   ].join("\n");
 }
