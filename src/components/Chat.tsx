@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { useAccount } from "wagmi";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { Send, Loader2, Terminal, Coins } from "lucide-react";
 import { SectionHeader } from "./SectionHeader";
 import { WalletButton } from "./WalletButton";
@@ -126,7 +126,9 @@ function renderContent(text: string) {
 }
 
 export function Chat() {
-  const { address, isConnected } = useAccount();
+  const { publicKey, connected } = useWallet();
+  const address = publicKey?.toBase58();
+  const isConnected = connected;
   const [messages, setMessages] = useState<Msg[]>([SUGGESTED_GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
