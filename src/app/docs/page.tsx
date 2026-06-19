@@ -6,7 +6,7 @@ import { Docs } from "@/components/Docs";
 export const metadata: Metadata = {
   title: "Docs — Vexor Terminal",
   description:
-    "Quickstart, planned $VEXOR token economy, Console walkthrough, sub-agent reference, tier table, and FAQ for the Vexor Terminal protocol on Base.",
+    "Quickstart, planned $VEXOR token economy, Console walkthrough, sub-agent reference, tier table, and FAQ for the Vexor Terminal protocol on Solana.",
 };
 
 export default function DocsPage() {

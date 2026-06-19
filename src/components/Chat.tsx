@@ -15,8 +15,8 @@ const CHAT_API =
 const CHAT_API_BASIC_AUTH = process.env.NEXT_PUBLIC_CHAT_API_BASIC_AUTH || "";
 
 const SAMPLE_PROMPTS = [
-  "Audit a Solidity ERC-20 contract",
-  "Summarize today's Base mainnet activity",
+  "Audit a Solana SPL token program",
+  "Summarize today's Solana mainnet activity",
   "Draft a protocol launch announcement",
   "Generate a memory recall query",
 ];
@@ -209,7 +209,7 @@ export function Chat() {
         <SectionHeader
           kicker="Orchestrator"
           title="Live orchestrator chat."
-          description="Connect a wallet on Base and submit a prompt. The orchestrator dispatches to the appropriate sub-agent and streams the response."
+          description="Connect a wallet on Solana and submit a prompt. The orchestrator dispatches to the appropriate sub-agent and streams the response."
         />
 
         <motion.div
@@ -222,7 +222,7 @@ export function Chat() {
           <div className="flex items-center justify-between gap-3 border-b border-white/5 bg-white/[0.02] px-4 sm:px-5 py-2.5 sm:py-3">
             <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">
               <Terminal className="h-3.5 w-3.5 text-violet-300" />
-              vexor@base:~$
+              vexor@solana:~$
             </div>
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-white/45">
@@ -311,7 +311,7 @@ export function Chat() {
             {!isConnected ? (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-2">
                 <div className="font-mono text-xs text-white/55 text-center sm:text-left">
-                  Connect a wallet on Base to use the orchestrator.
+                  Connect a wallet on Solana to use the orchestrator.
                 </div>
                 <WalletButton compact />
               </div>

@@ -57,7 +57,7 @@ interface TokenMeta {
   network?: string;
   host?: boolean;
   blurb?: string | null;
-  basescan_url?: string;
+  solscan_url?: string;
   dex_url?: string;
 }
 
@@ -217,7 +217,7 @@ function normalizeToken(raw: unknown, slug: string, sourceUrl: string): TokenPay
       network: pickString(tokenIn.network),
       host: pickBool(tokenIn.host),
       blurb: pickString(tokenIn.blurb) ?? null,
-      basescan_url: pickString(tokenIn.basescan_url),
+      solscan_url: pickString(tokenIn.solscan_url),
       dex_url: pickString(tokenIn.dex_url),
     },
     market_snapshot: {

@@ -1,11 +1,10 @@
 import type { Address } from "viem";
-import { base, baseSepolia } from "wagmi/chains";
 
 export type ContractAddresses = {
   token: Address | null;
   staking: Address | null;
   governance: Address | null;
-  /** Mainnet revenue-share staking pool (VexorRevShare). Only set on Base mainnet. */
+  /** Mainnet revenue-share staking pool (VexorRevShare). Only set on Solana mainnet. */
   revShare: Address | null;
 };
 
@@ -17,17 +16,23 @@ function asAddr(v: string | undefined): Address | null {
   return v as Address;
 }
 
-// Hardcoded mainnet revenue-share pool. Public, verified on Basescan.
-const VEXOR_REV_SHARE_MAINNET: Address = "0xE25f6243f848523c4577639e975B9F3E0fA57186";
+// Hardcoded mainnet revenue-share pool. Public, verified on Solscan.
+// Placeholder — will be replaced with Solana program address at launch.
+const VEXOR_REV_SHARE_MAINNET: Address = "0x0000000000000000000000000000000000000000";
+
+// Solana chain IDs are not numeric like EVM — using a placeholder key.
+// This mapping will be replaced by @solana/web3.js PublicKey lookups.
+const SOLANA_MAINNET_ID = 101;
+const SOLANA_DEVNET_ID = 102;
 
 export const CONTRACTS: Record<number, ContractAddresses> = {
-  [base.id]: {
+  [SOLANA_MAINNET_ID]: {
     token: asAddr(process.env.NEXT_PUBLIC_VEXOR_TOKEN),
     staking: asAddr(process.env.NEXT_PUBLIC_VEXOR_STAKING),
     governance: asAddr(process.env.NEXT_PUBLIC_VEXOR_GOVERNANCE),
     revShare: VEXOR_REV_SHARE_MAINNET,
   },
-  [baseSepolia.id]: {
+  [SOLANA_DEVNET_ID]: {
     token: asAddr(process.env.NEXT_PUBLIC_VEXOR_TOKEN_TESTNET),
     staking: asAddr(process.env.NEXT_PUBLIC_VEXOR_STAKING_TESTNET),
     governance: asAddr(process.env.NEXT_PUBLIC_VEXOR_GOVERNANCE_TESTNET),
@@ -43,7 +48,7 @@ export function getContracts(chainId: number | undefined): ContractAddresses {
 }
 
 export function isTestnet(chainId: number | undefined): boolean {
-  return chainId === baseSepolia.id;
+  return chainId === SOLANA_DEVNET_ID;
 }
 
 // -------------------------------------------------------------
@@ -51,7 +56,7 @@ export function isTestnet(chainId: number | undefined): boolean {
 // -------------------------------------------------------------
 
 export const VEXOR_TOKEN_ABI = [
-  // ERC-20 essentials
+  // SPL token essentials (EVM ABI kept as reference for migration)
   { type: "function", name: "name", stateMutability: "view", inputs: [], outputs: [{ type: "string" }] },
   { type: "function", name: "symbol", stateMutability: "view", inputs: [], outputs: [{ type: "string" }] },
   { type: "function", name: "decimals", stateMutability: "view", inputs: [], outputs: [{ type: "uint8" }] },
@@ -83,7 +88,7 @@ export const VEXOR_TOKEN_ABI = [
     ],
     outputs: [{ type: "uint256" }],
   },
-  // ERC20Votes
+  // Governance
   {
     type: "function",
     name: "delegate",
@@ -304,7 +309,7 @@ export const LOCK_TIERS = [
 ] as const;
 
 // VexorRevShare — flat $VEXOR mainnet staking pool with manual pro-rata reward push.
-// See contracts/src/VexorRevShare.sol.
+// Anchor program — to be deployed on Solana mainnet.
 export const VEXOR_REV_SHARE_ABI = [
   { type: "function", name: "stakingToken", stateMutability: "view", inputs: [], outputs: [{ type: "address" }] },
   { type: "function", name: "owner", stateMutability: "view", inputs: [], outputs: [{ type: "address" }] },

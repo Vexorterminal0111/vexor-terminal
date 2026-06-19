@@ -14,7 +14,7 @@ export function Console() {
         <SectionHeader
           kicker="Coming soon"
           title="Protocol Console."
-          description="Unified on-chain dashboard for wallet, staking, and governance on Base. Opens with the $VEXOR token launch."
+          description="Unified on-chain dashboard for wallet, staking, and governance on Solana. Opens with the $VEXOR token launch."
         />
 
         <motion.div
@@ -51,7 +51,7 @@ export function Console() {
             <p className="mt-3 max-w-xl text-sm sm:text-[15px] text-white/60 leading-relaxed">
               The on-chain Console — wallet, staking, and governance —
               will be enabled once $VEXOR is deployed and verified on
-              Base. Subscribe to launch updates through the channels below.
+              Solana. Subscribe to launch updates through the channels below.
             </p>
             <div className="mt-7 flex flex-wrap items-center justify-center gap-2">
               <a

@@ -1,9 +1,10 @@
-// Shared on-chain data helpers for the $VEXOR RevShare pool on Base mainnet.
+// Shared on-chain data helpers for the $VEXOR RevShare pool on Solana mainnet.
 // Used by the landing Hero APR widget and the /widget/stats embed page.
 
-export const RPC_URL = "https://mainnet.base.org";
-export const STAKING_CONTRACT = "0xE25f6243f848523c4577639e975B9F3E0fA57186";
-export const VT_TOKEN = "0x2c684D666998436634EcEde1527EdA7975427Ba3";
+export const RPC_URL = "https://api.mainnet-beta.solana.com";
+// Placeholder — will be replaced with Solana program addresses at launch.
+export const STAKING_CONTRACT = "11111111111111111111111111111111";
+export const VT_TOKEN = "11111111111111111111111111111111";
 export const LOG_BLOCK_RANGE = 90000;
 export const LOG_CHUNK_SIZE = 9000;
 

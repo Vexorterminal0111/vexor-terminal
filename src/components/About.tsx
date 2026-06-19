@@ -45,7 +45,7 @@ const features = [
   {
     icon: Hexagon,
     title: "$VEXOR Token",
-    body: "Native ERC-20 utility token planned for Base. Holding $VEXOR unlocks elevated tiers; staking returns a pro-rata share of protocol revenue.",
+    body: "Native SPL utility token planned for Solana. Holding $VEXOR unlocks elevated tiers; staking returns a pro-rata share of protocol revenue.",
     badge: "Coming soon",
     highlight: true,
   },
@@ -58,7 +58,7 @@ export function About() {
         <SectionHeader
           kicker="Platform"
           title="An orchestration platform for on-chain workflows."
-          description="Vexor coordinates nine specialized sub-agents across nine large language models. Every task is routed to the appropriate model, executed under wallet-scoped access, and accounted in the $VEXOR token economy on Base."
+          description="Vexor coordinates nine specialized sub-agents across nine large language models. Every task is routed to the appropriate model, executed under wallet-scoped access, and accounted in the $VEXOR token economy on Solana."
         />
 
         <div className="mt-10 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">

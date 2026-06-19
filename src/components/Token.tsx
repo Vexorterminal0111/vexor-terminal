@@ -29,8 +29,8 @@ const utility = [
 
 const stats = [
   { label: "Token", value: "$VEXOR" },
-  { label: "Standard", value: "ERC-20" },
-  { label: "Network", value: "Base" },
+  { label: "Standard", value: "SPL" },
+  { label: "Network", value: "Solana" },
   { label: "Supply", value: "100B" },
 ];
 
@@ -59,14 +59,14 @@ export function Token() {
             <div className="flex-1">
               <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-violet-300/80">
                 <span className="h-1.5 w-1.5 rounded-full bg-violet-300 shadow-[0_0_10px_rgba(139,92,246,0.8)]" />
-                Coming soon · Base
+                Coming soon · Solana
               </div>
               <div className="mt-4 sm:mt-5 font-mono text-4xl sm:text-5xl md:text-6xl text-white leading-none">
                 $VEXOR
               </div>
               <p className="mt-4 max-w-xl text-sm sm:text-[15px] text-white/65 leading-relaxed">
-                Native ERC-20 utility token of the Vexor Terminal protocol
-                on Base. $VEXOR is the unit of account for runtime,
+                Native SPL utility token of the Vexor Terminal protocol
+                on Solana. $VEXOR is the unit of account for runtime,
                 staking, and governance — 100B planned supply, 18
                 decimals.
               </p>

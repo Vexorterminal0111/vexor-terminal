@@ -7,7 +7,7 @@ import { AGENTS } from "@/lib/agents";
 export const metadata: Metadata = {
   title: "Sub-Agents — Dispatch Console",
   description:
-    "Chat directly with one of the 9 Vexor sub-agents — each with its own specialization, voice, and system prompt. Wallet-gated on Base.",
+    "Chat directly with one of the 9 Vexor sub-agents — each with its own specialization, voice, and system prompt. Wallet-gated on Solana.",
 };
 
 export default function AgentsIndexPage() {

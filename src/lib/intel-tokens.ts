@@ -24,10 +24,10 @@ export interface IntelTokenMeta {
   symbol: string;
   /** Full token name, e.g. "Vexor Terminal". */
   name: string;
-  /** EVM contract address (checksummed). */
+  /** Token mint address. */
   ca: string;
-  /** Chain key — currently always "base" for V1. */
-  network: "base";
+  /** Chain key — currently always "solana" for V1. */
+  network: "solana";
   /** Marks the project's own token. Rendered with a "host" badge. */
   host?: boolean;
   /** Short tagline shown on the index card. */
@@ -43,8 +43,8 @@ export const INTEL_TOKENS: ReadonlyArray<IntelTokenMeta> = [
     slug: "vt",
     symbol: "VEXOR",
     name: "Vexor Terminal",
-    ca: "0x2c684D666998436634EcEde1527EdA7975427Ba3",
-    network: "base",
+    ca: "TBD",
+    network: "solana",
     host: true,
     blurb: "Native token of the Vexor Terminal protocol.",
   },
@@ -52,48 +52,48 @@ export const INTEL_TOKENS: ReadonlyArray<IntelTokenMeta> = [
     slug: "aero",
     symbol: "AERO",
     name: "Aerodrome",
-    ca: "0x940181a94A35A4569E4529A3CDfB74e38FD98631",
-    network: "base",
-    blurb: "Base's flagship AMM. Liquidity layer for the ecosystem.",
+    ca: "TBD",
+    network: "solana",
+    blurb: "Leading Solana DEX. Liquidity layer for the ecosystem.",
   },
   {
     slug: "brett",
     symbol: "BRETT",
     name: "Brett",
-    ca: "0x532f27101965dd16442E59d40670FaF5eBB142E4",
-    network: "base",
-    blurb: "Base memecoin OG. Frog #2 of the original Boy's Club cast.",
+    ca: "TBD",
+    network: "solana",
+    blurb: "Solana memecoin OG. Frog #2 of the original Boy's Club cast.",
   },
   {
     slug: "degen",
     symbol: "DEGEN",
     name: "Degen",
-    ca: "0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed",
-    network: "base",
+    ca: "TBD",
+    network: "solana",
     blurb: "Farcaster-native tipping token. Powers /degen channel.",
   },
   {
     slug: "toshi",
     symbol: "TOSHI",
     name: "Toshi",
-    ca: "0xAC1Bd2486aAf3B5C0fc3Fd868558b082a531B2B4",
-    network: "base",
-    blurb: "Base's mascot cat. First memecoin launched on Base mainnet.",
+    ca: "TBD",
+    network: "solana",
+    blurb: "Community cat memecoin on Solana.",
   },
   {
     slug: "aeon",
     symbol: "AEON",
     name: "aeon",
-    ca: "0xBf8E8f0e8866a7052F948C16508644347c57aba3",
-    network: "base",
+    ca: "TBD",
+    network: "solana",
     blurb: "Token associated with the aeon autonomous-agent framework.",
   },
   {
     slug: "bnkr",
     symbol: "BNKR",
     name: "BankrCoin",
-    ca: "0x22aF33FE49fD1Fa80c7149773dDe5890D3c76F3b",
-    network: "base",
+    ca: "TBD",
+    network: "solana",
     blurb:
       "Native token of the Bankr LLM gateway (the same gateway routing aeon's Claude calls).",
   },

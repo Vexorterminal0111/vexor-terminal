@@ -8,15 +8,15 @@ const projects = [
   {
     name: "On-Chain Engineering",
     role: "Smart Contract Workflows",
-    body: "Cipher and Forge review pull requests, audit Solidity, and surface gas optimizations across the repository.",
-    stack: ["Foundry", "Solidity", "Base", "GitHub Actions"],
+    body: "Cipher and Forge review pull requests, audit Solana programs, and surface optimization opportunities across the repository.",
+    stack: ["Anchor", "Rust", "Solana", "GitHub Actions"],
     status: "Pilot",
   },
   {
     name: "DAO Operations",
     role: "Treasury & Governance",
     body: "Halo drafts proposals, Atlas researches comparables, Prism models impact. Multi-sig execution remains human-controlled.",
-    stack: ["Safe", "Tally", "Snapshot", "Base"],
+    stack: ["Realms", "SPL Governance", "Snapshot", "Solana"],
     status: "Concept",
   },
   {

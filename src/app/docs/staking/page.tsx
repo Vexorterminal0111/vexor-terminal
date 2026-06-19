@@ -20,7 +20,7 @@ export default function StakingDocsPage() {
         <p className="mt-4 text-sm sm:text-[15px] text-white/65 leading-relaxed">
           The full $VEXOR RevShare staking guide — how it works, the math,
           worked examples, contract addresses, and risks — will be published
-          alongside the $VEXOR token launch on Base.
+          alongside the $VEXOR token launch on Solana.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
           <Link

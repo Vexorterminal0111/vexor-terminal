@@ -28,7 +28,7 @@ export function Hero() {
           className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/70"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-violet-300 shadow-[0_0_10px_rgba(139,92,246,0.8)]" />
-          Vexor Terminal · v0.1.0 · $VEXOR launching on Base
+          Vexor Terminal · v0.1.0 · $VEXOR launching on Solana
         </motion.div>
 
         <motion.h1
@@ -53,12 +53,12 @@ export function Hero() {
           transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
           className="mt-6 sm:mt-8 max-w-2xl text-[15px] sm:text-lg md:text-xl text-white/70 leading-relaxed"
         >
-          Programmable AI orchestration on Base. Vexor coordinates{" "}
+          Programmable AI orchestration on Solana. Vexor coordinates{" "}
           <span className="text-white font-medium">nine specialized sub-agents</span>{" "}
           across nine large language models, with model selection,
           wallet-scoped access, and accounting governed by the{" "}
           <span className="text-violet-300">$VEXOR</span> token on{" "}
-          <span className="text-violet-300">Base</span>.
+          <span className="text-violet-300">Solana</span>.
         </motion.p>
 
         <motion.div
