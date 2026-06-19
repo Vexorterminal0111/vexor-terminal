@@ -21,14 +21,13 @@
 import type { Env } from "./index";
 import { INTEL_TOKENS, getIntelToken } from "../src/lib/intel-tokens";
 
-const ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
+const ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const DEX_API_BASE = "https://api.dexscreener.com";
-const ETHERSCAN_V2 = "https://api.etherscan.io/v2/api";
-const BASE_CHAIN_ID = 8453;
+const SOLSCAN_API = "https://pro-api.solscan.io/v2.0";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 const GROQ_TIMEOUT_MS = 20_000;
 const DEX_TIMEOUT_MS = 6_000;
-const ETHERSCAN_TIMEOUT_MS = 6_000;
+const SOLSCAN_TIMEOUT_MS = 6_000;
 
 /**
  * Parsed `/research <input>` arg. `kind === "slug"` means the input matched
@@ -43,11 +42,11 @@ export interface ResearchInput {
   slug?: string;
   /** Always set — for slug inputs, the slug's CA. */
   ca: string;
-  /** Human-readable label for the brief header (e.g. `$VEXOR` or `0x22aF…6F3b`). */
+  /** Human-readable label for the brief header (e.g. `$VEXOR` or `6ucE…nXrM`). */
   label: string;
 }
 
-/** Returns `null` for unrecognized inputs (neither a known slug nor a 0x address). */
+/** Returns `null` for unrecognized inputs (neither a known slug nor a Solana address). */
 export function parseResearchInput(raw: string): ResearchInput | null {
   const s = raw.trim();
   if (!s) return null;
@@ -123,32 +122,29 @@ interface ContractInfo {
 async function fetchContractInfo(env: Env, ca: string): Promise<ContractInfo | null> {
   if (!env.ETHERSCAN_API_KEY) return null;
   const ctl = new AbortController();
-  const t = setTimeout(() => ctl.abort(), ETHERSCAN_TIMEOUT_MS);
+  const t = setTimeout(() => ctl.abort(), SOLSCAN_TIMEOUT_MS);
   try {
-    const u = new URL(ETHERSCAN_V2);
-    u.searchParams.set("chainid", String(BASE_CHAIN_ID));
-    u.searchParams.set("module", "contract");
-    u.searchParams.set("action", "getsourcecode");
-    u.searchParams.set("address", ca);
-    u.searchParams.set("apikey", env.ETHERSCAN_API_KEY);
-    const res = await fetch(u.toString(), { signal: ctl.signal });
+    const res = await fetch(
+      `${SOLSCAN_API}/account?address=${encodeURIComponent(ca)}`,
+      {
+        headers: { token: env.ETHERSCAN_API_KEY },
+        signal: ctl.signal,
+      },
+    );
     if (!res.ok) return null;
     const j = (await res.json()) as {
-      status?: string;
-      result?: Array<{
-        SourceCode?: string;
-        ContractName?: string;
-        CompilerVersion?: string;
-        Proxy?: string;
-      }>;
+      success?: boolean;
+      data?: {
+        executable?: boolean;
+        type?: string;
+      };
     };
-    if (j.status !== "1" || !j.result?.[0]) return null;
-    const r = j.result[0];
+    if (!j.success || !j.data) return null;
     return {
-      verified: Boolean(r.SourceCode && r.SourceCode.length > 0),
-      name: r.ContractName || undefined,
-      compiler: r.CompilerVersion || undefined,
-      proxy: r.Proxy === "1",
+      verified: j.data.executable === true,
+      name: j.data.type || undefined,
+      compiler: undefined,
+      proxy: false,
     };
   } catch {
     return null;
@@ -312,7 +308,7 @@ export async function produceResearchBrief(env: Env, input: ResearchInput): Prom
   const facts = buildFacts(input, pair, contract);
   const llmBody = await callGroqSynthesis(env, facts);
   const header = composeHeader(input, pair);
-  const footer = `_DexScreener${contract ? " + Solscan" : ""} + Groq ${GROQ_MODEL}. Fetched ${new Date().toUTCString()}._`;
+  const footer = `_DexScreener${contract ? " \+ Solscan" : ""} \+ Groq ${GROQ_MODEL}\. Fetched ${new Date().toUTCString()}\._`;
 
   return `${header}\n\n${llmBody}\n\n${footer}`;
 }
@@ -335,9 +331,9 @@ function composeHeader(input: ResearchInput, pair: DexPair): string {
   ].join("\n");
 }
 
-/** Short-address helper (`0x22aF\u20266F3b`). */
+/** Short-address helper (`6ucE\u2026nXrM`). */
 function shortAddr(a: string): string {
-  return `${a.slice(0, 6)}\u2026${a.slice(-4)}`;
+  return `${a.slice(0, 4)}\u2026${a.slice(-4)}`;
 }
 
 function formatPrice(n: number): string {

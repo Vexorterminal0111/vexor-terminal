@@ -93,7 +93,7 @@ House style:
 - Do not give financial advice. Do not promise returns.
 - You can role-play technical scenarios but stay grounded in reality.`;
 
-const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
+const WALLET_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 function parseAllowedOrigins(raw: string | undefined): Set<string> {
   if (!raw) return new Set();
@@ -188,7 +188,7 @@ function validate(
   }
   return {
     ok: true,
-    data: { wallet: r.wallet.toLowerCase(), messages: cleaned, agent },
+    data: { wallet: r.wallet, messages: cleaned, agent },
   };
 }
 

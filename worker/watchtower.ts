@@ -55,7 +55,7 @@
 import type { Env } from "./index";
 import { INTEL_TOKENS, isIntelTokenSlug, getIntelToken } from "../src/lib/intel-tokens";
 import { parseResearchInput, produceResearchBrief, ResearchError } from "./researcher";
-import { rpcCall, padAddress, hexToBigInt, SEL } from "./rpc";
+import { rpcCall, hexToBigInt } from "./rpc";
 
 const TELEGRAM_API_BASE = "https://api.telegram.org";
 
@@ -76,8 +76,11 @@ const MAX_WHALE_USD = 10_000_000;
 const WHALE_MAX_BLOCK_RANGE = 1500; // per cron tick; Solana ~0.4s slots ⇒ ~50min window
 const WHALE_RECENT_FALLBACK_BLOCKS = 1800; // first-time scan: last ~1h
 const WHALE_COOLDOWN_TTL_SECONDS = 60 * 60 * 2; // de-dupe key TTL
-const TRANSFER_TOPIC =
+// EVM Transfer topic — retained for reference during Solana migration.
+// Whale scanner is disabled until Solana on-chain indexing ships.
+const _TRANSFER_TOPIC_EVM =
   "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+void _TRANSFER_TOPIC_EVM;
 
 // Volatility-spike scanner (Feature 3)
 const VOLATILITY_SPIKE_FACTOR = 3; // fire when 24h vol ≥ 3× 30d median
@@ -2248,7 +2251,8 @@ async function cmdTrending(env: Env, chatId: number): Promise<void> {
 // NOT store anything on-chain — the chat <-> wallet link is purely
 // off-chain bookkeeping so the user can change wallets freely without
 // touching gas.
-const VEXOR_REVSHARE_ADDRESS = "0xE25f6243f848523c4577639e975B9F3E0fA57186";
+// Solana program address — will be set at launch.
+const VEXOR_REVSHARE_ADDRESS: string | null = null;
 
 async function cmdPortfolio(
   env: Env,
@@ -2268,7 +2272,7 @@ async function cmdPortfolio(
     await sendMessage(
       env,
       chatId,
-      "`/portfolio` is private \u2014 DM me at @VexorAeonWatchtowerbot to bind your wallet. Read-only lookups still work here if you pass an explicit address: `/portfolio 0x\u2026`.",
+      "`/portfolio` is private \u2014 DM me at @VexorAeonWatchtowerbot to bind your wallet. Read-only lookups still work here if you pass an explicit address: `/portfolio <address>`.",
       "Markdown",
     );
     return;
@@ -2279,7 +2283,7 @@ async function cmdPortfolio(
     await sendMessage(
       env,
       chatId,
-      "Portfolio binding cleared. Use `/portfolio 0xYourWallet` to bind a new one.",
+      "Portfolio binding cleared. Use `/portfolio <YourWallet>` to bind a new one.",
       "Markdown",
     );
     return;
@@ -2294,13 +2298,13 @@ async function cmdPortfolio(
         env,
         chatId,
         [
-          "Usage: `/portfolio 0xYourWalletAddress`",
+          "Usage: `/portfolio <YourSolanaAddress>`",
           "",
           "I will track your holdings of every $VEXOR-roster token + your $VEXOR",
           "stake and pending rewards in the VexorRevShare pool. Your wallet",
           "address stays linked to this chat until you run `/portfolio unbind`.",
           "",
-          "Example: `/portfolio 0x0259abb884050E19e787cF7E271b6984E13BD79B`",
+          "Example: `/portfolio 6ucEAsCM4jwtYgTE3xAxgb6R5RwwAxzCaLCCaYtUnXrM`",
         ].join("\n"),
         "Markdown",
       );
@@ -2312,12 +2316,12 @@ async function cmdPortfolio(
       await sendMessage(
         env,
         chatId,
-        `\`${sanitizeAddressForEcho(candidate)}\` does not look like a valid 0x address (need 0x + 40 hex chars).`,
+        `\`${sanitizeAddressForEcho(candidate)}\` does not look like a valid Solana address (need 32-44 base58 chars).`,
         "Markdown",
       );
       return;
     }
-    wallet = candidate.toLowerCase();
+    wallet = candidate;
     // Only persist the binding in DMs. Group lookups are one-shot reads
     // — we never remember a wallet for a group chat to avoid leaking
     // whoever-typed-first's holdings on every subsequent `/portfolio`.
@@ -2331,7 +2335,7 @@ async function cmdPortfolio(
   await sendMessage(
     env,
     chatId,
-    `Reading portfolio for \`${wallet.slice(0, 6)}\u2026${wallet.slice(-4)}\` \u2014 hold on.`,
+    `Reading portfolio for \`${wallet.slice(0, 4)}\u2026${wallet.slice(-4)}\` \u2014 hold on.`,
     "Markdown",
   );
 
@@ -2354,7 +2358,7 @@ async function cmdPortfolio(
   }
 
   const lines: string[] = [
-    `*Portfolio* \u2014 \`${wallet.slice(0, 6)}\u2026${wallet.slice(-4)}\``,
+    `*Portfolio* \u2014 \`${wallet.slice(0, 4)}\u2026${wallet.slice(-4)}\``,
     "",
   ];
 
@@ -2364,7 +2368,7 @@ async function cmdPortfolio(
   let totalUsd = 0;
   for (const row of result) {
     if (row.amount === 0n) continue;
-    const amountStr = formatTokenAmount(row.amount, 18);
+    const amountStr = formatTokenAmount(row.amount, 9);
     const usdStr =
       row.usdValue != null ? `$${fmtUsd(row.usdValue)}` : "\u2014";
     if (row.usdValue != null) totalUsd += row.usdValue;
@@ -2377,19 +2381,19 @@ async function cmdPortfolio(
   // RevShare block (only when there's something interesting to show).
   if (staked > 0n || pendingReward > 0n) {
     const vtPrice = result.find((r) => r.slug === "vt")?.priceUsd ?? null;
-    const stakedNum = bigintToNumber(staked, 18);
-    const pendingNum = bigintToNumber(pendingReward, 18);
+    const stakedNum = bigintToNumber(staked, 9);
+    const pendingNum = bigintToNumber(pendingReward, 9);
     const stakedUsd = vtPrice != null ? stakedNum * vtPrice : null;
     const pendingUsd = vtPrice != null ? pendingNum * vtPrice : null;
 
     lines.push("");
     lines.push("*RevShare ($VEXOR pool)*");
     lines.push(
-      `Staked: ${formatTokenAmount(staked, 18)} VEXOR` +
+      `Staked: ${formatTokenAmount(staked, 9)} VEXOR` +
         (stakedUsd != null ? `  \u00B7  $${fmtUsd(stakedUsd)}` : ""),
     );
     lines.push(
-      `Pending rewards: ${formatTokenAmount(pendingReward, 18)} VEXOR` +
+      `Pending rewards: ${formatTokenAmount(pendingReward, 9)} VEXOR` +
         (pendingUsd != null ? `  \u00B7  $${fmtUsd(pendingUsd)}` : ""),
     );
     if (stakedUsd != null) totalUsd += stakedUsd;
@@ -2426,22 +2430,30 @@ async function readPortfolio(env: Env, wallet: string): Promise<PortfolioReadRes
     "https://raw.githubusercontent.com/Vexorterminal0111/vexor-aeon/data/intel/tokens"
   ).replace(/\/+$/, "");
 
-  const paddedWallet = padAddress(wallet);
+  // Fetch SPL token accounts owned by this wallet via Solana JSON-RPC.
+  // Returns all token accounts across mints — we match against the
+  // roster CAs to build the portfolio.
+  interface TokenAccountValue {
+    account: {
+      data: {
+        parsed?: {
+          info?: {
+            mint?: string;
+            tokenAmount?: { amount?: string; decimals?: number };
+          };
+        };
+      };
+    };
+  }
+  const tokenAccountsCall = rpcCall("getTokenAccountsByOwner", [
+    wallet,
+    { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
+    { encoding: "jsonParsed" },
+  ]).catch((err) => {
+    console.warn(`watchtower: getTokenAccountsByOwner failed: ${String(err)}`);
+    return null;
+  });
 
-  // Fan out RPC + snapshot fetches in parallel. balanceOf() for each
-  // roster token + RevShare balanceOf() and pending() for the same
-  // wallet. Snapshots are pulled in parallel from the GitHub Raw CDN
-  // (edge-cached for 60s) so this whole step usually finishes in well
-  // under a second once RPC settles.
-  const balanceCalls = INTEL_TOKENS.map((t) =>
-    rpcCall("eth_call", [
-      { to: t.ca, data: SEL.balanceOf + paddedWallet },
-      "latest",
-    ]).catch((err) => {
-      console.warn(`watchtower: balanceOf failed for ${t.slug}: ${String(err)}`);
-      return null;
-    }),
-  );
   const snapshotFetches = INTEL_TOKENS.map(async (t) => {
     try {
       const res = await fetch(`${baseUrl}/${t.slug}.json`, {
@@ -2456,27 +2468,32 @@ async function readPortfolio(env: Env, wallet: string): Promise<PortfolioReadRes
     }
   });
 
-  const stakedCall = rpcCall("eth_call", [
-    { to: VEXOR_REVSHARE_ADDRESS, data: SEL.balanceOf + paddedWallet },
-    "latest",
-  ]).catch(() => null);
-  const pendingCall = rpcCall("eth_call", [
-    { to: VEXOR_REVSHARE_ADDRESS, data: SEL.pending + paddedWallet },
-    "latest",
-  ]).catch(() => null);
-
-  const [balances, prices, stakedHex, pendingHex] = await Promise.all([
-    Promise.all(balanceCalls),
+  const [tokenAccountsResult, prices] = await Promise.all([
+    tokenAccountsCall,
     Promise.all(snapshotFetches),
-    stakedCall,
-    pendingCall,
   ]);
 
+  // Build a mint → balance map from the RPC response.
+  const mintBalances = new Map<string, bigint>();
+  if (tokenAccountsResult && typeof tokenAccountsResult === "object") {
+    const result = tokenAccountsResult as { value?: TokenAccountValue[] };
+    if (Array.isArray(result.value)) {
+      for (const entry of result.value) {
+        const info = entry.account?.data?.parsed?.info;
+        const mint = info?.mint;
+        const amount = info?.tokenAmount?.amount;
+        if (mint && amount) {
+          const existing = mintBalances.get(mint) ?? 0n;
+          mintBalances.set(mint, existing + BigInt(amount));
+        }
+      }
+    }
+  }
+
   const rows: PortfolioRow[] = INTEL_TOKENS.map((t, i) => {
-    const balHex = balances[i];
-    const amount = typeof balHex === "string" ? hexToBigInt(balHex) : 0n;
+    const amount = mintBalances.get(t.ca) ?? 0n;
     const priceUsd = prices[i];
-    const tokenAmount = bigintToNumber(amount, 18);
+    const tokenAmount = bigintToNumber(amount, 9);
     const usdValue = priceUsd != null ? tokenAmount * priceUsd : null;
     return {
       slug: t.slug,
@@ -2487,20 +2504,21 @@ async function readPortfolio(env: Env, wallet: string): Promise<PortfolioReadRes
     };
   });
 
-  const staked = typeof stakedHex === "string" ? hexToBigInt(stakedHex) : 0n;
-  const pendingReward =
-    typeof pendingHex === "string" ? hexToBigInt(pendingHex) : 0n;
+  // RevShare staking data not yet available on Solana — will be
+  // wired once the Anchor program deploys.
+  const staked = 0n;
+  const pendingReward = 0n;
 
   return { rows, staked, pendingReward };
 }
 
 function isValidAddress(s: string): boolean {
-  return /^0x[a-fA-F0-9]{40}$/.test(s);
+  return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
 }
 
 function sanitizeAddressForEcho(s: string): string {
-  // For Markdown safety — strip anything that's not 0-9/a-f/A-F/x.
-  const cleaned = s.replace(/[^a-fA-F0-9x]/g, "").slice(0, 64);
+  // For Markdown safety — strip anything that's not alphanumeric.
+  const cleaned = s.replace(/[^a-zA-Z0-9]/g, "").slice(0, 64);
   return cleaned || "?";
 }
 
@@ -2681,104 +2699,15 @@ async function sendPriceAlert(
 // -----------------------------------------------------------------------------
 
 async function scanWhaleTransfers(
-  slug: string,
-  watchers: ChatRecord[],
-  env: Env,
+  _slug: string,
+  _watchers: ChatRecord[],
+  _env: Env,
 ): Promise<void> {
-  // Anyone opted in for this token?
-  const subscribers = watchers.filter(
-    (w) => w.whale_thresholds && w.whale_thresholds[slug] != null,
-  );
-  if (subscribers.length === 0) return;
-
-  const meta = getIntelToken(slug);
-  if (!meta) return;
-
-  // Resolve scan range.
-  const headHex = (await rpcCall("eth_blockNumber", []).catch(() => null)) as
-    | string
-    | null;
-  if (!headHex) {
-    console.warn(`watchtower whale: failed to read head block for ${slug}`);
-    return;
-  }
-  const head = Number(hexToBigInt(headHex));
-  if (!Number.isFinite(head) || head <= 0) return;
-
-  const lastRaw = await env.WATCHTOWER.get(whaleBlockKey(slug));
-  const lastScanned = lastRaw ? Number(lastRaw) : NaN;
-  const from = Number.isFinite(lastScanned) && lastScanned > 0
-    ? Math.max(lastScanned + 1, head - WHALE_MAX_BLOCK_RANGE)
-    : head - WHALE_RECENT_FALLBACK_BLOCKS;
-  const to = Math.min(head, from + WHALE_MAX_BLOCK_RANGE);
-  if (from > to) {
-    // Already up to date.
-    await env.WATCHTOWER.put(whaleBlockKey(slug), String(to));
-    return;
-  }
-
-  // Get current price + decimals so we can convert raw token amounts → USD.
-  const [logs, decimals, snap] = await Promise.all([
-    fetchTransferLogs(meta.ca, from, to).catch((e) => {
-      console.warn(`watchtower whale: eth_getLogs failed for ${slug}: ${e}`);
-      return [];
-    }),
-    getTokenDecimals(env, meta.ca),
-    getSnapshot(env, slug),
-  ]);
-  const priceUsd = snap?.price_usd ?? null;
-  if (priceUsd == null || !Number.isFinite(priceUsd) || priceUsd <= 0) {
-    // Without a live price we cannot convert wei → USD. Bump the cursor
-    // anyway so we don't accumulate a backlog when DexScreener is down.
-    await env.WATCHTOWER.put(whaleBlockKey(slug), String(to));
-    return;
-  }
-
-  // For each log, compute USD value and fan out to each subscriber whose
-  // threshold is met.
-  const sends: Promise<unknown>[] = [];
-  for (const log of logs) {
-    const value = parseTransferValue(log.data);
-    if (value === 0n) continue;
-    const tokens = Number(value) / Math.pow(10, decimals);
-    if (!Number.isFinite(tokens)) continue;
-    const usd = tokens * priceUsd;
-    if (!Number.isFinite(usd) || usd < MIN_WHALE_USD) continue;
-
-    const from_addr = topicToAddress(log.topics[1]);
-    const to_addr = topicToAddress(log.topics[2]);
-    const dedupeKey = whaleDedupeKey(slug, log.transactionHash, log.logIndex);
-    const already = await env.WATCHTOWER.get(dedupeKey);
-    if (already) continue;
-
-    for (const rec of subscribers) {
-      const chatId = (rec as ChatRecord & { __chat_id?: number }).__chat_id;
-      if (chatId == null) continue;
-      // `subscribers` is pre-filtered to only include records with a
-      // configured whale threshold for this slug, so this lookup is
-      // guaranteed to be defined. The `?? DEFAULT_WHALE_USD` fallback
-      // was dead code and is dropped.
-      const threshold = rec.whale_thresholds![slug];
-      if (usd < threshold) continue;
-      sends.push(
-        sendWhaleAlert(env, chatId, slug, {
-          from_addr,
-          to_addr,
-          tokens,
-          usd,
-          tx_hash: log.transactionHash,
-        }),
-      );
-    }
-    sends.push(
-      env.WATCHTOWER.put(dedupeKey, String(Date.now()), {
-        expirationTtl: WHALE_COOLDOWN_TTL_SECONDS,
-      }),
-    );
-  }
-
-  sends.push(env.WATCHTOWER.put(whaleBlockKey(slug), String(to)));
-  await Promise.all(sends);
+  // Whale transfer scanning is disabled during the Solana migration.
+  // EVM eth_getLogs is not available on Solana RPC. This will be
+  // reimplemented using Solana transaction parsing once on-chain
+  // indexing ships.
+  return;
 }
 
 interface TransferLog {
@@ -2833,29 +2762,16 @@ function topicToAddress(topic: string | undefined): string {
 }
 
 async function getTokenDecimals(env: Env, ca: string): Promise<number> {
-  const key = `dec:${ca.toLowerCase()}`;
+  const key = `dec:${ca}`;
   const cached = await env.WATCHTOWER.get(key);
   if (cached) {
     const n = Number(cached);
     if (Number.isFinite(n) && n > 0 && n <= 30) return n;
   }
-  try {
-    const res = await rpcCall("eth_call", [
-      { to: ca, data: "0x313ce567" },
-      "latest",
-    ]);
-    if (typeof res === "string") {
-      const n = Number(hexToBigInt(res));
-      if (Number.isFinite(n) && n > 0 && n <= 30) {
-        await env.WATCHTOWER.put(key, String(n));
-        return n;
-      }
-    }
-  } catch (e) {
-    console.warn(`watchtower whale: decimals query failed for ${ca}: ${e}`);
-  }
-  // SPL token default. All 7 Pulse Premium tokens are 18 decimals.
-  return 18;
+  // SPL tokens default to 9 decimals on Solana (vs 18 on EVM).
+  // Full decimals lookup via getAccountInfo is deferred until
+  // whale scanning is re-enabled.
+  return 9;
 }
 
 async function sendWhaleAlert(
@@ -2888,7 +2804,7 @@ async function sendWhaleAlert(
 
 function shortAddr(addr: string): string {
   if (!addr || addr.length < 10) return addr || "\u2014";
-  return `${addr.slice(0, 6)}\u2026${addr.slice(-4)}`;
+  return `${addr.slice(0, 4)}\u2026${addr.slice(-4)}`;
 }
 
 // -----------------------------------------------------------------------------
@@ -3116,9 +3032,11 @@ async function getPortfolioBinding(
 ): Promise<string | null> {
   const raw = await env.WATCHTOWER.get(portfolioKey(chatId));
   if (!raw) return null;
-  // Stored as `0xabc...` lowercase. Validate to defend against legacy
-  // junk in KV from earlier experiments.
-  return /^0x[a-f0-9]{40}$/.test(raw) ? raw : null;
+  // Accept both Solana base58 and legacy EVM hex formats so old
+  // bindings still work until users rebind.
+  if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(raw)) return raw;
+  if (/^0x[a-f0-9]{40}$/.test(raw)) return raw;
+  return null;
 }
 
 async function setPortfolioBinding(
@@ -3126,7 +3044,7 @@ async function setPortfolioBinding(
   chatId: number,
   wallet: string,
 ): Promise<void> {
-  await env.WATCHTOWER.put(portfolioKey(chatId), wallet.toLowerCase());
+  await env.WATCHTOWER.put(portfolioKey(chatId), wallet);
 }
 
 function researchCounterKey(chatId: number, utcDay: string): string {
