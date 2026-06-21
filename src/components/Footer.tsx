@@ -29,6 +29,22 @@ export function Footer() {
               <span className="h-1.5 w-1.5 rounded-full bg-violet-300" />
               Built for Solana · v0.1.0
             </div>
+            <div className="mt-5">
+              <a
+                href="https://orynth.dev/projects/vexor-terminal"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://orynth.dev/api/badge/vexor-terminal?theme=light&style=default"
+                  alt="Featured on Orynth"
+                  width={200}
+                  height={62}
+                  className="opacity-70 hover:opacity-100 transition-opacity"
+                />
+              </a>
+            </div>
           </div>
 
           <div>
