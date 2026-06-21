@@ -20,6 +20,8 @@ Nine specialized sub-agents, nine language models, one orchestrator.
 [![Anchor](https://img.shields.io/badge/Anchor-Rust-e6522c?style=flat-square&labelColor=0a1628)](https://www.anchor-lang.com)
 [![License: MIT](https://img.shields.io/badge/license-MIT-8b5cf6?style=flat-square&labelColor=0a1628)](#license)
 
+<a href="https://orynth.dev/projects/vexor-terminal"><img src="https://orynth.dev/api/badge/vexor-terminal?theme=light&style=default" alt="Featured on Orynth" width="260" height="80"></a>
+
 [**Live site** ↗](https://vexorterminal.com) ·
 [Docs ↗](https://vexorterminal.com/docs) ·
 [@Vexorterminal ↗](https://x.com/Vexorterminal)
